@@ -1,0 +1,480 @@
+{
+    "_type": "export",
+    "__export_format": 4,
+    "__export_date": "2026-02-12T17:55:00.000Z",
+    "__export_source": "insomnia.desktop.app:v2023.5.8",
+    "resources": [
+        {
+            "_id": "req_auth_register",
+            "parentId": "fld_auth",
+            "modified": 1707765000000,
+            "created": 1707765000000,
+            "url": "{{ _.base_url }}/api/v1/user/register",
+            "name": "Register",
+            "description": "",
+            "method": "POST",
+            "body": {
+                "mimeType": "application/json",
+                "text": "{\n\t\"phoneNumber\": \"0901234567\",\n\t\"password\": \"123456\",\n\t\"fullName\": \"Test User\",\n\t\"role\": \"CUSTOMER\"\n}"
+            },
+            "parameters": [],
+            "headers": [
+                {
+                    "name": "Content-Type",
+                    "value": "application/json"
+                }
+            ],
+            "authentication": {},
+            "metaSortKey": -1707765000000,
+            "isPrivate": false,
+            "settingStoreCookies": true,
+            "settingSendCookies": true,
+            "settingDisableRenderRequestBody": false,
+            "settingEncodeUrl": true,
+            "settingRebuildPath": true,
+            "settingFollowRedirects": "global",
+            "_type": "request"
+        },
+        {
+            "_id": "req_auth_login",
+            "parentId": "fld_auth",
+            "modified": 1707765000001,
+            "created": 1707765000001,
+            "url": "{{ _.base_url }}/api/v1/user/login",
+            "name": "Login",
+            "description": "",
+            "method": "POST",
+            "body": {
+                "mimeType": "application/json",
+                "text": "{\n\t\"phoneNumber\": \"0901234567\",\n\t\"password\": \"123456\"\n}"
+            },
+            "parameters": [],
+            "headers": [
+                {
+                    "name": "Content-Type",
+                    "value": "application/json"
+                }
+            ],
+            "authentication": {},
+            "metaSortKey": -1707765000001,
+            "isPrivate": false,
+            "settingStoreCookies": true,
+            "settingSendCookies": true,
+            "settingDisableRenderRequestBody": false,
+            "settingEncodeUrl": true,
+            "settingRebuildPath": true,
+            "settingFollowRedirects": "global",
+            "_type": "request"
+        },
+        {
+            "_id": "req_auth_profile",
+            "parentId": "fld_auth",
+            "modified": 1707765000002,
+            "created": 1707765000002,
+            "url": "{{ _.base_url }}/api/v1/user/profile",
+            "name": "Get Profile",
+            "description": "",
+            "method": "GET",
+            "body": {},
+            "parameters": [],
+            "headers": [
+                {
+                    "name": "Authorization",
+                    "value": "Bearer {{ _.token }}"
+                }
+            ],
+            "authentication": {},
+            "metaSortKey": -1707765000002,
+            "isPrivate": false,
+            "settingStoreCookies": true,
+            "settingSendCookies": true,
+            "settingDisableRenderRequestBody": false,
+            "settingEncodeUrl": true,
+            "settingRebuildPath": true,
+            "settingFollowRedirects": "global",
+            "_type": "request"
+        },
+        {
+            "_id": "fld_auth",
+            "parentId": "wrk_1",
+            "modified": 1707765000003,
+            "created": 1707765000003,
+            "name": "Auth",
+            "description": "",
+            "environment": {},
+            "environmentPropertyOrder": null,
+            "metaSortKey": -1707765000003,
+            "_type": "request_group"
+        },
+        {
+            "_id": "req_shop_create",
+            "parentId": "fld_shop",
+            "modified": 1707765000004,
+            "created": 1707765000004,
+            "url": "{{ _.base_url }}/api/v1/shop",
+            "name": "Create Shop (Multipart)",
+            "description": "",
+            "method": "POST",
+            "body": {
+                "mimeType": "multipart/form-data",
+                "params": [
+                    {
+                        "name": "name",
+                        "value": "New Hair Salon"
+                    },
+                    {
+                        "name": "address",
+                        "value": "123 Main St"
+                    },
+                    {
+                        "name": "phone",
+                        "value": "0987654321"
+                    },
+                    {
+                        "name": "coordinates",
+                        "value": "[105.8, 21.0]"
+                    }
+                ]
+            },
+            "parameters": [],
+            "headers": [
+                {
+                    "name": "Authorization",
+                    "value": "Bearer {{ _.token }}"
+                },
+                {
+                    "name": "Content-Type",
+                    "value": "multipart/form-data"
+                }
+            ],
+            "authentication": {},
+            "metaSortKey": -1707765000004,
+            "isPrivate": false,
+            "settingStoreCookies": true,
+            "settingSendCookies": true,
+            "settingDisableRenderRequestBody": false,
+            "settingEncodeUrl": true,
+            "settingRebuildPath": true,
+            "settingFollowRedirects": "global",
+            "_type": "request"
+        },
+        {
+            "_id": "req_shop_my",
+            "parentId": "fld_shop",
+            "modified": 1707765000005,
+            "created": 1707765000005,
+            "url": "{{ _.base_url }}/api/v1/shop/my-shops",
+            "name": "My Shops",
+            "description": "",
+            "method": "GET",
+            "body": {},
+            "parameters": [],
+            "headers": [
+                {
+                    "name": "Authorization",
+                    "value": "Bearer {{ _.token }}"
+                }
+            ],
+            "authentication": {},
+            "metaSortKey": -1707765000005,
+            "isPrivate": false,
+            "settingStoreCookies": true,
+            "settingSendCookies": true,
+            "settingDisableRenderRequestBody": false,
+            "settingEncodeUrl": true,
+            "settingRebuildPath": true,
+            "settingFollowRedirects": "global",
+            "_type": "request"
+        },
+        {
+            "_id": "req_shop_detail",
+            "parentId": "fld_shop",
+            "modified": 1707765000006,
+            "created": 1707765000006,
+            "url": "{{ _.base_url }}/api/v1/shop/{{ _.shop_id }}",
+            "name": "Get Shop Detail",
+            "description": "",
+            "method": "GET",
+            "body": {},
+            "parameters": [],
+            "headers": [],
+            "authentication": {},
+            "metaSortKey": -1707765000006,
+            "isPrivate": false,
+            "settingStoreCookies": true,
+            "settingSendCookies": true,
+            "settingDisableRenderRequestBody": false,
+            "settingEncodeUrl": true,
+            "settingRebuildPath": true,
+            "settingFollowRedirects": "global",
+            "_type": "request"
+        },
+        {
+            "_id": "fld_shop",
+            "parentId": "wrk_1",
+            "modified": 1707765000007,
+            "created": 1707765000007,
+            "name": "Shop",
+            "description": "",
+            "environment": {},
+            "environmentPropertyOrder": null,
+            "metaSortKey": -1707765000007,
+            "_type": "request_group"
+        },
+        {
+            "_id": "req_service_create",
+            "parentId": "fld_service",
+            "modified": 1707765000008,
+            "created": 1707765000008,
+            "url": "{{ _.base_url }}/api/v1/service",
+            "name": "Create Service (Multipart)",
+            "description": "",
+            "method": "POST",
+            "body": {
+                "mimeType": "multipart/form-data",
+                "params": [
+                    {
+                        "name": "shopId",
+                        "value": "{{ _.shop_id }}"
+                    },
+                    {
+                        "name": "name",
+                        "value": "Haircut"
+                    },
+                    {
+                        "name": "price",
+                        "value": "50000"
+                    },
+                    {
+                        "name": "managerExtraFee",
+                        "value": "20000"
+                    },
+                    {
+                        "name": "duration",
+                        "value": "30"
+                    }
+                ]
+            },
+            "parameters": [],
+            "headers": [
+                {
+                    "name": "Authorization",
+                    "value": "Bearer {{ _.token }}"
+                },
+                {
+                    "name": "Content-Type",
+                    "value": "multipart/form-data"
+                }
+            ],
+            "authentication": {},
+            "metaSortKey": -1707765000008,
+            "isPrivate": false,
+            "settingStoreCookies": true,
+            "settingSendCookies": true,
+            "settingDisableRenderRequestBody": false,
+            "settingEncodeUrl": true,
+            "settingRebuildPath": true,
+            "settingFollowRedirects": "global",
+            "_type": "request"
+        },
+        {
+            "_id": "req_service_list",
+            "parentId": "fld_service",
+            "modified": 1707765000009,
+            "created": 1707765000009,
+            "url": "{{ _.base_url }}/api/v1/service/shop/{{ _.shop_id }}",
+            "name": "List Services",
+            "description": "",
+            "method": "GET",
+            "body": {},
+            "parameters": [],
+            "headers": [],
+            "authentication": {},
+            "metaSortKey": -1707765000009,
+            "isPrivate": false,
+            "settingStoreCookies": true,
+            "settingSendCookies": true,
+            "settingDisableRenderRequestBody": false,
+            "settingEncodeUrl": true,
+            "settingRebuildPath": true,
+            "settingFollowRedirects": "global",
+            "_type": "request"
+        },
+        {
+            "_id": "fld_service",
+            "parentId": "wrk_1",
+            "modified": 1707765000010,
+            "created": 1707765000010,
+            "name": "Service",
+            "description": "",
+            "environment": {},
+            "environmentPropertyOrder": null,
+            "metaSortKey": -1707765000010,
+            "_type": "request_group"
+        },
+        {
+            "_id": "req_booking_create",
+            "parentId": "fld_booking",
+            "modified": 1707765000011,
+            "created": 1707765000011,
+            "url": "{{ _.base_url }}/api/v1/appointment",
+            "name": "Create Appointment",
+            "description": "",
+            "method": "POST",
+            "body": {
+                "mimeType": "application/json",
+                "text": "{\n\t\"shopId\": \"{{ _.shop_id }}\",\n\t\"serviceIds\": [\"{{ _.service_id }}\"],\n\t\"barberId\": \"{{ _.barber_id }}\",\n\t\"bookingDate\": \"2026-02-13T10:00:00.000Z\",\n\t\"note\": \"Test booking\"\n}"
+            },
+            "parameters": [],
+            "headers": [
+                {
+                    "name": "Authorization",
+                    "value": "Bearer {{ _.token }}"
+                },
+                {
+                    "name": "Content-Type",
+                    "value": "application/json"
+                }
+            ],
+            "authentication": {},
+            "metaSortKey": -1707765000011,
+            "isPrivate": false,
+            "settingStoreCookies": true,
+            "settingSendCookies": true,
+            "settingDisableRenderRequestBody": false,
+            "settingEncodeUrl": true,
+            "settingRebuildPath": true,
+            "settingFollowRedirects": "global",
+            "_type": "request"
+        },
+        {
+            "_id": "req_booking_me",
+            "parentId": "fld_booking",
+            "modified": 1707765000012,
+            "created": 1707765000012,
+            "url": "{{ _.base_url }}/api/v1/appointment/me",
+            "name": "My Appointments",
+            "description": "",
+            "method": "GET",
+            "body": {},
+            "parameters": [],
+            "headers": [
+                {
+                    "name": "Authorization",
+                    "value": "Bearer {{ _.token }}"
+                }
+            ],
+            "authentication": {},
+            "metaSortKey": -1707765000012,
+            "isPrivate": false,
+            "settingStoreCookies": true,
+            "settingSendCookies": true,
+            "settingDisableRenderRequestBody": false,
+            "settingEncodeUrl": true,
+            "settingRebuildPath": true,
+            "settingFollowRedirects": "global",
+            "_type": "request"
+        },
+        {
+            "_id": "fld_booking",
+            "parentId": "wrk_1",
+            "modified": 1707765000013,
+            "created": 1707765000013,
+            "name": "Booking",
+            "description": "",
+            "environment": {},
+            "environmentPropertyOrder": null,
+            "metaSortKey": -1707765000013,
+            "_type": "request_group"
+        },
+        {
+            "_id": "req_search",
+            "parentId": "fld_search",
+            "modified": 1707765000014,
+            "created": 1707765000014,
+            "url": "{{ _.base_url }}/api/v1/search",
+            "name": "Search (Keyword + Location)",
+            "description": "",
+            "method": "GET",
+            "body": {},
+            "parameters": [
+                {
+                    "name": "keyword",
+                    "value": "Shine"
+                },
+                {
+                    "name": "lat",
+                    "value": "21.0"
+                },
+                {
+                    "name": "long",
+                    "value": "105.8"
+                },
+                {
+                    "name": "radius",
+                    "value": "5"
+                }
+            ],
+            "headers": [],
+            "authentication": {},
+            "metaSortKey": -1707765000014,
+            "isPrivate": false,
+            "settingStoreCookies": true,
+            "settingSendCookies": true,
+            "settingDisableRenderRequestBody": false,
+            "settingEncodeUrl": true,
+            "settingRebuildPath": true,
+            "settingFollowRedirects": "global",
+            "_type": "request"
+        },
+        {
+            "_id": "fld_search",
+            "parentId": "wrk_1",
+            "modified": 1707765000015,
+            "created": 1707765000015,
+            "name": "Search",
+            "description": "",
+            "environment": {},
+            "environmentPropertyOrder": null,
+            "metaSortKey": -1707765000015,
+            "_type": "request_group"
+        },
+        {
+            "_id": "wrk_1",
+            "parentId": null,
+            "modified": 1707765000000,
+            "created": 1707765000000,
+            "name": "Haircut Booking API",
+            "description": "",
+            "scope": "collection",
+            "_type": "workspace"
+        },
+        {
+            "_id": "env_1",
+            "parentId": "wrk_1",
+            "modified": 1707765000000,
+            "created": 1707765000000,
+            "name": "Base Environment",
+            "data": {
+                "base_url": "http://localhost:1000",
+                "token": "REPLACE_WITH_YOUR_TOKEN",
+                "shop_id": "REPLACE_WITH_SHOP_ID",
+                "service_id": "REPLACE_WITH_SERVICE_ID",
+                "barber_id": "REPLACE_WITH_BARBER_ID"
+            },
+            "dataPropertyOrder": {
+                "&": [
+                    "base_url",
+                    "token",
+                    "shop_id",
+                    "service_id",
+                    "barber_id"
+                ]
+            },
+            "color": null,
+            "isPrivate": false,
+            "metaSortKey": 1707765000000,
+            "_type": "environment"
+        }
+    ]
+}

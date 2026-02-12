@@ -1,0 +1,514 @@
+{
+    "_type": "export",
+    "__export_format": 4,
+    "__export_date": "2026-02-13T01:30:00.000Z",
+    "__export_source": "insomnia.desktop.app:v2023.5.8",
+    "resources": [
+        {
+            "_id": "wrk_1",
+            "parentId": null,
+            "modified": 1707765000000,
+            "created": 1707765000000,
+            "name": "Haircut Booking System API",
+            "description": "Full API Collection for B_Hair App",
+            "scope": "collection",
+            "_type": "workspace"
+        },
+        {
+            "_id": "env_1",
+            "parentId": "wrk_1",
+            "modified": 1707765000000,
+            "created": 1707765000000,
+            "name": "Localhost",
+            "data": {
+                "base_url": "http://localhost:1000",
+                "token": "PASTE_ACCESS_TOKEN_HERE",
+                "shop_id": "REPLACE_WITH_REAL_SHOP_ID",
+                "service_id": "REPLACE_WITH_REAL_SERVICE_ID",
+                "barber_id": "REPLACE_WITH_REAL_BARBER_ID",
+                "appointment_id": "REPLACE_WITH_APPOINTMENT_ID"
+            },
+            "dataPropertyOrder": {
+                "&": [
+                    "base_url",
+                    "token",
+                    "shop_id",
+                    "service_id",
+                    "barber_id",
+                    "appointment_id"
+                ]
+            },
+            "color": null,
+            "isPrivate": false,
+            "metaSortKey": 1707765000000,
+            "_type": "environment"
+        },
+        {
+            "_id": "fld_auth",
+            "parentId": "wrk_1",
+            "modified": 1707765000001,
+            "created": 1707765000001,
+            "name": "1. Authentication",
+            "description": "",
+            "environment": {},
+            "environmentPropertyOrder": null,
+            "metaSortKey": -10,
+            "_type": "request_group"
+        },
+        {
+            "_id": "req_auth_register",
+            "parentId": "fld_auth",
+            "modified": 1707765000002,
+            "created": 1707765000002,
+            "url": "{{ _.base_url }}/api/v1/user/register",
+            "name": "Register",
+            "method": "POST",
+            "body": {
+                "mimeType": "application/json",
+                "text": "{\n\t\"phoneNumber\": \"0901111111\",\n\t\"password\": \"123456\",\n\t\"fullName\": \"New User\",\n\t\"role\": \"CUSTOMER\"\n}"
+            },
+            "parameters": [],
+            "headers": [
+                {
+                    "name": "Content-Type",
+                    "value": "application/json"
+                }
+            ],
+            "metaSortKey": -10,
+            "_type": "request"
+        },
+        {
+            "_id": "req_auth_login",
+            "parentId": "fld_auth",
+            "modified": 1707765000003,
+            "created": 1707765000003,
+            "url": "{{ _.base_url }}/api/v1/user/login",
+            "name": "Login",
+            "method": "POST",
+            "body": {
+                "mimeType": "application/json",
+                "text": "{\n\t\"phoneNumber\": \"0901234567\",\n\t\"password\": \"123456\"\n}"
+            },
+            "parameters": [],
+            "headers": [
+                {
+                    "name": "Content-Type",
+                    "value": "application/json"
+                }
+            ],
+            "metaSortKey": -9,
+            "_type": "request"
+        },
+        {
+            "_id": "req_auth_profile",
+            "parentId": "fld_auth",
+            "modified": 1707765000004,
+            "created": 1707765000004,
+            "url": "{{ _.base_url }}/api/v1/user/profile",
+            "name": "Get Profile",
+            "method": "GET",
+            "body": {},
+            "parameters": [],
+            "headers": [
+                {
+                    "name": "Authorization",
+                    "value": "Bearer {{ _.token }}"
+                }
+            ],
+            "metaSortKey": -8,
+            "_type": "request"
+        },
+        {
+            "_id": "fld_shop",
+            "parentId": "wrk_1",
+            "modified": 1707765000010,
+            "created": 1707765000010,
+            "name": "2. Shop Management",
+            "description": "",
+            "environment": {},
+            "environmentPropertyOrder": null,
+            "metaSortKey": -9,
+            "_type": "request_group"
+        },
+        {
+            "_id": "req_shop_create",
+            "parentId": "fld_shop",
+            "modified": 1707765000011,
+            "created": 1707765000011,
+            "url": "{{ _.base_url }}/api/v1/shop",
+            "name": "Create Shop (Manager Only)",
+            "method": "POST",
+            "body": {
+                "mimeType": "multipart/form-data",
+                "params": [
+                    {
+                        "name": "name",
+                        "value": "New Barber Shop"
+                    },
+                    {
+                        "name": "address",
+                        "value": "789 Tran Hung Dao"
+                    },
+                    {
+                        "name": "phone",
+                        "value": "0988888888"
+                    },
+                    {
+                        "name": "coordinates",
+                        "value": "[105.8, 21.0]"
+                    },
+                    {
+                        "name": "openTime",
+                        "value": "08:00"
+                    },
+                    {
+                        "name": "closeTime",
+                        "value": "22:00"
+                    },
+                    {
+                        "name": "slotDuration",
+                        "value": "30"
+                    },
+                    {
+                        "name": "images1",
+                        "type": "file"
+                    }
+                ]
+            },
+            "parameters": [],
+            "headers": [
+                {
+                    "name": "Authorization",
+                    "value": "Bearer {{ _.token }}"
+                },
+                {
+                    "name": "Content-Type",
+                    "value": "multipart/form-data"
+                }
+            ],
+            "metaSortKey": -10,
+            "_type": "request"
+        },
+        {
+            "_id": "req_shop_list_my",
+            "parentId": "fld_shop",
+            "modified": 1707765000012,
+            "created": 1707765000012,
+            "url": "{{ _.base_url }}/api/v1/shop/my-shops",
+            "name": "Get My Shops",
+            "method": "GET",
+            "body": {},
+            "parameters": [],
+            "headers": [
+                {
+                    "name": "Authorization",
+                    "value": "Bearer {{ _.token }}"
+                }
+            ],
+            "metaSortKey": -9,
+            "_type": "request"
+        },
+        {
+            "_id": "req_shop_detail",
+            "parentId": "fld_shop",
+            "modified": 1707765000013,
+            "created": 1707765000013,
+            "url": "{{ _.base_url }}/api/v1/shop/{{ _.shop_id }}",
+            "name": "Get Shop Detail",
+            "method": "GET",
+            "body": {},
+            "parameters": [],
+            "headers": [],
+            "metaSortKey": -8,
+            "_type": "request"
+        },
+        {
+            "_id": "fld_service",
+            "parentId": "wrk_1",
+            "modified": 1707765000020,
+            "created": 1707765000020,
+            "name": "3. Service Management",
+            "description": "",
+            "environment": {},
+            "environmentPropertyOrder": null,
+            "metaSortKey": -8,
+            "_type": "request_group"
+        },
+        {
+            "_id": "req_service_create",
+            "parentId": "fld_service",
+            "modified": 1707765000021,
+            "created": 1707765000021,
+            "url": "{{ _.base_url }}/api/v1/service",
+            "name": "Create Service",
+            "method": "POST",
+            "body": {
+                "mimeType": "multipart/form-data",
+                "params": [
+                    {
+                        "name": "shopId",
+                        "value": "{{ _.shop_id }}"
+                    },
+                    {
+                        "name": "name",
+                        "value": "Luxury Haircut"
+                    },
+                    {
+                        "name": "price",
+                        "value": "150000"
+                    },
+                    {
+                        "name": "managerExtraFee",
+                        "value": "50000"
+                    },
+                    {
+                        "name": "duration",
+                        "value": "45"
+                    }
+                ]
+            },
+            "parameters": [],
+            "headers": [
+                {
+                    "name": "Authorization",
+                    "value": "Bearer {{ _.token }}"
+                },
+                {
+                    "name": "Content-Type",
+                    "value": "multipart/form-data"
+                }
+            ],
+            "metaSortKey": -10,
+            "_type": "request"
+        },
+        {
+            "_id": "req_service_list",
+            "parentId": "fld_service",
+            "modified": 1707765000022,
+            "created": 1707765000022,
+            "url": "{{ _.base_url }}/api/v1/service/shop/{{ _.shop_id }}",
+            "name": "Get Shop Services",
+            "method": "GET",
+            "body": {},
+            "parameters": [],
+            "headers": [],
+            "metaSortKey": -9,
+            "_type": "request"
+        },
+        {
+            "_id": "fld_schedule",
+            "parentId": "wrk_1",
+            "modified": 1707765000030,
+            "created": 1707765000030,
+            "name": "4. Schedule & Slots",
+            "description": "",
+            "environment": {},
+            "environmentPropertyOrder": null,
+            "metaSortKey": -7,
+            "_type": "request_group"
+        },
+        {
+            "_id": "req_schedule_slots",
+            "parentId": "fld_schedule",
+            "modified": 1707765000031,
+            "created": 1707765000031,
+            "url": "{{ _.base_url }}/api/v1/shop/{{ _.shop_id }}/slots",
+            "name": "Get Available Slots",
+            "method": "GET",
+            "body": {},
+            "parameters": [
+                {
+                    "name": "date",
+                    "value": "2026-02-14"
+                },
+                {
+                    "name": "barberId",
+                    "value": "{{ _.barber_id }}",
+                    "disabled": true
+                }
+            ],
+            "headers": [],
+            "metaSortKey": -10,
+            "_type": "request"
+        },
+        {
+            "_id": "fld_booking",
+            "parentId": "wrk_1",
+            "modified": 1707765000040,
+            "created": 1707765000040,
+            "name": "5. Booking (Appointment)",
+            "description": "",
+            "environment": {},
+            "environmentPropertyOrder": null,
+            "metaSortKey": -6,
+            "_type": "request_group"
+        },
+        {
+            "_id": "req_booking_create",
+            "parentId": "fld_booking",
+            "modified": 1707765000041,
+            "created": 1707765000041,
+            "url": "{{ _.base_url }}/api/v1/appointment",
+            "name": "Create Appointment",
+            "method": "POST",
+            "body": {
+                "mimeType": "application/json",
+                "text": "{\n\t\"shopId\": \"{{ _.shop_id }}\",\n\t\"serviceIds\": [\"{{ _.service_id }}\"],\n\t\"barberId\": \"{{ _.barber_id }}\",\n\t\"bookingDate\": \"2026-02-14T09:00:00.000Z\",\n\t\"note\": \"Test Booking\"\n}"
+            },
+            "parameters": [],
+            "headers": [
+                {
+                    "name": "Authorization",
+                    "value": "Bearer {{ _.token }}"
+                },
+                {
+                    "name": "Content-Type",
+                    "value": "application/json"
+                }
+            ],
+            "metaSortKey": -10,
+            "_type": "request"
+        },
+        {
+            "_id": "req_booking_me",
+            "parentId": "fld_booking",
+            "modified": 1707765000042,
+            "created": 1707765000042,
+            "url": "{{ _.base_url }}/api/v1/appointment/me",
+            "name": "My Appointments",
+            "method": "GET",
+            "body": {},
+            "parameters": [],
+            "headers": [
+                {
+                    "name": "Authorization",
+                    "value": "Bearer {{ _.token }}"
+                }
+            ],
+            "metaSortKey": -9,
+            "_type": "request"
+        },
+        {
+            "_id": "fld_review",
+            "parentId": "wrk_1",
+            "modified": 1707765000050,
+            "created": 1707765000050,
+            "name": "6. Reviews",
+            "description": "",
+            "environment": {},
+            "environmentPropertyOrder": null,
+            "metaSortKey": -5,
+            "_type": "request_group"
+        },
+        {
+            "_id": "req_review_create",
+            "parentId": "fld_review",
+            "modified": 1707765000051,
+            "created": 1707765000051,
+            "url": "{{ _.base_url }}/api/v1/review",
+            "name": "Create Review",
+            "method": "POST",
+            "body": {
+                "mimeType": "application/json",
+                "text": "{\n\t\"appointmentId\": \"{{ _.appointment_id }}\",\n\t\"rating\": 5,\n\t\"comment\": \"Great service!\"\n}"
+            },
+            "parameters": [],
+            "headers": [
+                {
+                    "name": "Authorization",
+                    "value": "Bearer {{ _.token }}"
+                },
+                {
+                    "name": "Content-Type",
+                    "value": "application/json"
+                }
+            ],
+            "metaSortKey": -10,
+            "_type": "request"
+        },
+        {
+            "_id": "req_review_list",
+            "parentId": "fld_review",
+            "modified": 1707765000052,
+            "created": 1707765000052,
+            "url": "{{ _.base_url }}/api/v1/review/shop/{{ _.shop_id }}",
+            "name": "Get Shop Reviews",
+            "method": "GET",
+            "body": {},
+            "parameters": [],
+            "headers": [],
+            "metaSortKey": -9,
+            "_type": "request"
+        },
+        {
+            "_id": "fld_search",
+            "parentId": "wrk_1",
+            "modified": 1707765000060,
+            "created": 1707765000060,
+            "name": "7. Search",
+            "description": "",
+            "environment": {},
+            "environmentPropertyOrder": null,
+            "metaSortKey": -4,
+            "_type": "request_group"
+        },
+        {
+            "_id": "req_search",
+            "parentId": "fld_search",
+            "modified": 1707765000061,
+            "created": 1707765000061,
+            "url": "{{ _.base_url }}/api/v1/search",
+            "name": "Search Shops",
+            "method": "GET",
+            "body": {},
+            "parameters": [
+                {
+                    "name": "keyword",
+                    "value": "Shine"
+                },
+                {
+                    "name": "lat",
+                    "value": "21.0"
+                },
+                {
+                    "name": "long",
+                    "value": "105.8"
+                }
+            ],
+            "headers": [],
+            "metaSortKey": -10,
+            "_type": "request"
+        },
+        {
+            "_id": "fld_notification",
+            "parentId": "wrk_1",
+            "modified": 1707765000070,
+            "created": 1707765000070,
+            "name": "8. Notifications",
+            "description": "",
+            "environment": {},
+            "environmentPropertyOrder": null,
+            "metaSortKey": -3,
+            "_type": "request_group"
+        },
+        {
+            "_id": "req_notif_list",
+            "parentId": "fld_notification",
+            "modified": 1707765000071,
+            "created": 1707765000071,
+            "url": "{{ _.base_url }}/api/v1/notification",
+            "name": "Get My Notifications",
+            "method": "GET",
+            "body": {},
+            "parameters": [],
+            "headers": [
+                {
+                    "name": "Authorization",
+                    "value": "Bearer {{ _.token }}"
+                }
+            ],
+            "metaSortKey": -10,
+            "_type": "request"
+        }
+    ]
+}
