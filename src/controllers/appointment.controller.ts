@@ -6,7 +6,7 @@ import Shop from '../models/shop.model';
 
 export const createAppointment = async (req: Request, res: Response) => {
     try {
-        const { shopId, barberId, serviceIds, bookingDate, note } = req.body; // bookingDate is ISO string
+        let { shopId, barberId, serviceIds, bookingDate, note } = req.body; // bookingDate is ISO string
 
         // 1. Validate Shop
         const shop = await Shop.findById(shopId);
@@ -49,6 +49,7 @@ export const createAppointment = async (req: Request, res: Response) => {
         // 5. Check Availability (Overlaps)
         // If barber is selected, check their schedule
         // If no barber selected, we might assign one or just check shop capacity (simplified: require barber for now)
+
         if (barberId) {
             const overlap = await Appointment.findOne({
                 barberId,
@@ -62,7 +63,28 @@ export const createAppointment = async (req: Request, res: Response) => {
                 return res.status(400).json({ message: 'Barber is busy at this time' });
             }
         } else {
-            return res.status(400).json({ message: 'Please select a specific barber' });
+            // Logic: Check Shop Capacity (Don't assign specific barber yet)
+            // 1. Count Total Active Barbers
+            const totalBarbers = await User.countDocuments({
+                shopId,
+                role: { $in: [UserRole.MANAGER, UserRole.STAFF] },
+                isActive: true
+            });
+
+            // 2. Count Concurrent Appointments (regardless of barber assignment)
+            const concurrentAppointments = await Appointment.countDocuments({
+                shopId,
+                status: { $in: [AppointmentStatus.PENDING, AppointmentStatus.CONFIRMED] },
+                $or: [
+                    { bookingDate: { $lt: endDate }, endTime: { $gt: startDate } }
+                ]
+            });
+
+            if (concurrentAppointments >= totalBarbers) {
+                return res.status(400).json({ message: 'Shop is fully booked at this time. Please select another slot.' });
+            }
+
+            // Allow booking with barberId = null
         }
 
         // 6. Create Appointment
@@ -104,12 +126,29 @@ export const createAppointment = async (req: Request, res: Response) => {
                 // Emit Socket Event
                 // Client (Manager) must join room: socket.emit('join_room', managerId)
                 getIO().to(managerIdStr).emit('new_notification', noti);
+
+                // --- CHANGE START: Push Notification (FCM) ---
+                const { sendPushNotification } = require('../services/notification.service');
+                const manager = await User.findById(shop.managerId);
+                if (manager && manager.fcmToken) {
+                    await sendPushNotification({
+                        token: manager.fcmToken,
+                        title: '📅 New Appointment',
+                        body: `New booking at ${startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
+                        data: {
+                            type: 'BOOKING_CREATED',
+                            appointmentId: appointment._id.toString()
+                        }
+                    });
+                }
+                // --- CHANGE END ---
             }
 
         } catch (err) {
             console.error('Notification error:', err);
             // Don't fail the request if notification fails
         }
+
         // --- CHANGE END ---
 
         res.status(201).json({

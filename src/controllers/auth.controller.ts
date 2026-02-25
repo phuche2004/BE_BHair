@@ -106,3 +106,16 @@ export const getProfile = async (req: Request, res: Response) => {
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 };
+
+export const updateFcmToken = async (req: Request, res: Response) => {
+    try {
+        const { fcmToken } = req.body;
+        if (!fcmToken) return res.status(400).json({ message: 'fcmToken is required' });
+
+        await User.findByIdAndUpdate(req.user.id, { fcmToken });
+
+        res.json({ message: 'FCM Token updated successfully' });
+    } catch (error: any) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};

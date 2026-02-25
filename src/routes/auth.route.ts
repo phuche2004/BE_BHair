@@ -12,5 +12,6 @@ router.post('/login', authController.login);
 
 // Protected routes
 router.get('/profile', authMiddleware.verifyToken, authController.getProfile);
+router.put('/fcm-token', authMiddleware.verifyToken, authController.updateFcmToken);
 
 export default router;

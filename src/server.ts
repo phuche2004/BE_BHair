@@ -48,7 +48,16 @@ app.get('/', (req: Request, res: Response) => {
 
 // Start server
 // Start server
-app.listen(PORT, () => {
+// Start server
+import { createServer } from 'http';
+import { initSocket } from './utils/socket';
+
+const httpServer = createServer(app);
+
+// Initialize Socket.io
+initSocket(httpServer);
+
+httpServer.listen(PORT, () => {
     console.log(`\n=================================================`);
     console.log(`Server running on port ${PORT}`);
     console.log(`http://localhost:${PORT}`);
