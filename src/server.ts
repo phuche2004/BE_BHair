@@ -1,6 +1,5 @@
 import dotenv from 'dotenv';
-// Load env vars - Tip: You can create a .env.local to override .env
-dotenv.config();
+dotenv.config({ quiet: true } as any);
 
 import express, { Application, Request, Response, NextFunction } from 'express';
 import connectDB from './config/database';
@@ -58,9 +57,7 @@ const httpServer = createServer(app);
 initSocket(httpServer);
 
 httpServer.listen(PORT, () => {
-    console.log(`\n=================================================`);
-    console.log(`Server running on port ${PORT}`);
-    console.log(`http://localhost:${PORT}`);
+    console.log(`\x1b[32m\x1b[1m✓ B_Hair API\x1b[0m  https://be-bhair.onrender.com`);
 });
 
 export default app;
