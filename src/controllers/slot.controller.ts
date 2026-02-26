@@ -48,7 +48,13 @@ export const getAvailableSlots = async (req: Request, res: Response) => {
 
         // Create base slots
         while (current < end) {
-            const timeString = current.toTimeString().slice(0, 5); // "09:00"
+            // Lấy giờ VN: toLocaleTimeString trả về đúng múi giờ +07:00 trên mọi server
+            const timeString = current.toLocaleTimeString('vi-VN', {
+                timeZone: 'Asia/Ho_Chi_Minh',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            }); // "09:00" — đúng giờ Việt Nam dù server chạy UTC
             const slotStart = new Date(current);
             // const slotEnd = new Date(current.getTime() + slotDuration * 60000); // Check range if needed
 
@@ -92,7 +98,8 @@ export const getAvailableSlots = async (req: Request, res: Response) => {
         slots.forEach(slot => {
             if (!slot.available) return; // Skip break slots
 
-            const slotStart = new Date(`${date}T${slot.time}:00`);
+            // Parse với timezone VN để so sánh đúng với bookingDate (UTC stored)
+            const slotStart = new Date(`${date}T${slot.time}:00+07:00`);
             const slotEnd = new Date(slotStart.getTime() + slotDuration * 60000);
 
             // Count how many appointments overlap with this slot
