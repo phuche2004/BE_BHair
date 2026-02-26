@@ -34,15 +34,16 @@ export const getAvailableSlots = async (req: Request, res: Response) => {
         const slots: { time: string; available: boolean; bookedCount: number; totalCapacity: number }[] = [];
         const slotDuration = shop.slotDuration || 30;
 
-        let current = new Date(`${date}T${shop.openTime}:00`);
-        const end = new Date(`${date}T${shop.closeTime}:00`);
+        // Múi giờ Việt Nam UTC+7 — tất cả khung giờ và so sánh đều dùng +07:00
+        let current = new Date(`${date}T${shop.openTime}:00+07:00`);
+        const end = new Date(`${date}T${shop.closeTime}:00+07:00`);
 
-        // Parse Break Times
+        // Parse Break Times (Vietnam time)
         let breakStart: Date | null = null;
         let breakEnd: Date | null = null;
         if (shop.breakStart && shop.breakEnd) {
-            breakStart = new Date(`${date}T${shop.breakStart}:00`);
-            breakEnd = new Date(`${date}T${shop.breakEnd}:00`);
+            breakStart = new Date(`${date}T${shop.breakStart}:00+07:00`);
+            breakEnd = new Date(`${date}T${shop.breakEnd}:00+07:00`);
         }
 
         // Create base slots
@@ -71,8 +72,9 @@ export const getAvailableSlots = async (req: Request, res: Response) => {
         }
 
         // 3. Fetch Existing Appointments
-        const dayStart = new Date(`${date}T00:00:00`);
-        const dayEnd = new Date(`${date}T23:59:59`);
+        // Truy vấn appointment trong ngày theo giờ Việt Nam
+        const dayStart = new Date(`${date}T00:00:00+07:00`);
+        const dayEnd = new Date(`${date}T23:59:59+07:00`);
 
         const query: any = {
             shopId,

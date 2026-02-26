@@ -1,0 +1,62 @@
+[{
+  "_id": {
+    "$oid": "698e171f2fcb7c6e2b4c222d"
+  },
+  "shopId": {
+    "$oid": "698e171f2fcb7c6e2b4c2226"
+  },
+  "name": "Cat Goi Massage (Combo)",
+  "price": 100000,
+  "managerExtraFee": 30000,
+  "duration": 45,
+  "image": "https://images.unsplash.com/photo-1599351431202-1e0f0137899a",
+  "isActive": true,
+  "createdAt": {
+    "$date": "2026-02-12T18:08:31.534Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-12T18:08:31.534Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "698e171f2fcb7c6e2b4c222f"
+  },
+  "shopId": {
+    "$oid": "698e171f2fcb7c6e2b4c2226"
+  },
+  "name": "Uon Toc Han Quoc",
+  "price": 300000,
+  "managerExtraFee": 50000,
+  "duration": 90,
+  "image": "https://images.unsplash.com/photo-1560869713-7d0a875faae7",
+  "isActive": true,
+  "createdAt": {
+    "$date": "2026-02-12T18:08:31.535Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-12T18:08:31.535Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "698e171f2fcb7c6e2b4c2236"
+  },
+  "shopId": {
+    "$oid": "698e171f2fcb7c6e2b4c2233"
+  },
+  "name": "Classic Cut",
+  "price": 150000,
+  "managerExtraFee": 0,
+  "duration": 60,
+  "isActive": true,
+  "createdAt": {
+    "$date": "2026-02-12T18:08:31.545Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-12T18:08:31.545Z"
+  },
+  "__v": 0
+}]

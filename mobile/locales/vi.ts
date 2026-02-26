@@ -1,0 +1,103 @@
+export const vi = {
+    tabs: {
+        home: 'Trang chủ',
+        search: 'Tìm kiếm',
+        appointments: 'Lịch hẹn',
+        settings: 'Cài đặt'
+    },
+    auth: {
+        welcomeBack: 'Chào mừng quay trở lại',
+        phoneLabel: 'Số điện thoại',
+        phonePlaceholder: 'Nhập số điện thoại',
+        passwordLabel: 'Mật khẩu',
+        passwordPlaceholder: 'Nhập mật khẩu',
+        signIn: 'Đăng nhập',
+        noAccount: 'Chưa có tài khoản? ',
+        signUp: 'Đăng ký',
+        createAccount: 'Tạo tài khoản',
+        joinToday: 'Tham gia B_Hair ngay hôm nay',
+        fullNameLabel: 'Họ và tên',
+        fullNamePlaceholder: 'Nhập họ và tên',
+        confirmPasswordLabel: 'Xác nhận mật khẩu',
+        confirmPasswordPlaceholder: 'Nhập lại mật khẩu',
+        haveAccount: 'Đã có tài khoản? ',
+        passwordsNotMatch: 'Mật khẩu không khớp',
+        fillAllFields: 'Vui lòng điền đầy đủ thông tin',
+        loginFailed: 'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.',
+        registerFailed: 'Đăng ký thất bại. Vui lòng thử lại.',
+        success: 'Thành công',
+        registerSuccess: 'Đăng ký thành công! Vui lòng đăng nhập.',
+        error: 'Lỗi',
+        ok: 'Đồng ý'
+    },
+    settings: {
+        darkMode: 'Giao diện tối',
+        language: 'Ngôn ngữ (Language)',
+        accountSettings: 'Cài đặt tài khoản',
+        paymentMethods: 'Phương thức thanh toán',
+        helpSupport: 'Trợ giúp & Hỗ trợ',
+        logout: 'Đăng xuất',
+        logoutConfirmTitle: 'Đăng xuất',
+        logoutConfirmMsg: 'Bạn có chắc chắn muốn đăng xuất không?',
+        cancel: 'Hủy',
+        noPhone: 'Chưa cập nhật SĐT'
+    },
+    home: {
+        welcome: 'Xin chào,',
+        findCut: 'Tìm thợ cắt tóc ưng ý',
+        searchPlaceholder: 'Tìm kiếm tiệm cắt tóc...',
+        featuredShops: 'Tiệm Nổi Bật',
+        topRated: 'Đánh Giá Cao',
+        viewAll: 'Xem tất cả',
+        open: 'Đang mở',
+        book: 'Đặt lịch'
+    },
+    search: {
+        title: 'Tìm kiếm tiệm',
+        filter: 'Lọc',
+        mapPlaceholder: 'Bản đồ hiển thị ở đây'
+    },
+    appointments: {
+        title: 'Lịch hẹn của tôi',
+        upcoming: 'SẮP TỚI',
+        completed: 'ĐÃ HOÀN THÀNH',
+        tomorrow: 'Ngày mai lúc'
+    },
+    shop: {
+        hours: 'Giờ mở cửa',
+        services: 'Dịch vụ',
+        mins: 'phút',
+        bookNow: 'Đặt lịch ngay',
+        imageMap: 'Ảnh tiệm / Bản đồ'
+    },
+    booking: {
+        title: 'Thanh toán & Đặt lịch',
+        selectDate: 'Chọn ngày',
+        selectTime: 'Chọn giờ',
+        selectService: 'Chọn dịch vụ',
+        noServices: 'Không có dịch vụ',
+        slotBooked: 'Đã đặt',
+        slotAvailable: 'Trống',
+        summary: 'Tổng quan',
+        date: 'Ngày',
+        time: 'Giờ',
+        service: 'Dịch vụ',
+        duration: 'Thời gian',
+        total: 'Tổng cộng',
+        confirm: 'Xác nhận đặt lịch',
+        incomplete: 'Chưa đủ thông tin',
+        selectServiceMsg: 'Vui lòng chọn dịch vụ.',
+        selectTimeMsg: 'Vui lòng chọn khung giờ.',
+        bookingConfirmed: 'Đặt lịch thành công',
+        bookingSuccessMsg: 'Lịch hẹn của bạn đã được đặt thành công!',
+        viewAppointments: 'Xem lịch hẹn',
+        done: 'Hoàn tất',
+        bookFailed: 'Đặt lịch thất bại.',
+        mins: 'phút'
+    },
+    common: {
+        back: 'Quay lại',
+        notSelected: 'Chưa chọn',
+        demoService: 'Cắt tóc Classic (Demo)'
+    }
+};

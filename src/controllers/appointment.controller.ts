@@ -12,6 +12,19 @@ export const createAppointment = async (req: Request, res: Response) => {
         const shop = await Shop.findById(shopId);
         if (!shop) return res.status(404).json({ message: 'Shop not found' });
 
+        // 1b. Kiểm tra customer đã có lịch đang chờ/xác nhận chưa
+        const existingActive = await Appointment.findOne({
+            customerId: req.user.id,
+            status: { $in: [AppointmentStatus.PENDING, AppointmentStatus.CONFIRMED] },
+        });
+        if (existingActive) {
+            return res.status(409).json({
+                message: 'You already have an active appointment. Please wait until it is completed before booking another.',
+                existingAppointmentId: existingActive._id,
+            });
+        }
+
+
         // 2. Validate Services & Calculate Price/Duration
         const services = await Service.find({ _id: { $in: serviceIds }, shopId: shopId, isActive: true });
         if (services.length !== serviceIds.length) {
@@ -163,11 +176,32 @@ export const createAppointment = async (req: Request, res: Response) => {
 export const getMyAppointments = async (req: Request, res: Response) => {
     try {
         const appointments = await Appointment.find({ customerId: req.user.id })
-            .populate('shopId', 'name address')
-            .populate('barberId', 'fullName')
-            .populate('serviceIds', 'name price')
+            .populate('shopId', 'name address images1')
+            .populate('barberId', 'fullName avatar')
+            .populate('serviceIds', 'name price duration')
             .sort({ bookingDate: -1 });
         res.json(appointments);
+    } catch (error: any) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+export const getAppointmentById = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const appointment = await Appointment.findById(id)
+            .populate('shopId', 'name address images1 phone')
+            .populate('barberId', 'fullName avatar')
+            .populate('serviceIds', 'name price duration');
+
+        if (!appointment) {
+            return res.status(404).json({ message: 'Appointment not found' });
+        }
+        // Chỉ owner mới được xem
+        if (appointment.customerId.toString() !== req.user.id) {
+            return res.status(403).json({ message: 'Not authorized' });
+        }
+        res.json(appointment);
     } catch (error: any) {
         res.status(500).json({ message: 'Server error', error: error.message });
     }
