@@ -3,6 +3,7 @@ import {
     View, Text, StyleSheet, ScrollView,
     ActivityIndicator, TouchableOpacity, Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Colors } from '../../constants/theme';
 import { useColorScheme } from '../../hooks/use-color-scheme';
@@ -122,9 +123,9 @@ export default function AppointmentDetailScreen() {
     const dividerColor = isDark ? '#FFFFFF14' : '#00000012';
 
     return (
-        <>
+        <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]} edges={['bottom']}>
             <Stack.Screen options={{ title: 'Chi tiết lịch hẹn' }} />
-            <ScrollView style={[styles.container, { backgroundColor: colors.background }]}
+            <ScrollView style={styles.container}
                 contentContainerStyle={{ paddingBottom: 40 }}>
 
                 {/* ── Status badge ── */}
@@ -200,7 +201,7 @@ export default function AppointmentDetailScreen() {
                     </TouchableOpacity>
                 )}
             </ScrollView>
-        </>
+        </SafeAreaView>
     );
 }
 
@@ -226,6 +227,7 @@ function Divider({ color = '#00000012' }: { color?: string }) {
 
 const styles = StyleSheet.create({
     container: { flex: 1 },
+    safe: { flex: 1, marginTop: 28 },
     center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
 
     statusCard: {

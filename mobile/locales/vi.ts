@@ -60,8 +60,16 @@ export const vi = {
     appointments: {
         title: 'Lịch hẹn của tôi',
         upcoming: 'SẮP TỚI',
-        completed: 'ĐÃ HOÀN THÀNH',
-        tomorrow: 'Ngày mai lúc'
+        past: 'Lịch đã qua',
+        noHistory: 'Chưa có lịch hẹn nào',
+        tomorrow: 'Ngày mai lúc',
+        status: {
+            PENDING: 'Chờ xác nhận',
+            CONFIRMED: 'Đã xác nhận',
+            COMPLETED: 'Hoàn thành',
+            CANCELLED: 'Đã hủy',
+            NO_SHOW: 'Không đến',
+        }
     },
     shop: {
         hours: 'Giờ mở cửa',

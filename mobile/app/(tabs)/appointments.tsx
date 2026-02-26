@@ -34,7 +34,17 @@ export default function AppointmentsScreen() {
     );
 
     const upcoming = appointments.filter((a) => a.status === 'PENDING' || a.status === 'CONFIRMED');
-    const past = appointments.filter((a) => a.status === 'COMPLETED' || a.status === 'CANCELLED');
+    const past = appointments.filter((a) => a.status === 'COMPLETED' || a.status === 'CANCELLED' || a.status === 'NO_SHOW');
+
+    // Map status → translated label + color
+    const STATUS_LABEL: Record<string, string> = (t as any)('appointments.status') ?? {};
+    const STATUS_COLOR: Record<string, string> = {
+        PENDING: '#E65100',
+        CONFIRMED: '#2E7D32',
+        COMPLETED: '#1565C0',
+        CANCELLED: '#B71C1C',
+        NO_SHOW: '#6D4C41',
+    };
 
     const renderCard = (appt: any, isUpcoming: boolean) => {
         const d = new Date(appt.bookingDate);
@@ -67,9 +77,9 @@ export default function AppointmentsScreen() {
             >
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                     <Text style={[isUpcoming ? styles.statusPending : styles.statusCompleted, {
-                        color: isUpcoming ? '#E65100' : '#2E7D32'
+                        color: STATUS_COLOR[appt.status] ?? (isUpcoming ? '#E65100' : '#2E7D32')
                     }]}>
-                        {appt.status}
+                        {STATUS_LABEL[appt.status] ?? appt.status}
                     </Text>
                     <Text style={{ color: colors.icon, fontSize: 16 }}>›</Text>
                 </View>
@@ -106,7 +116,7 @@ export default function AppointmentsScreen() {
 
                         {past.length > 0 && (
                             <View style={{ marginBottom: 16 }}>
-                                <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('appointments.completed')}</Text>
+                                <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('appointments.past')}</Text>
                                 {past.map(a => renderCard(a, false))}
                             </View>
                         )}

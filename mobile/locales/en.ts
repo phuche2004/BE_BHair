@@ -60,8 +60,16 @@ export const en = {
     appointments: {
         title: 'My Appointments',
         upcoming: 'UPCOMING',
-        completed: 'COMPLETED',
-        tomorrow: 'Tomorrow at'
+        past: 'PAST APPOINTMENTS',
+        noHistory: 'No appointments yet',
+        tomorrow: 'Tomorrow at',
+        status: {
+            PENDING: 'Pending',
+            CONFIRMED: 'Confirmed',
+            COMPLETED: 'Completed',
+            CANCELLED: 'Cancelled',
+            NO_SHOW: 'No Show',
+        }
     },
     shop: {
         hours: 'Hours',
