@@ -82,7 +82,9 @@ export default function AppointmentDetailScreen() {
                     try {
                         setCancelling(true);
                         await axiosInstance.patch(`/appointment/${id}/cancel`);
-                        Alert.alert('Đã hủy', 'Lịch hẹn đã được hủy thành công.', [
+                        // Cập nhật state ngay, không cần reload
+                        setAppt((prev: any) => ({ ...prev, status: 'CANCELLED' }));
+                        Alert.alert('Đã hủy thành công', 'Lịch hẹn của bạn đã được hủy.', [
                             { text: 'OK', onPress: () => router.back() }
                         ]);
                     } catch (e: any) {
@@ -106,14 +108,18 @@ export default function AppointmentDetailScreen() {
     if (!appt) return null;
 
     // Parse populated fields
-    const shopName = typeof appt.shopId === 'object' ? appt.shopId?.name : appt.shopId;
+    const shopName = typeof appt.shopId === 'object' ? appt.shopId?.name : (appt.shopId ?? '—');
     const shopAddress = typeof appt.shopId === 'object' ? appt.shopId?.address : '';
-    const barberName = typeof appt.barberId === 'object' ? appt.barberId?.fullName : (appt.barberId ? 'Barber' : 'Bất kỳ');
+    // barberId null = không chọn barber cụ thể
+    const barberName = appt.barberId
+        ? (typeof appt.barberId === 'object' ? appt.barberId.fullName : 'Barber')
+        : 'Bất kỳ (shop tự sắp xếp)';
     const services: any[] = appt.serviceIds ?? [];
 
     const statusLabel = STATUS_LABEL[appt.status] ?? appt.status;
     const statusColor = STATUS_COLOR[appt.status] ?? colors.primary;
     const canCancel = appt.status === 'PENDING' || appt.status === 'CONFIRMED';
+    const dividerColor = isDark ? '#FFFFFF14' : '#00000012';
 
     return (
         <>
@@ -133,18 +139,18 @@ export default function AppointmentDetailScreen() {
                     <InfoRow icon="📅" label="Thời gian bắt đầu" value={fmtDateTime(appt.bookingDate)} colors={colors} />
                     <InfoRow icon="🕐" label="Kết thúc dự kiến" value={fmtTime(appt.endTime)} colors={colors} />
 
-                    <Divider />
+                    <Divider color={dividerColor} />
 
                     <InfoRow icon="💈" label="Cửa hàng" value={shopName ?? '—'} colors={colors} />
                     {!!shopAddress && (
                         <InfoRow icon="📍" label="Địa chỉ" value={shopAddress} colors={colors} />
                     )}
 
-                    <Divider />
+                    <Divider color={dividerColor} />
 
                     <InfoRow icon="✂️" label="Barber" value={barberName} colors={colors} />
 
-                    <Divider />
+                    <Divider color={dividerColor} />
 
                     {/* Services */}
                     <Text style={[styles.rowLabel, { color: colors.icon }]}>🛎 Dịch vụ</Text>
@@ -162,7 +168,7 @@ export default function AppointmentDetailScreen() {
                         );
                     })}
 
-                    <Divider />
+                    <Divider color={dividerColor} />
 
                     <View style={styles.totalRow}>
                         <Text style={[styles.totalLabel, { color: colors.text }]}>Tổng tiền</Text>
@@ -173,7 +179,7 @@ export default function AppointmentDetailScreen() {
 
                     {!!appt.note && (
                         <>
-                            <Divider />
+                            <Divider color={dividerColor} />
                             <InfoRow icon="📝" label="Ghi chú" value={appt.note} colors={colors} />
                         </>
                     )}
@@ -212,8 +218,8 @@ function InfoRow({ icon, label, value, colors }: { icon: string; label: string; 
     );
 }
 
-function Divider() {
-    return <View style={styles.divider} />;
+function Divider({ color = '#00000012' }: { color?: string }) {
+    return <View style={[styles.divider, { backgroundColor: color }]} />;
 }
 
 // ─── Styles ───────────────────────────────────────────────────────────────────

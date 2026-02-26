@@ -197,7 +197,6 @@ export const getAppointmentById = async (req: Request, res: Response) => {
         if (!appointment) {
             return res.status(404).json({ message: 'Appointment not found' });
         }
-        // Chỉ owner mới được xem
         if (appointment.customerId.toString() !== req.user.id) {
             return res.status(403).json({ message: 'Not authorized' });
         }
@@ -206,6 +205,49 @@ export const getAppointmentById = async (req: Request, res: Response) => {
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 };
+
+export const cancelAppointment = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const appointment = await Appointment.findById(id);
+
+        if (!appointment) {
+            return res.status(404).json({ message: 'Appointment not found' });
+        }
+
+        // ── Kiểm tra quyền hủy ──────────────────────────────────────────────
+        const isOwner = appointment.customerId.toString() === req.user.id;
+        const isAdmin = req.user.role === UserRole.ADMIN;
+
+        // shopId từ JWT (sau khi fix) hoặc DB lookup cho token cũ
+        let userShopId = req.user.shopId;
+        if (!userShopId && (req.user.role === UserRole.STAFF || req.user.role === UserRole.MANAGER)) {
+            const dbUser = await User.findById(req.user.id).select('shopId');
+            userShopId = dbUser?.shopId?.toString();
+        }
+
+        const isShopStaff =
+            (req.user.role === UserRole.STAFF || req.user.role === UserRole.MANAGER) &&
+            userShopId?.toString() === appointment.shopId.toString();
+
+        if (!isOwner && !isAdmin && !isShopStaff) {
+            return res.status(403).json({ message: 'Not authorized to cancel this appointment' });
+        }
+        // ────────────────────────────────────────────────────────────────────
+
+        if (appointment.status !== AppointmentStatus.PENDING && appointment.status !== AppointmentStatus.CONFIRMED) {
+            return res.status(400).json({ message: `Cannot cancel appointment with status: ${appointment.status}` });
+        }
+
+        appointment.status = AppointmentStatus.CANCELLED;
+        await appointment.save();
+
+        res.json({ message: 'Appointment cancelled successfully', appointment });
+    } catch (error: any) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
 
 export const getShopAppointments = async (req: Request, res: Response) => {
     try {
