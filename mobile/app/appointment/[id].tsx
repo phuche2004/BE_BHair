@@ -9,6 +9,7 @@ import { Colors } from '../../constants/theme';
 import { useColorScheme } from '../../hooks/use-color-scheme';
 import { appointmentApi } from '../../api/appointment.api';
 import { axiosInstance } from '../../api';
+import { useAuthStore } from '../../store/useAuthStore';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -54,9 +55,10 @@ export default function AppointmentDetailScreen() {
     const colors = Colors[theme];
     const isDark = theme === 'dark';
 
+    const user = useAuthStore((state) => state.user);
     const [appt, setAppt] = useState<any>(null);
     const [loading, setLoading] = useState(true);
-    const [cancelling, setCancelling] = useState(false);
+    const [updating, setUpdating] = useState(false);
 
     useEffect(() => {
         if (!id) return;
@@ -74,24 +76,22 @@ export default function AppointmentDetailScreen() {
         })();
     }, [id]);
 
-    const handleCancel = () => {
-        Alert.alert('Hủy lịch hẹn', 'Bạn có chắc muốn hủy lịch hẹn này không?', [
+    const handleUpdateStatus = (newStatus: string, confirmMessage: string) => {
+        Alert.alert('Cập nhật trạng thái', confirmMessage, [
             { text: 'Không', style: 'cancel' },
             {
-                text: 'Hủy lịch', style: 'destructive',
+                text: 'Xác nhận', style: newStatus === 'CANCELLED' || newStatus === 'NO_SHOW' ? 'destructive' : 'default',
                 onPress: async () => {
                     try {
-                        setCancelling(true);
-                        await axiosInstance.patch(`/appointment/${id}/cancel`);
-                        // Cập nhật state ngay, không cần reload
-                        setAppt((prev: any) => ({ ...prev, status: 'CANCELLED' }));
-                        Alert.alert('Đã hủy thành công', 'Lịch hẹn của bạn đã được hủy.', [
-                            { text: 'OK', onPress: () => router.back() }
-                        ]);
+                        setUpdating(true);
+                        // Using our generic status update route
+                        await appointmentApi.updateAppointmentStatus(id, newStatus);
+                        setAppt((prev: any) => ({ ...prev, status: newStatus }));
+                        Alert.alert('Thành công', `Cập nhật trạng thái thành ${STATUS_LABEL[newStatus] || newStatus} thành công.`);
                     } catch (e: any) {
-                        Alert.alert('Lỗi', e.response?.data?.message ?? 'Không thể hủy lịch');
+                        Alert.alert('Lỗi', e.response?.data?.message ?? 'Không thể cập nhật trạng thái');
                     } finally {
-                        setCancelling(false);
+                        setUpdating(false);
                     }
                 }
             }
@@ -119,7 +119,11 @@ export default function AppointmentDetailScreen() {
 
     const statusLabel = STATUS_LABEL[appt.status] ?? appt.status;
     const statusColor = STATUS_COLOR[appt.status] ?? colors.primary;
-    const canCancel = appt.status === 'PENDING' || appt.status === 'CONFIRMED';
+    const isActive = appt.status === 'PENDING' || appt.status === 'CONFIRMED';
+
+    // Role checks
+    const isCustomer = user?.role === 'CUSTOMER';
+    const isManagerOrStaff = user?.role === 'MANAGER' || user?.role === 'ADMIN' || user?.role === 'STAFF';
     const dividerColor = isDark ? '#FFFFFF14' : '#00000012';
 
     return (
@@ -186,19 +190,44 @@ export default function AppointmentDetailScreen() {
                     )}
                 </View>
 
-                {/* ── Cancel button ── */}
-                {canCancel && (
-                    <TouchableOpacity
-                        style={[styles.cancelBtn, { borderColor: '#B71C1C' }]}
-                        activeOpacity={0.75}
-                        disabled={cancelling}
-                        onPress={handleCancel}
-                    >
-                        {cancelling
-                            ? <ActivityIndicator color="#B71C1C" />
-                            : <Text style={styles.cancelTxt}>Hủy lịch hẹn</Text>
-                        }
-                    </TouchableOpacity>
+                {/* ── Actions ── */}
+                {isActive && (
+                    <View style={styles.actionsContainer}>
+
+                        {(isCustomer || isManagerOrStaff) && (
+                            <TouchableOpacity
+                                style={[styles.actionBtn, { borderColor: '#B71C1C' }]}
+                                activeOpacity={0.75}
+                                disabled={updating}
+                                onPress={() => handleUpdateStatus('CANCELLED', 'Bạn có chắc muốn hủy lịch hẹn này không?')}
+                            >
+                                {updating ? <ActivityIndicator color="#B71C1C" /> : <Text style={[styles.actionTxt, { color: '#B71C1C' }]}>Hủy lịch hẹn</Text>}
+                            </TouchableOpacity>
+                        )}
+
+                        {isManagerOrStaff && (
+                            <>
+                                <TouchableOpacity
+                                    style={[styles.actionBtn, { borderColor: '#6D4C41', marginTop: 12 }]}
+                                    activeOpacity={0.75}
+                                    disabled={updating}
+                                    onPress={() => handleUpdateStatus('NO_SHOW', 'Xác nhận khách không đến?')}
+                                >
+                                    {updating ? <ActivityIndicator color="#6D4C41" /> : <Text style={[styles.actionTxt, { color: '#6D4C41' }]}>Đánh dấu Khách không đến</Text>}
+                                </TouchableOpacity>
+
+                                <TouchableOpacity
+                                    style={[styles.actionBtn, { backgroundColor: '#1565C0', borderColor: '#1565C0', marginTop: 12 }]}
+                                    activeOpacity={0.75}
+                                    disabled={updating}
+                                    onPress={() => handleUpdateStatus('COMPLETED', 'Xác nhận đơn này đã hoàn thành?')}
+                                >
+                                    {updating ? <ActivityIndicator color="#FFFFFF" /> : <Text style={[styles.actionTxt, { color: '#FFFFFF' }]}>Đánh dấu Hoàn thành</Text>}
+                                </TouchableOpacity>
+                            </>
+                        )}
+
+                    </View>
                 )}
             </ScrollView>
         </SafeAreaView>
@@ -259,10 +288,13 @@ const styles = StyleSheet.create({
     totalLabel: { fontSize: 15, fontWeight: '700' },
     totalValue: { fontSize: 18, fontWeight: '800' },
 
-    cancelBtn: {
-        marginHorizontal: 16, marginTop: 8,
+    actionsContainer: {
+        marginHorizontal: 16,
+        marginTop: 8,
+    },
+    actionBtn: {
         paddingVertical: 14, borderRadius: 12, borderWidth: 1.5,
         alignItems: 'center',
     },
-    cancelTxt: { color: '#B71C1C', fontWeight: '700', fontSize: 15 },
+    actionTxt: { fontWeight: '700', fontSize: 15 },
 });

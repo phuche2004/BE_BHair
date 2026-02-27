@@ -6,10 +6,16 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useTranslation } from '@/hooks/useTranslation';
+import { useAuthStore } from '@/store/useAuthStore';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
   const { t } = useTranslation();
+  const user = useAuthStore((state) => state.user);
+
+  const isManager = user?.role === 'MANAGER' || user?.role === 'ADMIN';
+  const isStaff = user?.role === 'STAFF';
+  const isCustomer = user?.role === 'CUSTOMER' || !user;
 
   return (
     <Tabs
@@ -25,11 +31,14 @@ export default function TabLayout() {
           borderTopColor: Colors[colorScheme ?? 'light'].secondary,
         }
       }}>
+
+      {/* ---------------- CUSTOMER TABS ---------------- */}
       <Tabs.Screen
         name="index"
         options={{
           title: t('tabs.home'),
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          href: isCustomer ? '/(tabs)' : null,
         }}
       />
       <Tabs.Screen
@@ -37,6 +46,7 @@ export default function TabLayout() {
         options={{
           title: t('tabs.search'),
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="magnifyingglass" color={color} />,
+          href: isCustomer ? '/search' : null,
         }}
       />
       <Tabs.Screen
@@ -44,8 +54,39 @@ export default function TabLayout() {
         options={{
           title: t('tabs.appointments'),
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="calendar" color={color} />,
+          href: isCustomer ? '/appointments' : null,
         }}
       />
+
+      {/* ---------------- MANAGER TABS ---------------- */}
+      <Tabs.Screen
+        name="manager-shops"
+        options={{
+          title: t('tabs.myShops'),
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="building.2.fill" color={color} />,
+          href: isManager ? '/manager-shops' : null,
+        }}
+      />
+      <Tabs.Screen
+        name="manager-appointments"
+        options={{
+          title: t('tabs.appointments'),
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="calendar" color={color} />,
+          href: isManager ? '/manager-appointments' : null,
+        }}
+      />
+
+      {/* ---------------- STAFF TABS ---------------- */}
+      <Tabs.Screen
+        name="staff-appointments"
+        options={{
+          title: t('tabs.appointments'),
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="calendar" color={color} />,
+          href: isStaff ? '/staff-appointments' : null,
+        }}
+      />
+
+      {/* ---------------- SHARED TABS ---------------- */}
       <Tabs.Screen
         name="settings"
         options={{
@@ -53,6 +94,7 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="gear" color={color} />,
         }}
       />
+
     </Tabs>
   );
 }

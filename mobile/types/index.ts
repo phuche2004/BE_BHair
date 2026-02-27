@@ -1,4 +1,4 @@
-export type Role = 'CUSTOMER' | 'MANAGER' | 'ADMIN';
+export type Role = 'CUSTOMER' | 'MANAGER' | 'ADMIN' | 'STAFF';
 
 export interface User {
     _id: string;
@@ -50,7 +50,7 @@ export interface Appointment {
     barberId: Barber | string;
     serviceIds: Service[] | string[];
     bookingDate: string; // ISO 8601
-    status: 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED';
+    status: 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED' | 'NO_SHOW';
     totalPrice: number;
     note?: string;
 }

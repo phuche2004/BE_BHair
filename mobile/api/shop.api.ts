@@ -5,6 +5,10 @@ export const shopApi = {
         const response = await axiosInstance.get('/search');
         return response.data;
     },
+    getMyShops: async () => {
+        const response = await axiosInstance.get('/shop/my-shops');
+        return response.data;
+    },
     getShopDetails: async (shopId: string) => {
         const response = await axiosInstance.get(`/shop/${shopId}`);
         return response.data;

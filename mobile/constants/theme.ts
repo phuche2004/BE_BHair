@@ -10,7 +10,7 @@ const tintColorDark = '#D2B48C'; // Tan / Caramel
 const brownPrimary = '#5D4037';
 const tanSecondary = '#D2B48C';
 const backgroundLight = '#FDF8F5'; // Off-white/Cream
-const backgroundDark = '#1c1c1cff'; // Dark Espresso
+const backgroundDark = '#141414ff'; // Dark Espresso
 const textLight = '#3E2723';
 const textDark = '#FDF8F5';
 

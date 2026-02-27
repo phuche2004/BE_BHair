@@ -55,9 +55,13 @@ src/
 
 ### 4.4. Manager Flow (Dành cho Role Quản lý tiệm)
 - **My Shops:** Xem danh sách tiệm mình quản lý: `GET /shop/my-shops`.
-- **Create Shop:** Đăng ký cửa hàng mới (Upload multiple images, config slot duration...): `POST /shop`.
-- **Create Service:** Tạo dịch vụ cho tiệm: `POST /service`.
-- **Manage Appointments:** Xem lịch hẹn của khách đối với cửa hàng (Backend cần hỗ trợ API list appointments by shop).
+- **Create/Edit Shop:** Đăng ký cửa hàng mới hoặc chỉnh sửa thông tin tiệm (Tên, địa chỉ, phone...). (Chỉ dành cho Manager/Admin): `POST /shop`, `PUT /shop/:id`.
+- **Create/Edit Service:** Tạo và chỉnh sửa dịch vụ cho tiệm (Giá, hình ảnh, thời gian...). (Chỉ dành cho Manager/Admin): `POST /service`, `PUT /service/:id`.
+- **Manage Appointments (Lịch tổng thể):** Xem lịch hẹn của khách đối với cửa hàng theo ngày. Có quyền lọc theo ngày và huỷ đơn hoặc cập nhật trạng thái đơn thành Khách không đến (NO_SHOW): `GET /appointment/shop/:shopId`.
+
+### 4.5. Barber Flow (Dành cho Role Thợ cắt tóc / STAFF)
+- **Barber Schedule (Lịch làm việc):** Xem lịch tổng thể các lịch hẹn được giao trong ngày.
+- **Manage Appointments:** Có quyền xem chi tiết lịch hẹn, huỷ đơn nếu cần thiết, hoặc báo cáo khách không đến (NO_SHOW). Các Barber không có quyền sửa thông tin Shop hay sửa Dịch vụ.
 
 ## 5. Đặc tả API RESTful Integration (B_Hair Backend)
 
@@ -114,6 +118,11 @@ Luồng đặt lịch cắt tóc.
 * **GET /appointment/me**
   * **Mô tả:** Lấy danh sách các lịch hẹn của Khách hàng hiện tại.
   * **Response (200):** `[ { "_id", "shopId", "serviceIds", "bookingDate", "status", "totalPrice" ... } ]`
+* **GET /appointment/shop/:shopId**
+  * **Mô tả:** Lấy danh sách lịch hẹn của một cửa hàng (Dành cho Manager/Barber).
+* **PUT /appointment/:id/status** (Cần bổ sung ở Backend nếu chưa có)
+  * **Mô tả:** Cập nhật trạng thái lịch hẹn (Cập nhật thành `CANCELLED`, `NO_SHOW`, `COMPLETED`).
+  * **Body:** `{ "status": "NO_SHOW" }`
 
 ### 5.6. Reviews & Real-time Khác
 * **POST /review**

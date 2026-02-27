@@ -247,17 +247,72 @@ export const cancelAppointment = async (req: Request, res: Response) => {
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 };
+export const updateAppointmentStatus = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const { status } = req.body;
+        const appointment = await Appointment.findById(id);
+
+        if (!appointment) {
+            return res.status(404).json({ message: 'Appointment not found' });
+        }
+
+        // ── Kiểm tra quyền cập nhật ──────────────────────────────────────────────
+        const isOwner = appointment.customerId.toString() === req.user.id;
+        const isAdmin = req.user.role === UserRole.ADMIN;
+
+        let userShopId = req.user.shopId;
+        if (!userShopId && (req.user.role === UserRole.STAFF || req.user.role === UserRole.MANAGER)) {
+            const dbUser = await User.findById(req.user.id).select('shopId');
+            userShopId = dbUser?.shopId?.toString();
+        }
+
+        const isShopStaff =
+            (req.user.role === UserRole.STAFF || req.user.role === UserRole.MANAGER) &&
+            userShopId?.toString() === appointment.shopId.toString();
+
+        if (!isOwner && !isAdmin && !isShopStaff) {
+            return res.status(403).json({ message: 'Not authorized to update this appointment status' });
+        }
+        // ────────────────────────────────────────────────────────────────────
+
+        // Validate status enum
+        if (!Object.values(AppointmentStatus).includes(status as any)) {
+            return res.status(400).json({ message: `Invalid status: ${status}` });
+        }
+
+        // Customers can only CANCEL
+        if (isOwner && !isAdmin && !isShopStaff && status !== AppointmentStatus.CANCELLED) {
+            return res.status(403).json({ message: 'Customer can only cancel appointments' });
+        }
+
+        appointment.status = status;
+        await appointment.save();
+
+        res.json({ message: `Appointment status updated to ${status}`, appointment });
+    } catch (error: any) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
 
 
 export const getShopAppointments = async (req: Request, res: Response) => {
     try {
-        // Manager only
         const { shopId } = req.params;
 
-        // Verify ownership
+        // Verify ownership (Manager or Staff of the shop)
         const shop = await Shop.findById(shopId);
-        if (!shop || (shop.managerId.toString() !== req.user.id && req.user.role !== UserRole.ADMIN)) {
-            return res.status(403).json({ message: 'Not authorized' });
+
+        let userShopId = req.user.shopId;
+        if (!userShopId && (req.user.role === UserRole.STAFF || req.user.role === UserRole.MANAGER)) {
+            const dbUser = await User.findById(req.user.id).select('shopId');
+            userShopId = dbUser?.shopId?.toString();
+        }
+
+        const isShopStaff = (req.user.role === UserRole.STAFF || req.user.role === UserRole.MANAGER) && userShopId === shopId;
+
+        if (!shop || (shop.managerId.toString() !== req.user.id && req.user.role !== UserRole.ADMIN && !isShopStaff)) {
+            return res.status(403).json({ message: 'Not authorized to view appointments for this shop' });
         }
 
         const appointments = await Appointment.find({ shopId })

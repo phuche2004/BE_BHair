@@ -3,7 +3,8 @@ export const vi = {
         home: 'Trang chủ',
         search: 'Tìm kiếm',
         appointments: 'Lịch hẹn',
-        settings: 'Cài đặt'
+        settings: 'Cài đặt',
+        myShops: 'Tiệm của tôi',
     },
     auth: {
         welcomeBack: 'Chào mừng quay trở lại',
