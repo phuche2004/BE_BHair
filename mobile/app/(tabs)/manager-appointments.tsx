@@ -1,23 +1,18 @@
 import React, { useState, useCallback } from 'react';
-import {
-    View, Text, StyleSheet, FlatList,
-    ActivityIndicator, TouchableOpacity, RefreshControl
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter, useFocusEffect } from 'expo-router';
 import { Colors } from '../../constants/theme';
 import { useColorScheme } from '../../hooks/use-color-scheme';
+import { useTranslation } from '../../hooks/useTranslation';
 import { appointmentApi } from '../../api/appointment.api';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { useAuthStore } from '../../store/useAuthStore';
 
-// Note: Similar to staff, Manager may have `shopId` tied to them, 
-// or may have an array of shops. This uses `user.shopId` for now.
-
 export default function ManagerAppointmentsScreen() {
-    const router = useRouter();
     const theme = useColorScheme() ?? 'light';
     const colors = Colors[theme];
-    const isDark = theme === 'dark';
+    const { t } = useTranslation();
+    const router = useRouter();
     const user: any = useAuthStore((state) => state.user);
 
     const [appointments, setAppointments] = useState<any[]>([]);
@@ -27,13 +22,15 @@ export default function ManagerAppointmentsScreen() {
     const fetchAppointments = async () => {
         if (!user?.shopId) {
             setLoading(false);
+            setRefreshing(false);
             return;
         }
         try {
+            setLoading(true);
             const res = await appointmentApi.getShopAppointments(user.shopId);
             setAppointments(res || []);
         } catch (error) {
-            console.error('Failed to fetch manager appointments', error);
+            console.error('Failed to fetch manager appointments:', error);
         } finally {
             setLoading(false);
             setRefreshing(false);
@@ -51,79 +48,166 @@ export default function ManagerAppointmentsScreen() {
         fetchAppointments();
     };
 
-    const renderItem = ({ item }: { item: any }) => {
-        const d = new Date(item.bookingDate);
-        const dateStr = d.toLocaleDateString('vi-VN');
-        const timeStr = d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+    const upcoming = appointments.filter((a) => a.status === 'PENDING' || a.status === 'CONFIRMED');
+    const past = appointments.filter((a) => a.status === 'COMPLETED' || a.status === 'CANCELLED' || a.status === 'NO_SHOW');
+
+    // Map status → translated label + color
+    const STATUS_LABEL: Record<string, string> = (t as any)('appointments.status') ?? {};
+    const STATUS_COLOR: Record<string, string> = {
+        PENDING: '#E65100',
+        CONFIRMED: '#2E7D32',
+        COMPLETED: '#1565C0',
+        CANCELLED: '#B71C1C',
+        NO_SHOW: '#6D4C41',
+    };
+
+    const renderCard = (appt: any, isUpcoming: boolean) => {
+        const d = new Date(appt.bookingDate);
+        const VN = { timeZone: 'Asia/Ho_Chi_Minh' } as const;
+        const dateStr =
+            d.toLocaleDateString('vi-VN', VN) +
+            ' ' +
+            d.toLocaleTimeString('vi-VN', { ...VN, hour: '2-digit', minute: '2-digit' });
+
+        // Khách hàng
+        const customerName = appt.customerId?.fullName || 'Khách vãng lai';
+        const customerPhone = appt.customerId?.phoneNumber || '';
+
+        // Tên Thợ
+        const barberName = appt.barberId?.fullName || '--';
+
+        const serviceNames = (appt.serviceIds ?? []).map((s: any) =>
+            typeof s === 'object' && s !== null ? s.name : s
+        ).filter(Boolean).join(', ') || `${(appt.serviceIds ?? []).length} dịch vụ`;
 
         return (
             <TouchableOpacity
-                style={[styles.card, { backgroundColor: isDark ? '#2D1F1B' : '#FFF', borderColor: colors.secondary + '40' }]}
-                activeOpacity={0.7}
-                onPress={() => router.push(`/appointment/${item._id}`)}
+                key={appt._id}
+                activeOpacity={0.75}
+                onPress={() => router.push(`/appointment/${appt._id}` as any)}
+                style={[styles.card, {
+                    backgroundColor: theme === 'dark' ? '#3E2723' : '#FFF',
+                    borderColor: colors.secondary,
+                    opacity: isUpcoming ? 1 : 0.7,
+                }]}
             >
-                <View style={styles.cardHeader}>
-                    <Text style={[styles.timeText, { color: colors.primary }]}>{timeStr} - {dateStr}</Text>
-                    <Text style={[styles.statusBadge, { color: item.status === 'PENDING' ? '#E65100' : colors.text }]}>
-                        {item.status}
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Text style={[isUpcoming ? styles.statusPending : styles.statusCompleted, {
+                        color: STATUS_COLOR[appt.status] ?? (isUpcoming ? '#E65100' : '#2E7D32')
+                    }]}>
+                        {STATUS_LABEL[appt.status] ?? appt.status}
+                    </Text>
+                    <Text style={{ color: colors.icon, fontSize: 16 }}>›</Text>
+                </View>
+                <Text style={[styles.cardTitle, { color: colors.text }]}>{serviceNames}</Text>
+
+                <View style={{ marginTop: 4 }}>
+                    <Text style={{ color: colors.icon, marginBottom: 2 }}>
+                        Khách: {customerName} {customerPhone ? `(${customerPhone})` : ''}
+                    </Text>
+                    <Text style={{ color: colors.icon }}>
+                        Thợ: {barberName}
                     </Text>
                 </View>
-                <Text style={[styles.customerName, { color: colors.text }]}>
-                    Khách: {item.customerId?.fullName || 'Khách vãng lai'} ({item.customerId?.phoneNumber})
-                </Text>
-                <Text style={[styles.serviceText, { color: colors.icon }]}>
-                    Thợ: {item.barberId?.fullName || '--'}
-                </Text>
-                <Text style={[styles.priceText, { color: colors.primary }]}>
-                    {(item.totalPrice || 0).toLocaleString()}đ
-                </Text>
+
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
+                    <Text style={{
+                        color: isUpcoming ? colors.primary : colors.icon,
+                        fontWeight: isUpcoming ? 'bold' : 'normal',
+                    }}>
+                        {dateStr}
+                    </Text>
+                    <Text style={{ color: colors.primary, fontWeight: '700' }}>
+                        {(appt.totalPrice || 0).toLocaleString()}đ
+                    </Text>
+                </View>
             </TouchableOpacity>
         );
     };
 
     return (
         <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]} edges={['top']}>
-            <View style={styles.header}>
-                <Text style={[styles.headerTitle, { color: colors.text }]}>Quản lý Lịch hẹn (Manager)</Text>
-            </View>
+            <ScrollView
+                style={styles.container}
+                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
+            >
+                <View style={styles.header}>
+                    <Text style={[styles.title, { color: colors.text }]}>Quản lý Lịch hẹn (Manager)</Text>
+                </View>
 
-            {loading ? (
-                <View style={styles.center}>
-                    <ActivityIndicator size="large" color={colors.primary} />
+                <View style={styles.content}>
+                    {loading ? (
+                        <ActivityIndicator size="large" color={colors.primary} />
+                    ) : (
+                        <>
+                            {upcoming.length > 0 && (
+                                <View style={{ marginBottom: 16 }}>
+                                    <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('appointments.upcoming')}</Text>
+                                    {upcoming.map(a => renderCard(a, true))}
+                                </View>
+                            )}
+
+                            {past.length > 0 && (
+                                <View style={{ marginBottom: 16 }}>
+                                    <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('appointments.past')}</Text>
+                                    {past.map(a => renderCard(a, false))}
+                                </View>
+                            )}
+
+                            {appointments.length === 0 && (
+                                <Text style={{ color: colors.icon, textAlign: 'center', marginTop: 20 }}>Không có lịch hẹn nào.</Text>
+                            )}
+                        </>
+                    )}
                 </View>
-            ) : (appointments.length === 0 ? (
-                <View style={styles.center}>
-                    <Text style={[styles.emptyText, { color: colors.icon }]}>Không có lịch hẹn nào.</Text>
-                </View>
-            ) : (
-                <FlatList
-                    data={appointments}
-                    keyExtractor={item => item._id}
-                    renderItem={renderItem}
-                    contentContainerStyle={styles.listContainer}
-                    refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
-                />
-            ))}
+            </ScrollView>
         </SafeAreaView>
     );
 }
 
 const styles = StyleSheet.create({
-    safe: { flex: 1 },
-    header: { padding: 16, borderBottomWidth: 1, borderBottomColor: '#E0E0E0' },
-    headerTitle: { fontSize: 24, fontWeight: '700' },
-    center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-    emptyText: { fontSize: 16 },
-    listContainer: { padding: 16, paddingBottom: 100 },
-    card: {
-        borderRadius: 12, borderWidth: 1,
-        padding: 16, marginBottom: 16,
-        shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2,
+    safe: {
+        flex: 1,
     },
-    cardHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
-    timeText: { fontSize: 16, fontWeight: '700' },
-    statusBadge: { fontSize: 12, fontWeight: '700', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, backgroundColor: '#00000008', overflow: 'hidden' },
-    customerName: { fontSize: 15, fontWeight: '600', marginBottom: 4 },
-    serviceText: { fontSize: 14, marginBottom: 4 },
-    priceText: { fontSize: 15, fontWeight: '700', alignSelf: 'flex-end' },
+    container: {
+        flex: 1,
+    },
+    header: {
+        padding: 20,
+        paddingTop: 10,
+    },
+    title: {
+        fontSize: 26,
+        fontWeight: 'bold',
+    },
+    content: {
+        paddingHorizontal: 20,
+        paddingBottom: 40,
+    },
+    sectionTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        marginBottom: 12,
+        marginTop: 8,
+    },
+    card: {
+        padding: 20,
+        borderRadius: 12,
+        marginBottom: 16,
+        borderWidth: 1,
+    },
+    cardTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        marginBottom: 4,
+        marginTop: 8,
+    },
+    statusPending: {
+        fontSize: 12,
+        fontWeight: 'bold',
+    },
+    statusCompleted: {
+        fontSize: 12,
+        fontWeight: 'bold',
+    }
 });
