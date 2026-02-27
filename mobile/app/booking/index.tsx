@@ -95,7 +95,20 @@ export default function BookingScreen() {
                 const active = all.find(
                     (a: any) => a.status === 'PENDING' || a.status === 'CONFIRMED'
                 );
-                setActiveBooking(active ?? null);
+
+                if (active) {
+                    setActiveBooking(active);
+                    Alert.alert(
+                        'Cảnh báo đặt lịch',
+                        `Bạn đang có lịch đặt chưa hoàn thành (Trạng thái: ${active.status}).\n\nBạn cần hoàn thành hoặc hủy lịch hiện tại trước khi tiếp tục đặt lịch mới.`,
+                        [
+                            { text: 'Đóng', style: 'cancel' },
+                            { text: 'Xem lịch hiện tại', isPreferred: true, onPress: () => router.replace('/(tabs)/appointments' as any) }
+                        ]
+                    );
+                } else {
+                    setActiveBooking(null);
+                }
             } catch {
                 setActiveBooking(null);
             } finally {
@@ -234,36 +247,10 @@ export default function BookingScreen() {
         );
     }
 
-    // ─── Active booking banner ────────────────────────────────────────────────
-    const activeBanner = activeBooking ? (
-        <View style={[styles.activeBanner, { backgroundColor: colors.primary + '18', borderColor: colors.primary }]}>
-            <Text style={[styles.activeBannerTitle, { color: colors.primary }]}>
-                ⚠️ Bạn đang có lịch đặt chưa hoàn thành
-            </Text>
-            <Text style={[styles.activeBannerBody, { color: colors.text }]}>
-                Trạng thái: <Text style={{ fontWeight: '700' }}>{activeBooking.status}</Text>
-                {'\n'}Bạn cần hoàn thành hoặc hủy lịch hiện tại trước khi đặt lịch mới.
-            </Text>
-            <TouchableOpacity
-                style={[styles.activeBannerBtn, { borderColor: colors.primary }]}
-                onPress={() => router.replace('/(tabs)/appointments' as any)}
-            >
-                <Text style={{ color: colors.primary, fontWeight: '700', fontSize: 13 }}>
-                    Xem lịch hiện tại →
-                </Text>
-            </TouchableOpacity>
-        </View>
-    ) : null;
-
-
-    // ─── Render ───────────────────────────────────────────────────────────────
     const isDark = theme === 'dark';
 
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
-
-            {/* Banner cảnh báo nếu đang có lịch active */}
-            {activeBanner}
 
             {/* ── Service chips ── */}
             <View style={[styles.section, { borderBottomColor: colors.secondary + '40' }]}>
@@ -344,6 +331,7 @@ export default function BookingScreen() {
                         const isCovered = state === 'covered';
                         const isAvail = state === 'available';
                         const isBooked = state === 'booked';
+                        const isBreak = isBooked && slot.bookedCount === 0;
 
                         // Màu nền theo state
                         let bg = isDark ? '#2D2320' : '#F5F2EF';
@@ -406,8 +394,11 @@ export default function BookingScreen() {
                                             (đang chiếm bởi dịch vụ)
                                         </Text>
                                     )}
-                                    {isBooked && (
+                                    {isBooked && !isBreak && (
                                         <Text style={[styles.slotLabel, { color: labelColor }]}>Đã đầy</Text>
+                                    )}
+                                    {isBreak && (
+                                        <Text style={[styles.slotLabel, { color: labelColor }]}>☕ Giờ nghỉ trưa</Text>
                                     )}
                                 </View>
 
@@ -430,7 +421,7 @@ export default function BookingScreen() {
                             </TouchableOpacity>
                         );
                     })}
-                    <View style={{ height: 16 }} />
+                    <View style={{ height: 100 }} />
                 </ScrollView>
             )}
 
@@ -472,33 +463,33 @@ const styles = StyleSheet.create({
     center: { justifyContent: 'center', alignItems: 'center', padding: 20 },
 
     // Service section
-    section: { paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1 },
-    sectionLabel: { fontSize: 14, fontWeight: '700', marginBottom: 10 },
+    section: { paddingHorizontal: 16, paddingVertical: 8, borderBottomWidth: 1 },
+    sectionLabel: { fontSize: 13, fontWeight: '700', marginBottom: 8 },
     chip: {
-        paddingHorizontal: 14, paddingVertical: 10,
+        paddingHorizontal: 12, paddingVertical: 8,
         borderRadius: 12, borderWidth: 1.5,
-        marginRight: 10, minWidth: 120,
+        marginRight: 10, minWidth: 110,
     },
     chipName: { fontSize: 13, fontWeight: '600', marginBottom: 2 },
     chipMeta: { fontSize: 11 },
-    hint: { marginTop: 8, fontSize: 11, fontStyle: 'italic' },
+    hint: { marginTop: 6, fontSize: 11, fontStyle: 'italic' },
 
     // Day picker
     dayPickerWrap: { borderBottomWidth: 1 },
-    dayPickerContent: { paddingHorizontal: 12, paddingVertical: 10, gap: 8 },
+    dayPickerContent: { paddingHorizontal: 12, paddingVertical: 8, gap: 8 },
     dayTab: {
-        width: 52, height: 56, borderRadius: 12, borderWidth: 1,
+        width: 50, height: 50, borderRadius: 12, borderWidth: 1,
         alignItems: 'center', justifyContent: 'center',
     },
     dayTabName: { fontSize: 10, fontWeight: '600' },
-    dayTabNum: { fontSize: 17, fontWeight: '800', marginTop: 2 },
+    dayTabNum: { fontSize: 16, fontWeight: '800', marginTop: 0 },
 
     // Slot rows
     slotRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: 13,
-        paddingHorizontal: 16,
+        paddingVertical: 10,
+        paddingHorizontal: 14,
         borderRadius: 12,
         borderWidth: 1.5,
         marginBottom: 8,
@@ -512,27 +503,20 @@ const styles = StyleSheet.create({
     badgeTxt: { fontSize: 11, fontWeight: '600' },
 
     // Bottom
-    bottomBar: { padding: 16, paddingBottom: 32, borderTopWidth: 1 },
-    summaryRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-    summaryService: { fontSize: 15, fontWeight: '600' },
-    summaryDT: { fontSize: 12, marginTop: 2 },
-    summaryPrice: { fontSize: 17, fontWeight: '800' },
-    confirmBtn: { borderRadius: 12, paddingVertical: 15, alignItems: 'center' },
-    confirmTxt: { color: '#FFF', fontSize: 16, fontWeight: '700' },
+    bottomBar: {
+        padding: 12,
+        paddingBottom: 24,
+        borderTopWidth: 1,
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+    },
+    summaryRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
+    summaryService: { fontSize: 14, fontWeight: '600' },
+    summaryDT: { fontSize: 11, marginTop: 2 },
+    summaryPrice: { fontSize: 16, fontWeight: '800' },
+    confirmBtn: { borderRadius: 10, paddingVertical: 12, alignItems: 'center' },
+    confirmTxt: { color: '#FFF', fontSize: 15, fontWeight: '700' },
 
-    // Active booking banner
-    activeBanner: {
-        margin: 16,
-        padding: 14,
-        borderRadius: 12,
-        borderWidth: 1.5,
-    },
-    activeBannerTitle: { fontSize: 14, fontWeight: '700', marginBottom: 6 },
-    activeBannerBody: { fontSize: 13, lineHeight: 20 },
-    activeBannerBtn: {
-        marginTop: 10,
-        paddingVertical: 8, paddingHorizontal: 14,
-        borderRadius: 8, borderWidth: 1.5,
-        alignSelf: 'flex-start',
-    },
 });

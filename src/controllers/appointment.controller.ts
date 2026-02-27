@@ -197,9 +197,24 @@ export const getAppointmentById = async (req: Request, res: Response) => {
         if (!appointment) {
             return res.status(404).json({ message: 'Appointment not found' });
         }
-        if (appointment.customerId.toString() !== req.user.id) {
-            return res.status(403).json({ message: 'Not authorized' });
+        // ── Kiểm tra quyền xem ──────────────────────────────────────────────
+        const isOwner = appointment.customerId.toString() === req.user.id;
+        const isAdmin = req.user.role === UserRole.ADMIN;
+
+        let userShopId = req.user.shopId;
+        if (!userShopId && (req.user.role === UserRole.STAFF || req.user.role === UserRole.MANAGER)) {
+            const dbUser = await User.findById(req.user.id).select('shopId');
+            userShopId = dbUser?.shopId?.toString();
         }
+
+        const isShopStaff =
+            (req.user.role === UserRole.STAFF || req.user.role === UserRole.MANAGER) &&
+            userShopId?.toString() === appointment.shopId._id.toString();
+
+        if (!isOwner && !isAdmin && !isShopStaff) {
+            return res.status(403).json({ message: 'Not authorized to view this appointment' });
+        }
+        // ────────────────────────────────────────────────────────────────────
         res.json(appointment);
     } catch (error: any) {
         res.status(500).json({ message: 'Server error', error: error.message });
