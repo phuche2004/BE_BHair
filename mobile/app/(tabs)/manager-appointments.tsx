@@ -279,15 +279,11 @@ export default function ManagerAppointmentsScreen() {
 
 
     return (
-        <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]} edges={['top']}>
-            <View style={styles.header}>
-                <Text style={[styles.title, { color: colors.text }]}>Lưới Lịch hẹn (Manager)</Text>
-            </View>
-
+        <View style={[styles.safe, { backgroundColor: colors.background }]}>
             {renderDayPicker()}
             {renderGrid()}
 
-        </SafeAreaView>
+        </View>
     );
 }
 

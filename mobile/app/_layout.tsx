@@ -49,15 +49,17 @@ export default function RootLayout() {
   useEffect(() => {
     if (!isReady || isLoading) return;
 
-    const inAuthGroup = (segments[0] as string) === 'auth';
+    setTimeout(() => {
+      const inAuthGroup = (segments[0] as string) === 'auth';
 
-    if (!token && !inAuthGroup) {
-      // Redirect to login if not authenticated
-      router.replace('/auth/login' as any);
-    } else if (token && inAuthGroup) {
-      // Redirect away from login if authenticated
-      router.replace('/(tabs)' as any);
-    }
+      if (!token && !inAuthGroup) {
+        // Redirect to login if not authenticated
+        router.replace('/auth/login' as any);
+      } else if (token && inAuthGroup) {
+        // Redirect away from login if authenticated
+        router.replace('/(tabs)' as any);
+      }
+    }, 0);
   }, [token, segments, isReady, isLoading, router]);
 
   if (!isReady) {

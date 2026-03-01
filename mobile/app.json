@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "mobile",
-    "slug": "mobile",
+    "slug": "b-hair",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -43,6 +43,13 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "02a818bc-ac63-4358-a47c-3446001ac2d7"
+      }
+    },
+    "owner": "phuche2004"
   }
 }

@@ -3,7 +3,8 @@ export const en = {
         home: 'Home',
         search: 'Search',
         appointments: 'Appointments',
-        settings: 'Settings'
+        settings: 'Settings',
+        myShops: 'My Shops'
     },
     auth: {
         welcomeBack: 'Welcome back to the best barbershop',

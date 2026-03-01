@@ -41,9 +41,14 @@ export default function RegisterScreen() {
     return (
         <KeyboardAvoidingView
             style={[{ backgroundColor: colors.background, flex: 1 }]}
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
         >
-            <ScrollView contentContainerStyle={styles.container}>
+            <ScrollView
+                contentContainerStyle={styles.container}
+                showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
+            >
                 <View style={styles.headerContainer}>
                     <Text style={[styles.title, { color: colors.primary }]}>B_Hair</Text>
                     <Text style={[styles.subtitle, { color: colors.text }]}>{t('auth.joinToday')}</Text>
@@ -111,11 +116,11 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
     headerContainer: {
-        marginBottom: 40,
+        marginBottom: 20,
         alignItems: 'center',
     },
     title: {
-        fontSize: 40,
+        fontSize: 32,
         fontWeight: 'bold',
         marginBottom: 8,
     },

@@ -1,25 +1,37 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Colors } from '../../constants/theme';
 import { useColorScheme } from '../../hooks/use-color-scheme';
 import { useTranslation } from '../../hooks/useTranslation';
 import { shopApi } from '../../api/shop.api';
-import { useFocusEffect } from 'expo-router';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useAuthStore } from '../../store/useAuthStore';
 
 export default function HomeScreen() {
   const theme = useColorScheme() ?? 'light';
   const colors = Colors[theme];
   const { t } = useTranslation();
   const router = useRouter();
+  const user = useAuthStore((state) => state.user);
 
   const [shops, setShops] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (user?.role === 'MANAGER' || user?.role === 'ADMIN') {
+      // Delay navigation to ensure Root Layout is mounted
+      setTimeout(() => router.replace('/(tabs)/manager-appointments'), 0);
+    } else if (user?.role === 'STAFF') {
+      setTimeout(() => router.replace('/(tabs)/staff-appointments'), 0);
+    }
+  }, [user, router]);
 
   useFocusEffect(
     React.useCallback(() => {
       const fetchShops = async () => {
         try {
+          if (user?.role !== 'CUSTOMER' && user?.role !== undefined) return; // Chỉ lấy tiệm nếu là user thường
+
           setLoading(true);
           const data = await shopApi.getAllShops();
           setShops(data.data || data); // Depending on exact backend wrap
@@ -30,8 +42,16 @@ export default function HomeScreen() {
         }
       };
       fetchShops();
-    }, [])
+    }, [user?.role])
   );
+
+  if (user?.role === 'MANAGER' || user?.role === 'ADMIN' || user?.role === 'STAFF') {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>

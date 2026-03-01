@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, Switch } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Switch, ScrollView } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '../../constants/theme';
 import { useColorScheme } from '../../hooks/use-color-scheme';
 import { useAuthStore } from '../../store/useAuthStore';
@@ -14,6 +15,7 @@ export default function SettingsScreen() {
     const router = useRouter();
     const { t, language: hookLang } = useTranslation();
     const { theme: storedTheme, setTheme, language, setLanguage } = useThemeStore();
+    const insets = useSafeAreaInsets();
 
     const isDarkMode = storedTheme === 'dark';
 
@@ -29,7 +31,6 @@ export default function SettingsScreen() {
                 style: 'destructive',
                 onPress: async () => {
                     await logout();
-                    router.replace('/auth/login' as any);
                 }
             }
         ]);
@@ -37,52 +38,61 @@ export default function SettingsScreen() {
 
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
-            <View style={styles.header}>
-                <View style={[styles.avatarPlaceholder, { backgroundColor: colors.primary }]}>
-                    <Text style={styles.avatarText}>{user?.fullName?.charAt(0) || 'U'}</Text>
+            <ScrollView
+                contentContainerStyle={{
+                    padding: 20,
+                    paddingTop: 40,
+                    paddingBottom: insets.bottom + 100
+                }}
+                showsVerticalScrollIndicator={false}
+            >
+                <View style={styles.header}>
+                    <View style={[styles.avatarPlaceholder, { backgroundColor: colors.primary }]}>
+                        <Text style={styles.avatarText}>{user?.fullName?.charAt(0) || 'U'}</Text>
+                    </View>
+                    <Text style={[styles.name, { color: colors.text }]}>{user?.fullName || 'User Name'}</Text>
+                    <Text style={[styles.phone, { color: colors.icon }]}>{user?.phoneNumber || t('settings.noPhone')}</Text>
                 </View>
-                <Text style={[styles.name, { color: colors.text }]}>{user?.fullName || 'User Name'}</Text>
-                <Text style={[styles.phone, { color: colors.icon }]}>{user?.phoneNumber || t('settings.noPhone')}</Text>
-            </View>
 
-            <View style={styles.section}>
-                <View style={[styles.menuItem, { borderBottomColor: colors.secondary }]}>
-                    <Text style={[styles.menuText, { color: colors.text }]}>{t('settings.darkMode')}</Text>
-                    <Switch
-                        trackColor={{ false: colors.secondary, true: colors.primary }}
-                        thumbColor={'#FFF'}
-                        onValueChange={toggleSwitch}
-                        value={isDarkMode}
-                    />
+                <View style={styles.section}>
+                    <View style={[styles.menuItem, { borderBottomColor: colors.secondary }]}>
+                        <Text style={[styles.menuText, { color: colors.text }]}>{t('settings.darkMode')}</Text>
+                        <Switch
+                            trackColor={{ false: colors.secondary, true: colors.primary }}
+                            thumbColor={'#FFF'}
+                            onValueChange={toggleSwitch}
+                            value={isDarkMode}
+                        />
+                    </View>
+
+                    <TouchableOpacity
+                        style={[styles.menuItem, { borderBottomColor: colors.secondary }]}
+                        onPress={() => setLanguage(language === 'vi' ? 'en' : 'vi')}
+                    >
+                        <Text style={[styles.menuText, { color: colors.text }]}>{t('settings.language')}</Text>
+                        <Text style={[styles.menuText, { color: colors.primary }]}>
+                            {language === 'vi' ? 'Tiếng Việt 🇻🇳' : 'English 🇺🇸'}
+                        </Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity style={[styles.menuItem, { borderBottomColor: colors.secondary }]}>
+                        <Text style={[styles.menuText, { color: colors.text }]}>{t('settings.accountSettings')}</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={[styles.menuItem, { borderBottomColor: colors.secondary }]}>
+                        <Text style={[styles.menuText, { color: colors.text }]}>{t('settings.paymentMethods')}</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={[styles.menuItem, { borderBottomColor: colors.secondary }]}>
+                        <Text style={[styles.menuText, { color: colors.text }]}>{t('settings.helpSupport')}</Text>
+                    </TouchableOpacity>
                 </View>
 
                 <TouchableOpacity
-                    style={[styles.menuItem, { borderBottomColor: colors.secondary }]}
-                    onPress={() => setLanguage(language === 'vi' ? 'en' : 'vi')}
+                    style={[styles.logoutButton, { backgroundColor: colors.primary }]}
+                    onPress={handleLogout}
                 >
-                    <Text style={[styles.menuText, { color: colors.text }]}>{t('settings.language')}</Text>
-                    <Text style={[styles.menuText, { color: colors.primary }]}>
-                        {language === 'vi' ? 'Tiếng Việt 🇻🇳' : 'English 🇺🇸'}
-                    </Text>
+                    <Text style={styles.logoutText}>{t('settings.logout')}</Text>
                 </TouchableOpacity>
-
-                <TouchableOpacity style={[styles.menuItem, { borderBottomColor: colors.secondary }]}>
-                    <Text style={[styles.menuText, { color: colors.text }]}>{t('settings.accountSettings')}</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={[styles.menuItem, { borderBottomColor: colors.secondary }]}>
-                    <Text style={[styles.menuText, { color: colors.text }]}>{t('settings.paymentMethods')}</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={[styles.menuItem, { borderBottomColor: colors.secondary }]}>
-                    <Text style={[styles.menuText, { color: colors.text }]}>{t('settings.helpSupport')}</Text>
-                </TouchableOpacity>
-            </View>
-
-            <TouchableOpacity
-                style={[styles.logoutButton, { backgroundColor: colors.primary }]}
-                onPress={handleLogout}
-            >
-                <Text style={styles.logoutText}>{t('settings.logout')}</Text>
-            </TouchableOpacity>
+            </ScrollView>
         </View>
     );
 }
@@ -90,8 +100,6 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        padding: 20,
-        paddingTop: 60,
     },
     header: {
         alignItems: 'center',

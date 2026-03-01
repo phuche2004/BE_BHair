@@ -13,9 +13,13 @@ export default function TabLayout() {
   const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
 
-  const isManager = user?.role === 'MANAGER' || user?.role === 'ADMIN';
-  const isStaff = user?.role === 'STAFF';
-  const isCustomer = user?.role === 'CUSTOMER' || !user;
+  // Cache the role so tabs don't suddenly restructure during logout unmount
+  const roleRef = React.useRef(user?.role);
+  const role = user?.role || roleRef.current;
+
+  const isManager = role === 'MANAGER' || role === 'ADMIN';
+  const isStaff = role === 'STAFF';
+  const isCustomer = role === 'CUSTOMER' || !role;
 
   return (
     <Tabs
