@@ -16,6 +16,7 @@ import { axiosInstance } from '../../api';
 import { shopApi } from '../../api/shop.api';
 import { appointmentApi } from '../../api/appointment.api';
 import { useTranslation } from '../../hooks/useTranslation';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -248,6 +249,7 @@ export default function BookingScreen() {
     }
 
     const isDark = theme === 'dark';
+    const insets = useSafeAreaInsets();
 
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -426,7 +428,7 @@ export default function BookingScreen() {
             )}
 
             {/* ── Bottom bar ── */}
-            <View style={[styles.bottomBar, { backgroundColor: colors.background, borderTopColor: colors.secondary + '40' }]}>
+            <View style={[styles.bottomBar, { backgroundColor: colors.background, borderTopColor: colors.secondary + '40', paddingBottom: insets.bottom + 12 }]}>
                 {selectedTime && selectedService && (
                     <View style={styles.summaryRow}>
                         <View>
