@@ -6,11 +6,14 @@ import { useTranslation } from '../../hooks/useTranslation';
 import { appointmentApi } from '../../api/appointment.api';
 import { useFocusEffect, useRouter } from 'expo-router';
 
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
 export default function AppointmentsScreen() {
     const theme = useColorScheme() ?? 'light';
     const colors = Colors[theme];
     const { t } = useTranslation();
     const router = useRouter();
+    const insets = useSafeAreaInsets();
 
     const [appointments, setAppointments] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -97,7 +100,10 @@ export default function AppointmentsScreen() {
     };
 
     return (
-        <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
+        <ScrollView
+            style={[styles.container, { backgroundColor: colors.background }]}
+            contentContainerStyle={{ paddingBottom: insets.bottom + 20 }}
+        >
             <View style={styles.header}>
                 <Text style={[styles.title, { color: colors.text }]}>{t('appointments.title')}</Text>
             </View>

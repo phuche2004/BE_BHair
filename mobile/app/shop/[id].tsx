@@ -5,6 +5,7 @@ import { Colors } from '../../constants/theme';
 import { useColorScheme } from '../../hooks/use-color-scheme';
 import { useTranslation } from '../../hooks/useTranslation';
 import { shopApi } from '../../api/shop.api';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function ShopDetailScreen() {
     const { id } = useLocalSearchParams();
@@ -56,9 +57,11 @@ export default function ShopDetailScreen() {
         );
     }
 
+    const insets = useSafeAreaInsets();
+
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
-            <ScrollView>
+            <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
                 <View style={styles.imagePlaceholder}>
                     {/* In a real app we would map shop.images[0] here */}
                     <Text style={{ color: '#FFF' }}>{t('shop.imageMap')}</Text>
@@ -88,7 +91,11 @@ export default function ShopDetailScreen() {
                 </View>
             </ScrollView>
 
-            <View style={[styles.bottomBar, { backgroundColor: colors.background, borderTopColor: colors.secondary }]}>
+            <View style={[styles.bottomBar, {
+                backgroundColor: colors.background,
+                borderTopColor: colors.secondary,
+                paddingBottom: insets.bottom > 0 ? insets.bottom + 10 : 40
+            }]}>
                 <TouchableOpacity
                     style={[styles.bookButton, { backgroundColor: colors.primary }]}
                     onPress={() => router.push({ pathname: '/booking', params: { shopId: id } } as any)}
