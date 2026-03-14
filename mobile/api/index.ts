@@ -2,7 +2,8 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Base URL points to the live Render Backend
-export const API_URL = 'https://be-bhair.onrender.com/api/v1';
+// Use EXPO_PUBLIC_ prefix for Expo to pick up environment variables at build time
+export const API_URL = process.env.EXPO_PUBLIC_API_URL || "";
 
 export const axiosInstance = axios.create({
     baseURL: API_URL,

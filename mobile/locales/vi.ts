@@ -15,6 +15,7 @@ export const vi = {
         signIn: 'Đăng nhập',
         noAccount: 'Chưa có tài khoản? ',
         signUp: 'Đăng ký',
+        forgotPassword: 'Quên mật khẩu?',
         createAccount: 'Tạo tài khoản',
         joinToday: 'Tham gia B_Hair ngay hôm nay',
         fullNameLabel: 'Họ và tên',
@@ -51,7 +52,7 @@ export const vi = {
         topRated: 'Đánh Giá Cao',
         viewAll: 'Xem tất cả',
         open: 'Đang mở',
-        book: 'Đặt lịch'
+        book: 'Chi tiết'
     },
     search: {
         title: 'Tìm kiếm tiệm',
@@ -107,6 +108,9 @@ export const vi = {
     common: {
         back: 'Quay lại',
         notSelected: 'Chưa chọn',
-        demoService: 'Cắt tóc Classic (Demo)'
+        demoService: 'Cắt tóc Classic (Demo)',
+        reload: 'Tải lại',
+        report: 'Báo cáo',
+        reportSuccess: 'Cảm ơn bạn đã báo cáo. Chúng tôi sẽ xử lý sớm nhất.'
     }
 };

@@ -1,153 +1,283 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, Switch, ScrollView } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Colors } from '../../constants/theme';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Switch, ScrollView, Image } from 'react-native';
+import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
+import { Colors, Fonts } from '../../constants/theme';
 import { useColorScheme } from '../../hooks/use-color-scheme';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useThemeStore } from '../../store/useThemeStore';
 import { useTranslation } from '../../hooks/useTranslation';
-import { useRouter } from 'expo-router';
+import { MaterialIcons } from '@expo/vector-icons';
+import { HeaderMenu } from '../../components/ui/header-menu';
+
+
+
 
 export default function SettingsScreen() {
-    const theme = useColorScheme() ?? 'light';
-    const colors = Colors[theme];
-    const { user, logout } = useAuthStore();
-    const router = useRouter();
-    const { t, language: hookLang } = useTranslation();
-    const { theme: storedTheme, setTheme, language, setLanguage } = useThemeStore();
-    const insets = useSafeAreaInsets();
+  const theme = useColorScheme() ?? 'light';
+  const colors = Colors[theme];
+  const { user, logout } = useAuthStore();
+  const { t } = useTranslation();
+  const { theme: storedTheme, setTheme, language, setLanguage } = useThemeStore();
+  const insets = useSafeAreaInsets();
 
-    const isDarkMode = storedTheme === 'dark';
+  const isDarkMode = storedTheme === 'dark';
 
-    const toggleSwitch = () => {
-        setTheme(isDarkMode ? 'light' : 'dark');
-    };
+  const toggleSwitch = () => {
+    setTheme(isDarkMode ? 'light' : 'dark');
+  };
 
-    const handleLogout = () => {
-        Alert.alert(t('settings.logoutConfirmTitle'), t('settings.logoutConfirmMsg'), [
-            { text: t('settings.cancel'), style: 'cancel' },
-            {
-                text: t('settings.logout'),
-                style: 'destructive',
-                onPress: async () => {
-                    await logout();
-                }
-            }
-        ]);
-    };
+  const handleLogout = () => {
+    Alert.alert(t('settings.logoutConfirmTitle'), t('settings.logoutConfirmMsg'), [
+      { text: t('settings.cancel'), style: 'cancel' },
+      {
+        text: t('settings.logout'),
+        style: 'destructive',
+        onPress: async () => {
+          await logout();
+        }
+      }
+    ]);
+  };
 
-    return (
-        <View style={[styles.container, { backgroundColor: colors.background }]}>
-            <ScrollView
-                contentContainerStyle={{
-                    padding: 20,
-                    paddingTop: 40,
-                    paddingBottom: insets.bottom + 100
-                }}
-                showsVerticalScrollIndicator={false}
-            >
-                <View style={styles.header}>
-                    <View style={[styles.avatarPlaceholder, { backgroundColor: colors.primary }]}>
-                        <Text style={styles.avatarText}>{user?.fullName?.charAt(0) || 'U'}</Text>
-                    </View>
-                    <Text style={[styles.name, { color: colors.text }]}>{user?.fullName || 'User Name'}</Text>
-                    <Text style={[styles.phone, { color: colors.icon }]}>{user?.phoneNumber || t('settings.noPhone')}</Text>
-                </View>
-
-                <View style={styles.section}>
-                    <View style={[styles.menuItem, { borderBottomColor: colors.secondary }]}>
-                        <Text style={[styles.menuText, { color: colors.text }]}>{t('settings.darkMode')}</Text>
-                        <Switch
-                            trackColor={{ false: colors.secondary, true: colors.primary }}
-                            thumbColor={'#FFF'}
-                            onValueChange={toggleSwitch}
-                            value={isDarkMode}
-                        />
-                    </View>
-
-                    <TouchableOpacity
-                        style={[styles.menuItem, { borderBottomColor: colors.secondary }]}
-                        onPress={() => setLanguage(language === 'vi' ? 'en' : 'vi')}
-                    >
-                        <Text style={[styles.menuText, { color: colors.text }]}>{t('settings.language')}</Text>
-                        <Text style={[styles.menuText, { color: colors.primary }]}>
-                            {language === 'vi' ? 'Tiếng Việt 🇻🇳' : 'English 🇺🇸'}
-                        </Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity style={[styles.menuItem, { borderBottomColor: colors.secondary }]}>
-                        <Text style={[styles.menuText, { color: colors.text }]}>{t('settings.accountSettings')}</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={[styles.menuItem, { borderBottomColor: colors.secondary }]}>
-                        <Text style={[styles.menuText, { color: colors.text }]}>{t('settings.paymentMethods')}</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={[styles.menuItem, { borderBottomColor: colors.secondary }]}>
-                        <Text style={[styles.menuText, { color: colors.text }]}>{t('settings.helpSupport')}</Text>
-                    </TouchableOpacity>
-                </View>
-
-                <TouchableOpacity
-                    style={[styles.logoutButton, { backgroundColor: colors.primary }]}
-                    onPress={handleLogout}
-                >
-                    <Text style={styles.logoutText}>{t('settings.logout')}</Text>
-                </TouchableOpacity>
-            </ScrollView>
+  return (
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+      <ScrollView
+        contentContainerStyle={{
+          paddingBottom: insets.bottom + 100
+        }}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.topBar}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Text style={[styles.brand, { color: colors.primary }]}>B_Hair</Text>
+            <View style={{ width: 1, height: 14, backgroundColor: colors.border }} />
+            <Text style={{ fontSize: 13, fontWeight: '600', color: colors.secondary, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+              Cài đặt
+            </Text>
+          </View>
+          <HeaderMenu />
         </View>
-    );
+
+        <View style={styles.profileRow}>
+          {user?.avatar ? (
+            <Image source={{ uri: user.avatar }} style={styles.avatar} />
+          ) : (
+            <View style={[styles.avatar, styles.avatarPlaceholder, { backgroundColor: colors.surfaceAlt }]}>
+              <MaterialIcons name="person" size={50} color={colors.outline} />
+            </View>
+          )}
+          <View style={styles.profileMeta}>
+            <Text style={[styles.profileLabel, { color: colors.secondary }]}>Khách hàng</Text>
+            <Text style={[styles.profileName, { color: colors.primary }]}>{user?.fullName || 'User Name'}</Text>
+            <Text style={[styles.profilePhone, { color: colors.muted }]}>{user?.phoneNumber || t('settings.noPhone')}</Text>
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <View style={[styles.cardRow, { backgroundColor: colors.surface }]}>
+            <View style={styles.rowLeft}>
+              <MaterialIcons name="dark-mode" size={20} color={colors.secondary} />
+              <Text style={[styles.rowLabel, { color: colors.primary }]}>{t('settings.darkMode')}</Text>
+            </View>
+            <Switch
+              trackColor={{ false: colors.border, true: colors.primary }}
+              thumbColor={isDarkMode ? colors.onPrimary : '#FFF'}
+              onValueChange={toggleSwitch}
+              value={isDarkMode}
+            />
+          </View>
+
+          <View style={[styles.cardBlock, { backgroundColor: colors.surface }]}>
+            <View style={styles.rowLeft}>
+              <MaterialIcons name="language" size={20} color={colors.secondary} />
+              <Text style={[styles.rowLabel, { color: colors.primary }]}>{t('settings.language')}</Text>
+            </View>
+            <View style={[styles.segment, { backgroundColor: colors.surfaceAlt }]}>
+              <TouchableOpacity
+                style={[styles.segmentBtn, language === 'vi' && { backgroundColor: colors.primary }]}
+                onPress={() => setLanguage('vi')}
+              >
+                <Text style={[styles.segmentText, { color: language === 'vi' ? colors.onPrimary : colors.muted }]}>Tiếng Việt</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.segmentBtn, language === 'en' && { backgroundColor: colors.primary }]}
+                onPress={() => setLanguage('en')}
+              >
+                <Text style={[styles.segmentText, { color: language === 'en' ? colors.onPrimary : colors.muted }]}>English</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          <View style={[styles.cardBlock, { backgroundColor: colors.surface }]}>
+            <TouchableOpacity style={styles.linkRow}>
+              <View style={styles.rowLeft}>
+                <MaterialIcons name="person" size={20} color={colors.secondary} />
+                <Text style={[styles.rowLabel, { color: colors.primary }]}>{t('settings.accountSettings')}</Text>
+              </View>
+              <MaterialIcons name="chevron-right" size={20} color={colors.outline} />
+            </TouchableOpacity>
+            <View style={[styles.divider, { backgroundColor: colors.border }]} />
+            <TouchableOpacity style={styles.linkRow}>
+              <View style={styles.rowLeft}>
+                <MaterialIcons name="payments" size={20} color={colors.secondary} />
+                <Text style={[styles.rowLabel, { color: colors.primary }]}>{t('settings.paymentMethods')}</Text>
+              </View>
+              <MaterialIcons name="chevron-right" size={20} color={colors.outline} />
+            </TouchableOpacity>
+            <View style={[styles.divider, { backgroundColor: colors.border }]} />
+            <TouchableOpacity style={styles.linkRow}>
+              <View style={styles.rowLeft}>
+                <MaterialIcons name="help" size={20} color={colors.secondary} />
+                <Text style={[styles.rowLabel, { color: colors.primary }]}>{t('settings.helpSupport')}</Text>
+              </View>
+              <MaterialIcons name="chevron-right" size={20} color={colors.outline} />
+            </TouchableOpacity>
+          </View>
+
+          <TouchableOpacity
+            style={[styles.logoutButton, { borderColor: colors.error }]}
+            onPress={handleLogout}
+          >
+            <MaterialIcons name="logout" size={18} color={colors.error} />
+            <Text style={[styles.logoutText, { color: colors.error }]}>{t('settings.logout')}</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
-    header: {
-        alignItems: 'center',
-        marginBottom: 40,
-    },
-    avatarPlaceholder: {
-        width: 100,
-        height: 100,
-        borderRadius: 50,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: 16,
-    },
-    avatarText: {
-        fontSize: 40,
-        color: '#FFF',
-        fontWeight: 'bold',
-    },
-    name: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        marginBottom: 4,
-    },
-    phone: {
-        fontSize: 16,
-    },
-    section: {
-        marginBottom: 40,
-    },
-    menuItem: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingVertical: 16,
-        borderBottomWidth: 1,
-    },
-    menuText: {
-        fontSize: 16,
-        fontWeight: '500',
-    },
-    logoutButton: {
-        padding: 16,
-        borderRadius: 8,
-        alignItems: 'center',
-    },
-    logoutText: {
-        color: '#FFF',
-        fontSize: 16,
-        fontWeight: 'bold',
-    }
+  container: {
+    flex: 1,
+  },
+  topBar: {
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  topLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  brand: {
+    fontSize: 18,
+    fontWeight: '700',
+    fontFamily: Fonts.headline,
+  },
+  header: {
+    paddingHorizontal: 20,
+    paddingTop: 6,
+    paddingBottom: 16,
+  },
+  title: {
+    fontSize: 30,
+    fontWeight: '700',
+    fontFamily: Fonts.headline,
+  },
+  profileRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    paddingHorizontal: 20,
+    gap: 16,
+    marginBottom: 24,
+  },
+  avatar: {
+    width: 100,
+    height: 100,
+    borderRadius: 16,
+  },
+  avatarPlaceholder: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  profileMeta: {
+    flex: 1,
+    paddingBottom: 6,
+  },
+  profileLabel: {
+    fontSize: 11,
+    textTransform: 'uppercase',
+    letterSpacing: 2,
+    fontWeight: '700',
+  },
+  profileName: {
+    fontSize: 22,
+    fontWeight: '700',
+    fontFamily: Fonts.headline,
+    marginTop: 4,
+  },
+  profilePhone: {
+    fontSize: 13,
+    marginTop: 4,
+  },
+  section: {
+    paddingHorizontal: 20,
+    gap: 16,
+  },
+  cardRow: {
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  cardBlock: {
+    borderRadius: 16,
+    padding: 16,
+    gap: 12,
+  },
+  rowLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  rowLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  segment: {
+    flexDirection: 'row',
+    borderRadius: 12,
+    padding: 4,
+  },
+  segmentBtn: {
+    flex: 1,
+    paddingVertical: 8,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  segmentText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  linkRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  divider: {
+    height: 1,
+    opacity: 0.12,
+  },
+  logoutButton: {
+    borderWidth: 1,
+    borderRadius: 14,
+    paddingVertical: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  logoutText: {
+    fontSize: 13,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
 });

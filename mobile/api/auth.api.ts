@@ -29,4 +29,11 @@ export const authApi = {
         const response = await axiosInstance.get('/user/profile');
         return response.data.metadata || response.data;
     },
+
+    googleLogin: async (idToken: string): Promise<AuthResponse> => {
+        const response = await axiosInstance.post('/user/google', {
+            idToken,
+        });
+        return response.data.metadata || response.data;
+    },
 };

@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import User, { UserRole } from '../models/user.model';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import admin from '../config/firebase.config';
 
 // Helper to generate Token
 const generateToken = (user: any) => {
@@ -117,5 +118,70 @@ export const updateFcmToken = async (req: Request, res: Response) => {
         res.json({ message: 'FCM Token updated successfully' });
     } catch (error: any) {
         res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+export const googleLogin = async (req: Request, res: Response) => {
+    try {
+        const { idToken } = req.body;
+        if (!idToken) {
+            return res.status(400).json({ message: 'ID Token is required' });
+        }
+
+        // Verify Firebase ID Token
+        const decodedToken = await admin.auth().verifyIdToken(idToken);
+        const { uid, email, name, picture } = decodedToken;
+
+        // Find user by googleId or email
+        let user = await User.findOne({ 
+            $or: [
+                { googleId: uid },
+                { email: email }
+            ]
+        });
+
+        if (user) {
+            // Update existing user if googleId is missing or if info changed
+            let updated = false;
+            if (!user.googleId) {
+                user.googleId = uid;
+                updated = true;
+            }
+            if (!user.email && email) {
+                user.email = email;
+                updated = true;
+            }
+            if (updated) await user.save();
+        } else {
+            // Create new user
+            user = new User({
+                fullName: name || 'Google User',
+                email,
+                googleId: uid,
+                avatar: picture || '',
+                role: UserRole.CUSTOMER,
+                isActive: true
+            });
+            await user.save();
+        }
+
+        const token = generateToken(user);
+
+        res.status(200).json({
+            message: 'Google login successful',
+            token,
+            user: {
+                id: user._id,
+                fullName: user.fullName,
+                email: user.email,
+                role: user.role,
+                avatar: user.avatar,
+                shopId: user.shopId
+            }
+        });
+
+    } catch (error: any) {
+        console.error('Google Login Error:', error);
+        res.status(401).json({ message: 'Invalid ID Token', error: error.message });
     }
 };

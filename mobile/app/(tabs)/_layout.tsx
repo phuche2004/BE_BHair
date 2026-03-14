@@ -24,16 +24,21 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        tabBarInactiveTintColor: Colors[colorScheme ?? 'light'].tabIconDefault,
-        headerShown: true,
-        headerStyle: { backgroundColor: Colors[colorScheme ?? 'light'].background },
-        headerTintColor: Colors[colorScheme ?? 'light'].text,
+        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].secondary,
+        tabBarInactiveTintColor: Colors[colorScheme ?? 'light'].outline,
+        headerShown: false,
         tabBarButton: HapticTab,
         tabBarStyle: {
           backgroundColor: Colors[colorScheme ?? 'light'].background,
-          borderTopColor: Colors[colorScheme ?? 'light'].secondary,
-        }
+          borderTopColor: Colors[colorScheme ?? 'light'].border,
+          height: 72,
+          paddingBottom: 10,
+          paddingTop: 6,
+        },
+        tabBarLabelStyle: {
+          fontSize: 10,
+          fontWeight: '700',
+        },
       }}>
 
       {/* ---------------- CUSTOMER TABS ---------------- */}

@@ -15,8 +15,10 @@ export interface IBarberProfile {
 }
 
 export interface IUser extends Document {
-    phoneNumber: string;
+    phoneNumber?: string;
     password?: string;
+    email?: string;
+    googleId?: string;
     fullName: string;
     role: UserRole;
     avatar?: string;
@@ -34,8 +36,10 @@ export interface IUser extends Document {
 
 const UserSchema: Schema = new Schema(
     {
-        phoneNumber: { type: String, required: true, unique: true, index: true },
-        password: { type: String, required: true },
+        phoneNumber: { type: String, unique: true, index: true, sparse: true },
+        password: { type: String },
+        email: { type: String, unique: true, index: true, sparse: true },
+        googleId: { type: String, unique: true, index: true, sparse: true },
         fullName: { type: String, required: true },
         role: {
             type: String,

@@ -5,7 +5,7 @@ export default function ShopLayout() {
     const { t } = useTranslation();
 
     return (
-        <Stack>
+        <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="[id]" options={{ title: t('shop.imageMap'), headerBackTitle: t('common.back') }} />
         </Stack>
     );

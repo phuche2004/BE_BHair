@@ -15,6 +15,7 @@ export const en = {
         signIn: 'Sign In',
         noAccount: 'Don\'t have an account? ',
         signUp: 'Sign up',
+        forgotPassword: 'Forgot password?',
         createAccount: 'Create an Account',
         joinToday: 'Join B_Hair today',
         fullNameLabel: 'Full Name',
@@ -51,7 +52,7 @@ export const en = {
         topRated: 'Top Rated',
         viewAll: 'View All',
         open: 'Open',
-        book: 'Book'
+        book: 'Details'
     },
     search: {
         title: 'Search Barbershops',
@@ -107,6 +108,9 @@ export const en = {
     common: {
         back: 'Back',
         notSelected: 'Not selected',
-        demoService: 'Classic Haircut (Demo)'
+        demoService: 'Classic Haircut (Demo)',
+        reload: 'Reload',
+        report: 'Report',
+        reportSuccess: 'Thank you for your report. We will investigate shortly.'
     }
 };

@@ -9,6 +9,7 @@ const router = express.Router();
 // Allow single file upload for 'avatar' field
 router.post('/register', upload.single('avatar'), authController.register);
 router.post('/login', authController.login);
+router.post('/google', authController.googleLogin);
 
 // Protected routes
 router.get('/profile', authMiddleware.verifyToken, authController.getProfile);

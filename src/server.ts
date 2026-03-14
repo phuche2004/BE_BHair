@@ -57,7 +57,7 @@ const httpServer = createServer(app);
 initSocket(httpServer);
 
 httpServer.listen(PORT, () => {
-    console.log(`\x1b[32m\x1b[1m✓ B_Hair API\x1b[0m  https://be-bhair.onrender.com`);
+    console.log(`\x1b[32m\x1b[1m✓ B_Hair API\x1b[0m  bhair`);
 });
 
 export default app;

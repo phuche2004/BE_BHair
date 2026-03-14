@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 import { useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFonts } from 'expo-font';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useAuthStore } from '@/store/useAuthStore';
@@ -21,6 +22,10 @@ export default function RootLayout() {
   const { restoreToken, isLoading, token } = useAuthStore();
   const [isReady, setIsReady] = useState(false);
   const loadTheme = useThemeStore((state) => state.loadTheme);
+  const [fontsLoaded] = useFonts({
+    NotoSerif: require('../assets/fonts/NotoSerif-Variable.ttf'),
+    Manrope: require('../assets/fonts/Manrope-Variable.ttf'),
+  });
 
   useEffect(() => {
     loadTheme();
@@ -62,7 +67,7 @@ export default function RootLayout() {
     }, 0);
   }, [token, segments, isReady, isLoading, router]);
 
-  if (!isReady) {
+  if (!isReady || !fontsLoaded) {
     return null; // Or a splash screen component
   }
 
