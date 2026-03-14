@@ -28,12 +28,11 @@ export default function LoginScreen() {
     const login = useAuthStore((state) => state.login);
 
     // Google Auth Request
-    // Note: To work in Expo Go, we use the Expo Proxy (auth.expo.io)
+    // Note: To work in Expo Go, it uses a proxy. In Standalone (APK), it uses the Native ID.
     const [request, response, promptAsync] = Google.useAuthRequest({
         androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
         iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
         webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
-        redirectUri: AuthSession.makeRedirectUri(),
     });
 
     useEffect(() => {
