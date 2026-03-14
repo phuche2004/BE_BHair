@@ -1,10 +1,11 @@
 import dotenv from 'dotenv';
 dotenv.config({ quiet: true } as any);
 
-import express, { Application, Request, Response, NextFunction } from 'express';
+import express, { Application, Request, Response } from 'express';
 import connectDB from './config/database';
 import { verifyCloudinaryConnection } from './config/cloudinary.config';
 import morgan from 'morgan';
+import cors from 'cors';
 
 // Connect to database
 connectDB();
@@ -25,6 +26,7 @@ import notificationRoutes from './routes/notification.route';
 import slotRoutes from './routes/slot.route';
 
 // Middleware
+app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 if (process.env.NODE_ENV === 'development') {
@@ -46,8 +48,6 @@ app.get('/', (req: Request, res: Response) => {
 });
 
 // Start server
-// Start server
-// Start server
 import { createServer } from 'http';
 import { initSocket } from './utils/socket';
 
@@ -56,8 +56,10 @@ const httpServer = createServer(app);
 // Initialize Socket.io
 initSocket(httpServer);
 
-httpServer.listen(PORT, () => {
-    console.log(`\x1b[32m\x1b[1m✓ B_Hair API\x1b[0m  bhair`);
+const HOST = '0.0.0.0';
+
+httpServer.listen(PORT as number, HOST, () => {
+    console.log(`\x1b[32m\x1b[1m✓ B_Hair API\x1b[0m  http://192.168.110.117:${PORT}`);
 });
 
 export default app;

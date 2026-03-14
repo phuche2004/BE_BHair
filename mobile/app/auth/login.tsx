@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { MaterialIcons, FontAwesome5 } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
+import * as AuthSession from 'expo-auth-session';
 import { authApi } from '../../api/auth.api';
 import { useAuthStore } from '../../store/useAuthStore';
 import { Colors, Fonts } from '../../constants/theme';
@@ -27,10 +28,12 @@ export default function LoginScreen() {
     const login = useAuthStore((state) => state.login);
 
     // Google Auth Request
+    // Note: To work in Expo Go, we use the Expo Proxy (auth.expo.io)
     const [request, response, promptAsync] = Google.useAuthRequest({
         androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
         iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
         webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+        redirectUri: AuthSession.makeRedirectUri(),
     });
 
     useEffect(() => {
