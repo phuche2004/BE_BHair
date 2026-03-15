@@ -130,14 +130,24 @@ export const googleLogin = async (req: Request, res: Response) => {
             return res.status(400).json({ message: 'ID Token is required' });
         }
 
+        const audiences = [
+            process.env.GOOGLE_CLIENT_ID_ANDROID,
+            process.env.GOOGLE_CLIENT_ID_WEB,
+            process.env.GOOGLE_CLIENT_ID_IOS
+        ].filter(Boolean) as string[];
+
+        console.log('Verifying token with audiences:', audiences);
+
+        if (audiences.length === 0) {
+            console.error('CRITICAL: No Google Client IDs configured on server!');
+        }
+
         // Verify Google ID Token
         const ticket = await client.verifyIdToken({
             idToken: idToken,
-            audience: [
-                process.env.GOOGLE_CLIENT_ID_ANDROID as string,
-                process.env.GOOGLE_CLIENT_ID_WEB as string
-            ],
+            audience: audiences,
         });
+
         const payload = ticket.getPayload();
         if (!payload) {
             return res.status(401).json({ message: 'Invalid ID Token payload' });
@@ -169,7 +179,7 @@ export const googleLogin = async (req: Request, res: Response) => {
             // Create new user
             user = new User({
                 fullName: name || 'Google User',
-                email,
+                email: email || '',
                 googleId: sub,
                 avatar: picture || '',
                 role: UserRole.CUSTOMER,
@@ -194,7 +204,17 @@ export const googleLogin = async (req: Request, res: Response) => {
         });
 
     } catch (error: any) {
-        console.error('Google Login Error:', error);
-        res.status(401).json({ message: 'Invalid ID Token', error: error.message });
+        console.error('Google Login Verification Error:', error.message);
+        res.status(401).json({ 
+            message: 'Invalid ID Token', 
+            error: error.message,
+            debug: {
+                configuredAudiences: [
+                    !!process.env.GOOGLE_CLIENT_ID_ANDROID,
+                    !!process.env.GOOGLE_CLIENT_ID_WEB,
+                    !!process.env.GOOGLE_CLIENT_ID_IOS
+                ]
+            }
+        });
     }
 };
