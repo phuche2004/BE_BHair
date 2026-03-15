@@ -5,6 +5,7 @@ import { MaterialIcons, FontAwesome5 } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
 import * as AuthSession from 'expo-auth-session';
+import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { authApi } from '../../api/auth.api';
 import { useAuthStore } from '../../store/useAuthStore';
 import { Colors, Fonts } from '../../constants/theme';
@@ -20,6 +21,16 @@ export default function LoginScreen() {
     const colors = Colors[theme];
     const { t } = useTranslation();
     const primaryText = colors.onPrimary;
+    const isExpoGo = Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
+    const webClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
+    const androidClientId = process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID;
+    const iosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
+    const redirectUri = isExpoGo
+        ? AuthSession.getRedirectUrl()
+        : AuthSession.makeRedirectUri({
+            native: 'com.bhair.app:/oauthredirect',
+            scheme: 'com.bhair.app',
+        });
 
     const [phoneNumber, setPhoneNumber] = useState('');
     const [password, setPassword] = useState('');
@@ -30,10 +41,11 @@ export default function LoginScreen() {
     // Google Auth Request
     // Note: To work in Expo Go, it uses a proxy. In Standalone (APK), it uses the Native ID.
     const [request, response, promptAsync] = Google.useAuthRequest({
-        androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
-        iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
-        webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
-        redirectUri: AuthSession.makeRedirectUri(),
+        androidClientId: isExpoGo ? undefined : androidClientId,
+        iosClientId: isExpoGo ? undefined : iosClientId,
+        webClientId,
+        clientId: isExpoGo ? webClientId : undefined,
+        redirectUri,
     });
 
     useEffect(() => {
