@@ -20,6 +20,7 @@ export interface IAppointment extends Document {
     endTime: Date;
     totalPrice: number;
     status: AppointmentStatus;
+    bookingCode: string;
     note?: string;
     createdAt: Date;
     updatedAt: Date;
@@ -42,6 +43,7 @@ const AppointmentSchema: Schema = new Schema(
             default: AppointmentStatus.PENDING,
             index: true
         },
+        bookingCode: { type: String, unique: true, index: true },
         note: { type: String },
     },
     { timestamps: true }

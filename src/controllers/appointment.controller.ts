@@ -3,6 +3,11 @@ import Appointment, { AppointmentStatus } from '../models/appointment.model';
 import Service from '../models/service.model';
 import User, { UserRole } from '../models/user.model';
 import Shop from '../models/shop.model';
+import { Types } from 'mongoose';
+
+const generateBookingCode = () => {
+    return `#BH-${new Types.ObjectId().toString().slice(-4).toUpperCase()}`;
+};
 
 export const createAppointment = async (req: Request, res: Response) => {
     try {
@@ -110,6 +115,7 @@ export const createAppointment = async (req: Request, res: Response) => {
             endTime: endDate,
             totalPrice,
             status: AppointmentStatus.PENDING, // Or CONFIRMED if no prepay
+            bookingCode: generateBookingCode(),
             note
         });
 
@@ -178,9 +184,16 @@ export const getMyAppointments = async (req: Request, res: Response) => {
         const appointments = await Appointment.find({ customerId: req.user.id })
             .populate('shopId', 'name address images1')
             .populate('barberId', 'fullName avatar')
-            .populate('serviceIds', 'name price duration')
-            .sort({ bookingDate: -1 });
-        res.json(appointments);
+            .populate('serviceIds', 'name price duration image')
+            .sort({ bookingDate: -1 })
+            .lean();
+
+        const transformed = appointments.map((appt: any) => ({
+            ...appt,
+            bookingCode: appt.bookingCode || `#BH-${String(appt._id).slice(-4).toUpperCase()}`
+        }));
+
+        res.json(transformed);
     } catch (error: any) {
         res.status(500).json({ message: 'Server error', error: error.message });
     }
@@ -192,7 +205,7 @@ export const getAppointmentById = async (req: Request, res: Response) => {
         const appointment = await Appointment.findById(id)
             .populate('shopId', 'name address images1 phone')
             .populate('barberId', 'fullName avatar')
-            .populate('serviceIds', 'name price duration');
+            .populate('serviceIds', 'name price duration image');
 
         if (!appointment) {
             return res.status(404).json({ message: 'Appointment not found' });
@@ -215,7 +228,13 @@ export const getAppointmentById = async (req: Request, res: Response) => {
             return res.status(403).json({ message: 'Not authorized to view this appointment' });
         }
         // ────────────────────────────────────────────────────────────────────
-        res.json(appointment);
+        
+        const transformed = {
+            ...appointment.toObject(),
+            bookingCode: appointment.bookingCode || `#BH-${String(appointment._id).slice(-4).toUpperCase()}`
+        };
+
+        res.json(transformed);
     } catch (error: any) {
         res.status(500).json({ message: 'Server error', error: error.message });
     }

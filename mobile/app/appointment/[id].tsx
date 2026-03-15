@@ -121,8 +121,6 @@ export default function AppointmentDetailScreen() {
   const isCustomer = user?.role === 'CUSTOMER';
   const isManagerOrStaff = user?.role === 'MANAGER' || user?.role === 'ADMIN' || user?.role === 'STAFF';
 
-  const apptId = `#BH-${String(appt._id).slice(-4).toUpperCase()}`;
-
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
       <View style={styles.topBar}>
@@ -137,16 +135,20 @@ export default function AppointmentDetailScreen() {
         <View style={styles.idRow}>
           <View>
             <Text style={[styles.idLabel, { color: colors.secondary }]}>MÃ LỊCH HẸN</Text>
-            <Text style={[styles.idValue, { color: colors.primary }]}>{apptId}</Text>
+            <Text style={[styles.idValue, { color: colors.primary }]}>{appt.bookingCode}</Text>
           </View>
           <View style={[styles.statusPill, { backgroundColor: `${statusColor}22` }]}>
             <Text style={[styles.statusText, { color: statusColor }]}>{statusLabel}</Text>
           </View>
         </View>
 
-        <ImageBackground source={{ uri: HERO }} style={styles.hero} imageStyle={styles.heroImage}>
+        <ImageBackground 
+          source={{ uri: (typeof appt.shopId === 'object' && appt.shopId?.images1?.[0]) || HERO }} 
+          style={styles.hero} 
+          imageStyle={styles.heroImage}
+        >
           <View style={styles.heroOverlay} />
-          <Text style={styles.heroCaption}>Trải nghiệm dịch vụ đẳng cấp tại B_Hair</Text>
+          <Text style={styles.heroCaption}>Trải nghiệm dịch vụ tại {shopName}</Text>
         </ImageBackground>
 
         <View style={[styles.card, { backgroundColor: theme === 'dark' ? colors.surfaceAlt : colors.surface }]}>
@@ -173,6 +175,9 @@ export default function AppointmentDetailScreen() {
             <MaterialIcons name="content-cut" size={18} color={colors.secondary} />
             <Text style={[styles.smallLabel, { color: colors.muted }]}>BARBER</Text>
             <Text style={[styles.smallValue, { color: colors.primary }]} numberOfLines={1}>{barberName}</Text>
+            {typeof appt.shopId === 'object' && !!appt.shopId?.phone && (
+              <Text style={[styles.smallSub, { color: colors.muted }]}>Tel: {appt.shopId.phone}</Text>
+            )}
           </View>
         </View>
 
@@ -184,9 +189,14 @@ export default function AppointmentDetailScreen() {
             const dur = typeof svc === 'object' ? svc.duration : null;
             return (
               <View key={idx} style={styles.serviceRow}>
-                <View>
-                  <Text style={[styles.serviceName, { color: colors.primary }]}>{name}</Text>
-                  <Text style={[styles.serviceMeta, { color: colors.muted }]}>{dur ? `${dur} phút` : ''}</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                  {typeof svc === 'object' && !!svc.image && (
+                    <ImageBackground source={{ uri: svc.image }} style={styles.serviceImage} imageStyle={{ borderRadius: 8 }} />
+                  )}
+                  <View>
+                    <Text style={[styles.serviceName, { color: colors.primary }]}>{name}</Text>
+                    <Text style={[styles.serviceMeta, { color: colors.muted }]}>{dur ? `${dur} phút` : ''}</Text>
+                  </View>
                 </View>
                 <Text style={[styles.servicePrice, { color: colors.secondary }]}>
                   {price ? `${price.toLocaleString()}đ` : ''}
@@ -401,6 +411,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
   },
+  serviceImage: {
+    width: 44,
+    height: 44,
+    borderRadius: 8,
+    backgroundColor: '#f0f0f0',
+  },
   divider: {
     height: 1,
     marginVertical: 8,
@@ -409,6 +425,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    paddingTop: 8,
   },
   totalLabel: {
     fontSize: 11,
