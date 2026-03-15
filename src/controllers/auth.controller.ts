@@ -2,7 +2,9 @@ import { Request, Response } from 'express';
 import User, { UserRole } from '../models/user.model';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import admin from '../config/firebase.config';
+import { OAuth2Client } from 'google-auth-library';
+
+const client = new OAuth2Client();
 
 // Helper to generate Token
 const generateToken = (user: any) => {
@@ -128,14 +130,25 @@ export const googleLogin = async (req: Request, res: Response) => {
             return res.status(400).json({ message: 'ID Token is required' });
         }
 
-        // Verify Firebase ID Token
-        const decodedToken = await admin.auth().verifyIdToken(idToken);
-        const { uid, email, name, picture } = decodedToken;
+        // Verify Google ID Token
+        const ticket = await client.verifyIdToken({
+            idToken: idToken,
+            audience: [
+                process.env.GOOGLE_CLIENT_ID_ANDROID as string,
+                process.env.GOOGLE_CLIENT_ID_WEB as string
+            ],
+        });
+        const payload = ticket.getPayload();
+        if (!payload) {
+            return res.status(401).json({ message: 'Invalid ID Token payload' });
+        }
+
+        const { sub, email, name, picture } = payload;
 
         // Find user by googleId or email
         let user = await User.findOne({ 
             $or: [
-                { googleId: uid },
+                { googleId: sub },
                 { email: email }
             ]
         });
@@ -144,7 +157,7 @@ export const googleLogin = async (req: Request, res: Response) => {
             // Update existing user if googleId is missing or if info changed
             let updated = false;
             if (!user.googleId) {
-                user.googleId = uid;
+                user.googleId = sub;
                 updated = true;
             }
             if (!user.email && email) {
@@ -157,7 +170,7 @@ export const googleLogin = async (req: Request, res: Response) => {
             user = new User({
                 fullName: name || 'Google User',
                 email,
-                googleId: uid,
+                googleId: sub,
                 avatar: picture || '',
                 role: UserRole.CUSTOMER,
                 isActive: true

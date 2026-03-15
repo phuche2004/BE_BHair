@@ -25,8 +25,13 @@ export default function LoginScreen() {
     const webClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
     const androidClientId = process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID;
     const iosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
+    const expoOwner = Constants.expoConfig?.owner;
+    const expoSlug = Constants.expoConfig?.slug;
+    const proxyRedirectUri = expoOwner && expoSlug
+        ? `https://auth.expo.io/@${expoOwner}/${expoSlug}`
+        : 'https://auth.expo.io/@phuche2004/b-hair';
     const redirectUri = isExpoGo
-        ? AuthSession.getRedirectUrl()
+        ? proxyRedirectUri
         : AuthSession.makeRedirectUri({
             native: 'com.bhair.app:/oauthredirect',
             scheme: 'com.bhair.app',
@@ -119,6 +124,17 @@ export default function LoginScreen() {
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleGooglePress = async () => {
+        if (isExpoGo) {
+            Alert.alert(
+                t('auth.error'),
+                'Google Sign-In không hỗ trợ trên Expo Go (proxy đã bị gỡ). Hãy dùng Dev Build hoặc APK.'
+            );
+            return;
+        }
+        await promptAsync();
     };
 
     return (
@@ -216,7 +232,7 @@ export default function LoginScreen() {
 
                         <TouchableOpacity
                             style={[styles.googleButton, { borderColor: colors.border }]}
-                            onPress={() => promptAsync()}
+                            onPress={handleGooglePress}
                             disabled={!request || loading}
                             activeOpacity={0.8}
                         >
