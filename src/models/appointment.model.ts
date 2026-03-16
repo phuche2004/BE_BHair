@@ -14,8 +14,8 @@ export interface IAppointment extends Document {
     // --- CHANGE END ---
 
     customerId: mongoose.Types.ObjectId;
-    customerName: string;
-    customerPhone: string;
+    customerName?: string;
+    customerPhone?: string;
     barberId?: mongoose.Types.ObjectId;
     serviceIds: mongoose.Types.ObjectId[];
     bookingDate: Date;
@@ -34,8 +34,8 @@ const AppointmentSchema: Schema = new Schema(
         shopId: { type: Schema.Types.ObjectId, ref: 'Shop', required: true, index: true },
 
         customerId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
-        customerName: { type: String, required: true },
-        customerPhone: { type: String, required: true },
+        customerName: { type: String, required: false },
+        customerPhone: { type: String, required: false },
         barberId: { type: Schema.Types.ObjectId, ref: 'User', required: false, index: true },
         serviceIds: [{ type: Schema.Types.ObjectId, ref: 'Service', required: true }],
         bookingDate: { type: Date, required: true },
