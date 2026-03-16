@@ -9,6 +9,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useAuthStore } from '../../store/useAuthStore';
 import { MaterialIcons } from '@expo/vector-icons';
 import { HeaderMenu } from '../../components/ui/header-menu';
+import { HapticTouch } from '../../components/ui/haptic-touch';
 
 function toDateStr(d: Date): string {
   const y = d.getFullYear();
@@ -86,6 +87,11 @@ export default function ManagerAppointmentsScreen() {
     ]);
   }, [fetchSlots, fetchAppointments]);
 
+  const extractTimeFromISO = (isoStr: string) => {
+    const d = new Date(isoStr);
+    return d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false });
+  };
+
   useFocusEffect(
     useCallback(() => {
       fetchAllData(selectedDate);
@@ -120,6 +126,13 @@ export default function ManagerAppointmentsScreen() {
     NO_SHOW: colors.muted,
   };
 
+  const apptsByTime: Record<string, any[]> = {};
+  shopAppointments.forEach(appt => {
+    const timeStr = appt.startTime || extractTimeFromISO(appt.bookingDate || appt.date);
+    if (!apptsByTime[timeStr]) apptsByTime[timeStr] = [];
+    apptsByTime[timeStr].push(appt);
+  });
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       <View style={styles.topBar}>
@@ -139,7 +152,7 @@ export default function ManagerAppointmentsScreen() {
             const isSelected = selectedDate === date;
             const d = new Date(date);
             return (
-              <TouchableOpacity
+              <HapticTouch
                 key={date}
                 style={[
                   styles.dateItem,
@@ -153,7 +166,7 @@ export default function ManagerAppointmentsScreen() {
                 <Text style={[styles.dateNum, { color: isSelected ? colors.onPrimary : colors.primary }]}>
                   {d.getDate()}
                 </Text>
-              </TouchableOpacity>
+              </HapticTouch>
             );
           })}
         </ScrollView>
@@ -166,34 +179,51 @@ export default function ManagerAppointmentsScreen() {
         {loadingAppts || loadingSlots ? (
           <ActivityIndicator style={styles.loader} color={colors.primary} />
         ) : (
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: colors.secondary }]}>DANH SÁCH LỊCH HẸN ({shopAppointments.length})</Text>
-            {shopAppointments.length === 0 ? (
-              <Text style={[styles.emptyText, { color: colors.muted }]}>Không có lịch hẹn cho ngày này</Text>
-            ) : (
-              shopAppointments.map((appt, idx) => (
-                <TouchableOpacity
-                  key={appt._id || idx}
-                  style={[styles.apptCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
-                  onPress={() => router.push(`/appointment/${appt._id}` as any)}
-                >
-                  <View style={styles.apptHeader}>
-                    <Text style={[styles.customerName, { color: colors.primary }]}>{appt.userId?.fullName || 'Khách vãng lai'}</Text>
-                    <View style={[styles.statusBadge, { backgroundColor: STATUS_COLOR[appt.status] + '20' }]}>
-                      <Text style={[styles.statusText, { color: STATUS_COLOR[appt.status] }]}>{STATUS_LABEL[appt.status]}</Text>
-                    </View>
+          <View style={styles.timeline}>
+            {slots.map((slot, idx) => {
+              const timeStr = slot.time;
+              const appts = apptsByTime[timeStr] || [];
+              const isPast = new Date(`${selectedDate}T${timeStr}`) < new Date();
+
+              return (
+                <View key={idx} style={styles.timeSlot}>
+                  <View style={styles.timeColumn}>
+                    <Text style={[styles.timeLabel, { color: isPast ? colors.muted : colors.primary }]}>{timeStr}</Text>
                   </View>
-                  <Text style={[styles.serviceName, { color: colors.secondary }]}>{appt.serviceId?.name}</Text>
-                  <View style={styles.apptFooter}>
-                    <View style={styles.timeRow}>
-                      <MaterialIcons name="schedule" size={14} color={colors.secondary} />
-                      <Text style={[styles.timeText, { color: colors.secondary }]}>{appt.startTime}</Text>
-                    </View>
-                    <Text style={[styles.priceText, { color: colors.primary }]}>{appt.totalPrice?.toLocaleString()}đ</Text>
+                  <View style={[styles.slotContent, { borderLeftColor: colors.border }]}>
+                    {appts.length > 0 ? (
+                      appts.map((appt, aIdx) => (
+                        <HapticTouch
+                          key={aIdx}
+                          style={[styles.apptCard, { backgroundColor: colors.surface, borderColor: colors.primary + '30' }]}
+                          onPress={() => router.push(`/appointment/${appt._id}` as any)}
+                        >
+                          <View style={styles.cardInfo}>
+                              <View style={styles.nameRow}>
+                                <Text style={[styles.customerName, { color: colors.primary }]}>
+                                  {appt.customerName || appt.userId?.fullName || 'Khách vãng lai'}
+                                </Text>
+                                <View style={[styles.statusDot, { backgroundColor: STATUS_COLOR[appt.status] || colors.primary }]} />
+                              </View>
+                              <Text style={[styles.customerContact, { color: colors.muted }]}>
+                                {appt.customerPhone || appt.userId?.phoneNumber || appt.userId?.email || 'N/A'}
+                              </Text>
+                              <Text style={[styles.serviceName, { color: colors.secondary }]}>{appt.serviceId?.name}</Text>
+                            </View>
+                            <View style={[styles.statusBadge, { backgroundColor: STATUS_COLOR[appt.status] + '20' }]}>
+                              <Text style={[styles.statusText, { color: STATUS_COLOR[appt.status] }]}>{STATUS_LABEL[appt.status]}</Text>
+                            </View>
+                        </HapticTouch>
+                      ))
+                    ) : (
+                      <View style={[styles.emptySlot, { borderColor: colors.border + '20' }]}>
+                          <View style={[styles.emptyLine, { backgroundColor: colors.border + '15' }]} />
+                      </View>
+                    )}
                   </View>
-                </TouchableOpacity>
-              ))
-            )}
+                </View>
+              );
+            })}
           </View>
         )}
       </ScrollView>
@@ -259,61 +289,78 @@ const styles = StyleSheet.create({
   loader: {
     marginTop: 40,
   },
-  section: {
+  timeline: {
     paddingTop: 10,
     paddingBottom: 40,
   },
-  sectionTitle: {
-    fontSize: 11,
+  timeSlot: {
+    flexDirection: 'row',
+    minHeight: 80,
+  },
+  timeColumn: {
+    width: 60,
+    paddingTop: 10,
+  },
+  timeLabel: {
+    fontSize: 14,
     fontWeight: '700',
-    letterSpacing: 1.5,
-    marginBottom: 16,
+  },
+  slotContent: {
+    flex: 1,
+    borderLeftWidth: 1,
+    paddingLeft: 16,
+    paddingBottom: 16,
   },
   apptCard: {
-    borderRadius: 15,
-    padding: 16,
+    borderRadius: 14,
+    padding: 12,
     borderWidth: 1,
-    marginBottom: 12,
-  },
-  apptHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     marginBottom: 8,
   },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  cardInfo: {
+    flex: 1,
+  },
   customerName: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
+  },
+  customerContact: {
+    fontSize: 12,
+    marginTop: 1,
   },
   statusBadge: {
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 8,
+    marginLeft: 12,
   },
   statusText: {
     fontSize: 11,
     fontWeight: '700',
   },
   serviceName: {
-    fontSize: 14,
-    marginBottom: 12,
-  },
-  apptFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  timeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  timeText: {
     fontSize: 13,
+    marginTop: 2,
   },
-  priceText: {
-    fontSize: 15,
-    fontWeight: '700',
+  emptySlot: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingVertical: 20,
+  },
+  emptyLine: {
+    height: 1,
+    width: '100%',
+    borderRadius: 1,
   },
   emptyText: {
     fontSize: 14,

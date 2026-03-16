@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Alert,
   ImageBackground,
+  DeviceEventEmitter,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -59,21 +60,28 @@ export default function AppointmentDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
 
-  useEffect(() => {
+  const fetchData = useCallback(async () => {
     if (!id) return;
-    (async () => {
-      try {
-        setLoading(true);
-        const res = await appointmentApi.getAppointmentById(id);
-        setAppt(res.data ?? res);
-      } catch (e: any) {
-        Alert.alert('Lỗi', e.response?.data?.message ?? 'Không tải được lịch hẹn');
-        router.back();
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, [id]);
+    try {
+      setLoading(true);
+      const res = await appointmentApi.getAppointmentById(id);
+      setAppt(res.data ?? res);
+    } catch (e: any) {
+      Alert.alert('Lỗi', e.response?.data?.message ?? 'Không tải được lịch hẹn');
+      router.back();
+    } finally {
+      setLoading(false);
+    }
+  }, [id, router]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  useEffect(() => {
+    const sub = DeviceEventEmitter.addListener('APP_REFRESH_SCREEN', fetchData);
+    return () => sub.remove();
+  }, [fetchData]);
 
   const handleUpdateStatus = (newStatus: string, confirmMessage: string) => {
     Alert.alert('Cập nhật trạng thái', confirmMessage, [

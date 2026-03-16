@@ -9,6 +9,7 @@ import { useAuthStore } from '../../store/useAuthStore';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { HeaderMenu } from '../../components/ui/header-menu';
+import { HapticTouch } from '../../components/ui/haptic-touch';
 
 const SAMPLE_IMAGES = [
   'https://lh3.googleusercontent.com/aida-public/AB6AXuA1EMmzLiUnvvExlXuuJ5TwhZ-UGvA7TSC12PvpAVXRpB8gbEV_fVp89prjitZINmGKQNMQHKOPZAcyvv6wezOjMviYcaNJWi-wMhzr_GSymToXbhBakwhrdhjstGeaGBdgatqGWfH7c7FA2NCn43vBmhZiqu1MRJ7ivMy4UUPGJ5lk92m5rdc7nehZtKh02Qm5Twl6ybLaUODV3qsHUDzoyVedRi7977qNN2cTeuyIMJTyd4jMzX6ttIg4FVGkV1i6TIoG9n4kGWJe',
@@ -107,7 +108,7 @@ export default function HomeScreen() {
           {/* <Text style={[styles.greetingTitle, { color: colors.primary }]}>B_Hair</Text> */}
         </View>
 
-        <TouchableOpacity
+        <HapticTouch
           activeOpacity={0.8}
           onPress={() => router.push('/(tabs)/search' as any)}
           style={[styles.searchBar, { backgroundColor: theme === 'dark' ? colors.surfaceAlt : colors.surfaceHighest }]}
@@ -120,7 +121,7 @@ export default function HomeScreen() {
             placeholderTextColor={colors.outline}
             style={[styles.searchInput, { color: colors.text }]}
           />
-        </TouchableOpacity>
+        </HapticTouch>
 
         {loading ? (
           <View style={styles.loadingBlock}>
@@ -137,7 +138,7 @@ export default function HomeScreen() {
               const rating = shop.rating ?? shop.averageRating ?? (index % 2 ? 4.9 : 4.8);
               return (
                 <View key={shop._id} style={styles.cardBlock}>
-                  <TouchableOpacity
+                  <HapticTouch
                     activeOpacity={0.9}
                     style={[styles.cardImageWrap, { backgroundColor: colors.surfaceAlt }]}
                     onPress={() => router.push({ pathname: '/shop/[id]', params: { id: shop._id } } as any)}
@@ -145,9 +146,9 @@ export default function HomeScreen() {
                     <Image source={{ uri: cover }} style={styles.cardImage} />
                     <View style={[styles.ratingBadge, { backgroundColor: theme === 'dark' ? `${colors.surfaceAlt}E6` : `${colors.cardAlt}E6` }]}>
                       <MaterialIcons name="star" size={14} color={colors.secondary} />
-                      <Text style={[styles.ratingText, { color: colors.text }]}>{Number(rating).toFixed(1)}</Text>
+                      <Text style={[styles.ratingText, { color: colors.text }]} allowFontScaling={false}>{Number(rating).toFixed(1)}</Text>
                     </View>
-                  </TouchableOpacity>
+                  </HapticTouch>
 
                   <View style={styles.cardMeta}>
                     <View style={{ flex: 1 }}>
@@ -157,13 +158,13 @@ export default function HomeScreen() {
                         {shop.openTime || '09:00'} - {shop.closeTime || '20:00'}
                       </Text>
                     </View>
-                    <TouchableOpacity
+                    <HapticTouch
                       activeOpacity={0.85}
                       style={[styles.bookBtn, { backgroundColor: colors.primary }]}
                       onPress={() => router.push({ pathname: '/shop/[id]', params: { id: shop._id } } as any)}
                     >
                       <Text style={[styles.bookText, { color: primaryText }]}>{t('home.book')}</Text>
-                    </TouchableOpacity>
+                    </HapticTouch>
                   </View>
                 </View>
               );
@@ -263,10 +264,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 10,
+    flexShrink: 0,
+    minWidth: 46,
+    justifyContent: 'center',
   },
   ratingText: {
     fontSize: 12,
     fontWeight: '700',
+    includeFontPadding: false,
   },
   cardMeta: {
     flexDirection: 'row',
@@ -290,10 +295,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 12,
-    alignSelf: 'flex-start',
+    alignSelf: 'center',
+    minWidth: 80,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
   },
   bookText: {
     fontSize: 13,
     fontWeight: '700',
+    includeFontPadding: false,
   },
 });

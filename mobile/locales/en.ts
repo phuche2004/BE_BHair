@@ -33,6 +33,9 @@ export const en = {
         ok: 'OK'
     },
     settings: {
+        title: 'Settings',
+        customer: 'Customer',
+        haptics: 'Haptic Feedback',
         darkMode: 'Dark Mode',
         language: 'Language (Ngôn ngữ)',
         accountSettings: 'Account Settings',

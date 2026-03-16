@@ -7,7 +7,9 @@ import { shopApi } from '../../api/shop.api';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
+import { HapticTouch } from '../../components/ui/haptic-touch';
 import { HeaderMenu } from '../../components/ui/header-menu';
+import { ShopMap } from '../../components/ui/ShopMap';
 
 const SAMPLE_IMAGES = [
   'https://lh3.googleusercontent.com/aida-public/AB6AXuA1EMmzLiUnvvExlXuuJ5TwhZ-UGvA7TSC12PvpAVXRpB8gbEV_fVp89prjitZINmGKQNMQHKOPZAcyvv6wezOjMviYcaNJWi-wMhzr_GSymToXbhBakwhrdhjstGeaGBdgatqGWfH7c7FA2NCn43vBmhZiqu1MRJ7ivMy4UUPGJ5lk92m5rdc7nehZtKh02Qm5Twl6ybLaUODV3qsHUDzoyVedRi7977qNN2cTeuyIMJTyd4jMzX6ttIg4FVGkV1i6TIoG9n4kGWJe',
@@ -26,6 +28,7 @@ export default function SearchScreen() {
   const [shops, setShops] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [activeFilter, setActiveFilter] = useState('Gần tôi');
+  const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
 
   const fetchShops = useCallback(async () => {
     try {
@@ -69,7 +72,16 @@ export default function SearchScreen() {
             Tìm kiếm
           </Text>
         </View>
-        <HeaderMenu />
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <HapticTouch onPress={() => setViewMode(viewMode === 'list' ? 'map' : 'list')}>
+            <MaterialIcons 
+              name={viewMode === 'list' ? 'map' : 'view-list'} 
+              size={24} 
+              color={colors.secondary} 
+            />
+          </HapticTouch>
+          <HeaderMenu />
+        </View>
       </View>
 
       <View style={styles.content}>
@@ -82,11 +94,16 @@ export default function SearchScreen() {
             value={keyword}
             onChangeText={setKeyword}
           />
+          {keyword && (
+            <HapticTouch onPress={() => setKeyword('')}>
+              <MaterialIcons name="close" size={20} color={colors.outline} />
+            </HapticTouch>
+          )}
         </View>
 
         <View style={styles.filtersRow}>
           {FILTERS.map((filter) => (
-            <TouchableOpacity
+            <HapticTouch
               key={filter}
               style={[
                 styles.filterChip,
@@ -96,12 +113,11 @@ export default function SearchScreen() {
                 }
               ]}
               onPress={() => setActiveFilter(filter)}
-              activeOpacity={0.8}
             >
               <Text style={[styles.filterText, { color: activeFilter === filter ? colors.onPrimary : colors.primary }]}>{filter}</Text>
-            </TouchableOpacity>
+            </HapticTouch>
           ))}
-          <TouchableOpacity
+          <HapticTouch
             style={[
               styles.filterChip,
               {
@@ -110,16 +126,19 @@ export default function SearchScreen() {
               }
             ]}
             onPress={() => setActiveFilter('Gần tôi')}
-            activeOpacity={0.8}
           >
             <MaterialIcons name="near-me" size={16} color={activeFilter === 'Gần tôi' ? colors.onPrimary : colors.secondary} />
             <Text style={[styles.filterText, { color: activeFilter === 'Gần tôi' ? colors.onPrimary : colors.secondary }]}>Gần tôi</Text>
-          </TouchableOpacity>
+          </HapticTouch>
         </View>
 
         <Text style={[styles.sectionLabel, { color: colors.secondary }]}>KẾT QUẢ GỢI Ý</Text>
 
-        {loading ? (
+        {viewMode === 'map' ? (
+          <View style={styles.mapWrapper}>
+            <ShopMap />
+          </View>
+        ) : loading ? (
           <View style={styles.center}>
             <ActivityIndicator size="large" color={colors.secondary} />
           </View>
@@ -132,10 +151,10 @@ export default function SearchScreen() {
               const rating = item.rating ?? item.averageRating ?? (index % 2 ? 4.9 : 4.8);
               const distance = item.distance ?? `${index + 1}.2 km`;
               return (
-                <TouchableOpacity
+                <HapticTouch
+                  key={item._id}
                   style={[styles.card, { backgroundColor: theme === 'dark' ? colors.surfaceAlt : colors.surface }]}
                   onPress={() => router.push({ pathname: '/shop/[id]', params: { id: item._id } } as any)}
-                  activeOpacity={0.9}
                 >
                   <Image source={{ uri: cover }} style={styles.cardImage} />
                   <View style={styles.cardMeta}>
@@ -148,7 +167,7 @@ export default function SearchScreen() {
                       <Text style={[styles.ratingText, { color: colors.primary }]}>{Number(rating).toFixed(1)}</Text>
                     </View>
                   </View>
-                </TouchableOpacity>
+                </HapticTouch>
               );
             }}
             ListEmptyComponent={() => (
@@ -201,6 +220,16 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: 20,
+  },
+  mapWrapper: {
+    flex: 1,
+    marginTop: 10,
+    borderRadius: 20,
+    overflow: 'hidden',
+    marginBottom: 20,
+    // Add shadow/border to map wrapper if needed
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.05)',
   },
   searchBar: {
     flexDirection: 'row',

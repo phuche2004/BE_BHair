@@ -5,6 +5,10 @@ export const shopApi = {
         const response = await axiosInstance.get('/search');
         return response.data;
     },
+    getNearbyShops: async (lat: number, long: number, radius = 5) => {
+        const response = await axiosInstance.get(`/search?lat=${lat}&long=${long}&radius=${radius}`);
+        return response.data;
+    },
     getMyShops: async () => {
         const response = await axiosInstance.get('/shop/my-shops');
         return response.data;

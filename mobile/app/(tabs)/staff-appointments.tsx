@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, RefreshControl, Image, DeviceEventEmitter } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, RefreshControl, DeviceEventEmitter } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors, Fonts } from '../../constants/theme';
 import { useColorScheme } from '../../hooks/use-color-scheme';
@@ -9,8 +9,8 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useAuthStore } from '../../store/useAuthStore';
 import { MaterialIcons } from '@expo/vector-icons';
 import { HeaderMenu } from '../../components/ui/header-menu';
+import { HapticTouch } from '../../components/ui/haptic-touch';
 
-const AVATAR = 'https://lh3.googleusercontent.com/aida-public/AB6AXuC-Xx9r7ezFsaNrnBqvRNVVp06gGWlrhPgVu4D4WqxS0TAdvfWtCWT-dsJadcOLAHXaZ5nooDaAjY7jHD5WzGpeGcr_pVTWleEzuinmqsrMGvKa28dQfIooirfUbY7RAPHvdRzctlb0zWyX20CDgxOn0aGN-CgwxfVN_5LOQJAy8riVc8BLz3M3Nxku3f6grLtMx-YT9zIDlMkKNbGvikxSzzWbyYwjUnIj-hIoFVKJvhcrPmDMCuGvjuDxQ6DPNr3L57kgwEhuupvu';
 
 function toDateStr(d: Date): string {
   const y = d.getFullYear();
@@ -120,6 +120,14 @@ export default function StaffAppointmentsScreen() {
     apptsByTime[timeStr].push(appt);
   });
 
+  const STATUS_COLOR: Record<string, string> = {
+    PENDING: colors.warning,
+    CONFIRMED: colors.secondary,
+    COMPLETED: colors.success,
+    CANCELLED: colors.error,
+    NO_SHOW: colors.muted,
+  };
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       <View style={styles.topBar}>
@@ -139,7 +147,7 @@ export default function StaffAppointmentsScreen() {
             const isSelected = selectedDate === date;
             const d = new Date(date);
             return (
-              <TouchableOpacity
+              <HapticTouch
                 key={date}
                 style={[
                   styles.dateItem,
@@ -153,7 +161,7 @@ export default function StaffAppointmentsScreen() {
                 <Text style={[styles.dateNum, { color: isSelected ? colors.onPrimary : colors.primary }]}>
                   {d.getDate()}
                 </Text>
-              </TouchableOpacity>
+              </HapticTouch>
             );
           })}
         </ScrollView>
@@ -180,22 +188,29 @@ export default function StaffAppointmentsScreen() {
                   <View style={[styles.slotContent, { borderLeftColor: colors.border }]}>
                     {appts.length > 0 ? (
                       appts.map((appt, aIdx) => (
-                        <TouchableOpacity
+                        <HapticTouch
                           key={aIdx}
-                          style={[styles.apptCard, { backgroundColor: colors.surface, borderColor: colors.primary + '40' }]}
+                          style={[styles.apptCard, { backgroundColor: colors.surface, borderColor: colors.primary + '30' }]}
                           onPress={() => router.push(`/appointment/${appt._id}` as any)}
                         >
-                          <View style={styles.cardTop}>
-                            <Image source={{ uri: appt.userId?.avatar || AVATAR }} style={styles.avatar} />
-                            <View style={styles.cardInfo}>
-                              <Text style={[styles.customerName, { color: colors.primary }]}>{appt.userId?.fullName || 'Khách vãng lai'}</Text>
-                              <Text style={[styles.serviceName, { color: colors.secondary }]}>{appt.serviceId?.name}</Text>
+                          <View style={styles.cardInfo}>
+                            <View style={styles.nameRow}>
+                              <Text style={[styles.customerName, { color: colors.primary }]}>
+                                {appt.customerName || appt.userId?.fullName || 'Khách vãng lai'}
+                              </Text>
+                              <View style={[styles.statusDot, { backgroundColor: STATUS_COLOR[appt.status] || colors.primary }]} />
                             </View>
+                            <Text style={[styles.customerContact, { color: colors.muted }]}>
+                              {appt.customerPhone || appt.userId?.phoneNumber || appt.userId?.email || 'N/A'}
+                            </Text>
+                            <Text style={[styles.serviceName, { color: colors.secondary }]}>{appt.serviceId?.name}</Text>
                           </View>
-                        </TouchableOpacity>
+                        </HapticTouch>
                       ))
                     ) : (
-                      <View style={[styles.emptySlot, { backgroundColor: isPast ? colors.border + '10' : 'transparent' }]} />
+                      <View style={[styles.emptySlot, { borderColor: colors.border + '20' }]}>
+                         <View style={[styles.emptyLine, { backgroundColor: colors.border + '15' }]} />
+                      </View>
                     )}
                   </View>
                 </View>
@@ -293,23 +308,26 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: 8,
   },
-  cardTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
-    backgroundColor: '#eee',
-  },
   cardInfo: {
     flex: 1,
+  },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
   customerName: {
     fontSize: 15,
     fontWeight: '700',
+  },
+  customerContact: {
+    fontSize: 12,
+    marginTop: 1,
   },
   serviceName: {
     fontSize: 13,
@@ -317,7 +335,12 @@ const styles = StyleSheet.create({
   },
   emptySlot: {
     flex: 1,
-    marginVertical: 4,
-    borderRadius: 8,
+    justifyContent: 'center',
+    paddingVertical: 20,
+  },
+  emptyLine: {
+    height: 1,
+    width: '100%',
+    borderRadius: 1,
   },
 });

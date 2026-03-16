@@ -8,7 +8,10 @@ import {
   TouchableOpacity,
   DeviceEventEmitter,
   Image,
+  Linking,
 } from 'react-native';
+import * as Notifications from 'expo-notifications';
+import { registerForPushNotificationsAsync } from '../../utils/notification.util';
 import { Colors, Fonts } from '../../constants/theme';
 import { useColorScheme } from '../../hooks/use-color-scheme';
 import { useTranslation } from '../../hooks/useTranslation';
@@ -17,6 +20,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { HeaderMenu } from '../../components/ui/header-menu';
+import { HapticTouch } from '../../components/ui/haptic-touch';
 
 export default function AppointmentsScreen() {
   const theme = useColorScheme() ?? 'light';
@@ -29,6 +33,12 @@ export default function AppointmentsScreen() {
   const [appointments, setAppointments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<'upcoming' | 'past'>('upcoming');
+  const [showPermissionPrompt, setShowPermissionPrompt] = useState(false);
+
+  const checkPermissions = async () => {
+    const { status } = await Notifications.getPermissionsAsync();
+    setShowPermissionPrompt(status !== 'granted');
+  };
 
   const fetchAppointments = useCallback(async () => {
     try {
@@ -46,6 +56,7 @@ export default function AppointmentsScreen() {
     useCallback(() => {
       setTab('upcoming');
       fetchAppointments();
+      checkPermissions();
     }, [fetchAppointments])
   );
 
@@ -72,14 +83,14 @@ export default function AppointmentsScreen() {
     const isPast = tab === 'past';
     
     return (
-      <TouchableOpacity 
+      <HapticTouch 
         key={appt._id || index}
         style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}
         onPress={() => router.push(`/appointment/${appt._id}` as any)}
       >
         <View style={styles.cardHeader}>
-          <View>
-            <Text style={[styles.shopName, { color: colors.primary }]}>{appt.shopId?.name || 'Barbershop'}</Text>
+          <View style={{ flex: 1, marginRight: 8 }}>
+            <Text style={[styles.shopName, { color: colors.primary }]} numberOfLines={1}>{appt.shopId?.name || 'Barbershop'}</Text>
             <Text style={[styles.serviceName, { color: colors.secondary }]}>
               {appt.serviceIds?.[0]?.name || appt.serviceId?.name || t('common.demoService')}
               {appt.serviceIds?.length > 1 ? ` (+${appt.serviceIds.length - 1})` : ''}
@@ -116,14 +127,14 @@ export default function AppointmentsScreen() {
             {appt.totalPrice?.toLocaleString('vi-VN')}đ
           </Text>
           {!isPast && (
-            <View style={[styles.actionBtn, { backgroundColor: colors.primary }]}>
+             <View style={[styles.actionBtn, { backgroundColor: colors.primary }]}>
               <Text style={[styles.actionText, { color: colors.onPrimary }]}>
-                Chi tiết
+                {t('home.book')}
               </Text>
             </View>
           )}
         </View>
-      </TouchableOpacity>
+      </HapticTouch>
     );
   };
 
@@ -141,22 +152,22 @@ export default function AppointmentsScreen() {
       </View>
 
       <View style={styles.tabContainer}>
-        <TouchableOpacity 
+        <HapticTouch 
           style={[styles.tab, tab === 'upcoming' && { borderBottomColor: colors.primary, borderBottomWidth: 2 }]}
           onPress={() => setTab('upcoming')}
         >
           <Text style={[styles.tabText, tab === 'upcoming' ? { color: colors.primary, fontWeight: '700' } : { color: colors.secondary }]}>
             {t('appointments.upcoming')}
           </Text>
-        </TouchableOpacity>
-        <TouchableOpacity 
+        </HapticTouch>
+        <HapticTouch 
           style={[styles.tab, tab === 'past' && { borderBottomColor: colors.primary, borderBottomWidth: 2 }]}
           onPress={() => setTab('past')}
         >
           <Text style={[styles.tabText, tab === 'past' ? { color: colors.primary, fontWeight: '700' } : { color: colors.secondary }]}>
             {t('appointments.past')}
           </Text>
-        </TouchableOpacity>
+        </HapticTouch>
       </View>
 
       <ScrollView 
@@ -176,16 +187,37 @@ export default function AppointmentsScreen() {
             <Text style={[styles.emptySubText, { color: colors.muted }]}>
               {tab === 'upcoming' ? 'Hãy chọn một tiệm và đặt lịch làm đẹp ngay nhé!' : 'Lịch sử đặt lịch của bạn sẽ hiển thị tại đây.'}
             </Text>
-            <TouchableOpacity 
+            <HapticTouch 
               style={[styles.emptyButton, { backgroundColor: colors.primary }]}
               onPress={() => router.push('/')}
             >
               <Text style={[styles.emptyButtonText, { color: colors.onPrimary }]}>Đặt lịch ngay</Text>
               <MaterialIcons name="arrow-forward" size={18} color={colors.onPrimary} />
-            </TouchableOpacity>
+            </HapticTouch>
           </View>
         ) : (
-          (tab === 'upcoming' ? upcoming : past).map((appt, idx) => renderAppointment(appt, idx))
+          <>
+            {(tab === 'upcoming' ? upcoming : past).map((appt, idx) => renderAppointment(appt, idx))}
+            
+            {tab === 'upcoming' && showPermissionPrompt && (
+              <HapticTouch 
+                style={[styles.notiBanner, { backgroundColor: colors.surfaceAlt, borderColor: colors.primary + '33' }]}
+                onPress={async () => {
+                  const token = await registerForPushNotificationsAsync();
+                  if (token) setShowPermissionPrompt(false);
+                }}
+              >
+                <View style={[styles.notiIcon, { backgroundColor: colors.primary }]}>
+                  <MaterialIcons name="notifications-active" size={20} color={colors.onPrimary} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.notiTitle, { color: colors.primary }]}>Bạn có muốn nhắc lịch không?</Text>
+                  <Text style={[styles.notiText, { color: colors.muted }]}>Cho phép gửi thông báo để không bỏ lỡ lịch cắt tóc.</Text>
+                </View>
+                <MaterialIcons name="chevron-right" size={20} color={colors.primary} />
+              </HapticTouch>
+            )}
+          </>
         )}
       </ScrollView>
     </SafeAreaView>
@@ -227,11 +259,11 @@ const styles = StyleSheet.create({
   },
   tab: {
     paddingVertical: 12,
-    marginRight: 24,
+    marginRight: 16,
   },
   tabText: {
     fontSize: 13,
-    letterSpacing: 1,
+    letterSpacing: 0.5,
   },
   scrollContent: {
     paddingHorizontal: 20,
@@ -261,10 +293,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 8,
+    flexShrink: 0,
+    marginLeft: 12,
   },
   statusText: {
     fontSize: 11,
     fontWeight: '700',
+    includeFontPadding: false,
   },
   cardInfo: {
     flexDirection: 'row',
@@ -296,10 +331,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 10,
+    minWidth: 80,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
   },
   actionText: {
     fontSize: 12,
     fontWeight: '600',
+    includeFontPadding: false,
   },
   loader: {
     flex: 1,
@@ -347,5 +387,29 @@ const styles = StyleSheet.create({
   emptyButtonText: {
     fontSize: 15,
     fontWeight: '700',
+  },
+  notiBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 20,
+    borderWidth: 1,
+    marginTop: 10,
+    gap: 12,
+  },
+  notiIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  notiTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  notiText: {
+    fontSize: 12,
+    marginTop: 2,
   },
 });

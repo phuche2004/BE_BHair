@@ -6,6 +6,7 @@ import { authApi } from '../../api/auth.api';
 import { Colors, Fonts } from '../../constants/theme';
 import { useColorScheme } from '../../hooks/use-color-scheme';
 import { useTranslation } from '../../hooks/useTranslation';
+import { HapticTouch } from '../../components/ui/haptic-touch';
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -57,9 +58,9 @@ export default function RegisterScreen() {
         <View style={[styles.glow, { backgroundColor: colors.highlight }]} />
 
         <View style={styles.topBar}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.iconBtn}>
+          <HapticTouch onPress={() => router.back()} style={styles.iconBtn}>
             <MaterialIcons name="arrow-back" size={22} color={colors.text} />
-          </TouchableOpacity>
+          </HapticTouch>
           <Text style={[styles.brand, { color: colors.text }]}>B_Hair</Text>
           <View style={styles.iconBtn} />
         </View>
@@ -123,23 +124,22 @@ export default function RegisterScreen() {
             </View>
           )}
 
-          <TouchableOpacity
+          <HapticTouch
             style={[styles.button, { backgroundColor: colors.primary }]}
             onPress={handleRegister}
             disabled={loading}
-            activeOpacity={0.8}
           >
             {loading ? (
               <ActivityIndicator color={primaryText} />
             ) : (
               <Text style={[styles.buttonText, { color: primaryText }]}>{t('auth.signUp')}</Text>
             )}
-          </TouchableOpacity>
+          </HapticTouch>
 
-          <TouchableOpacity onPress={(() => router.push('/auth/login')) as any} style={styles.footer}>
+          <HapticTouch onPress={(() => router.push('/auth/login')) as any} style={styles.footer}>
             <Text style={[styles.footerText, { color: colors.outline }]}>{t('auth.haveAccount')}</Text>
             <Text style={[styles.footerLink, { color: colors.secondary }]}>{t('auth.signIn')}</Text>
-          </TouchableOpacity>
+          </HapticTouch>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>

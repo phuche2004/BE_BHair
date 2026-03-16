@@ -33,6 +33,9 @@ export const vi = {
         ok: 'Đồng ý'
     },
     settings: {
+        title: 'Cài đặt',
+        customer: 'Khách hàng',
+        haptics: 'Phản hồi xúc giác',
         darkMode: 'Giao diện tối',
         language: 'Ngôn ngữ (Language)',
         accountSettings: 'Cài đặt tài khoản',

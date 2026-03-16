@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, Switch, ScrollView, Image } from 'react-native';
+import { View, Text, StyleSheet, Alert, Switch, ScrollView, Image } from 'react-native';
 import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
+import * as Haptics from 'expo-haptics';
 import { Colors, Fonts } from '../../constants/theme';
 import { useColorScheme } from '../../hooks/use-color-scheme';
 import { useAuthStore } from '../../store/useAuthStore';
@@ -8,6 +9,7 @@ import { useThemeStore } from '../../store/useThemeStore';
 import { useTranslation } from '../../hooks/useTranslation';
 import { MaterialIcons } from '@expo/vector-icons';
 import { HeaderMenu } from '../../components/ui/header-menu';
+import { HapticTouch } from '../../components/ui/haptic-touch';
 
 
 
@@ -17,7 +19,7 @@ export default function SettingsScreen() {
   const colors = Colors[theme];
   const { user, logout } = useAuthStore();
   const { t } = useTranslation();
-  const { theme: storedTheme, setTheme, language, setLanguage } = useThemeStore();
+  const { theme: storedTheme, setTheme, language, setLanguage, hapticsEnabled, setHapticsEnabled } = useThemeStore();
   const insets = useSafeAreaInsets();
 
   const isDarkMode = storedTheme === 'dark';
@@ -52,7 +54,7 @@ export default function SettingsScreen() {
             <Text style={[styles.brand, { color: colors.primary }]}>B_Hair</Text>
             <View style={{ width: 1, height: 14, backgroundColor: colors.border }} />
             <Text style={{ fontSize: 13, fontWeight: '600', color: colors.secondary, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-              Cài đặt
+              {t('settings.title') || 'Cài đặt'}
             </Text>
           </View>
           <HeaderMenu />
@@ -67,24 +69,45 @@ export default function SettingsScreen() {
             </View>
           )}
           <View style={styles.profileMeta}>
-            <Text style={[styles.profileLabel, { color: colors.secondary }]}>Khách hàng</Text>
+            <Text style={[styles.profileLabel, { color: colors.secondary }]}>{t('settings.customer') || 'Khách hàng'}</Text>
             <Text style={[styles.profileName, { color: colors.primary }]}>{user?.fullName || 'User Name'}</Text>
             <Text style={[styles.profilePhone, { color: colors.muted }]}>{user?.phoneNumber || t('settings.noPhone')}</Text>
           </View>
         </View>
 
         <View style={styles.section}>
-          <View style={[styles.cardRow, { backgroundColor: colors.surface }]}>
-            <View style={styles.rowLeft}>
-              <MaterialIcons name="dark-mode" size={20} color={colors.secondary} />
-              <Text style={[styles.rowLabel, { color: colors.primary }]}>{t('settings.darkMode')}</Text>
+          <View style={[styles.cardBlock, { backgroundColor: colors.surface }]}>
+            <View style={styles.row}>
+              <View style={styles.rowLeft}>
+                <MaterialIcons name="vibration" size={20} color={colors.secondary} />
+                <Text style={[styles.rowLabel, { color: colors.primary }]}>{t('settings.haptics')}</Text>
+              </View>
+              <Switch
+                value={hapticsEnabled}
+                onValueChange={(val) => {
+                  setHapticsEnabled(val);
+                  if (val) Haptics.selectionAsync();
+                }}
+                trackColor={{ false: colors.border, true: colors.primary }}
+                thumbColor={hapticsEnabled ? colors.onPrimary : '#f4f3f4'}
+              />
             </View>
-            <Switch
-              trackColor={{ false: colors.border, true: colors.primary }}
-              thumbColor={isDarkMode ? colors.onPrimary : '#FFF'}
-              onValueChange={toggleSwitch}
-              value={isDarkMode}
-            />
+            <View style={[styles.divider, { backgroundColor: colors.border }]} />
+            <View style={styles.row}>
+              <View style={styles.rowLeft}>
+                <MaterialIcons name="dark-mode" size={20} color={colors.secondary} />
+                <Text style={[styles.rowLabel, { color: colors.primary }]}>{t('settings.darkMode')}</Text>
+              </View>
+              <Switch
+                value={theme === 'dark'}
+                onValueChange={(val) => {
+                  setTheme(val ? 'dark' : 'light');
+                  if (hapticsEnabled) Haptics.selectionAsync();
+                }}
+                trackColor={{ false: colors.border, true: colors.primary }}
+                thumbColor={theme === 'dark' ? colors.onPrimary : '#f4f3f4'}
+              />
+            </View>
           </View>
 
           <View style={[styles.cardBlock, { backgroundColor: colors.surface }]}>
@@ -93,54 +116,54 @@ export default function SettingsScreen() {
               <Text style={[styles.rowLabel, { color: colors.primary }]}>{t('settings.language')}</Text>
             </View>
             <View style={[styles.segment, { backgroundColor: colors.surfaceAlt }]}>
-              <TouchableOpacity
+              <HapticTouch
                 style={[styles.segmentBtn, language === 'vi' && { backgroundColor: colors.primary }]}
                 onPress={() => setLanguage('vi')}
               >
                 <Text style={[styles.segmentText, { color: language === 'vi' ? colors.onPrimary : colors.muted }]}>Tiếng Việt</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
+              </HapticTouch>
+              <HapticTouch
                 style={[styles.segmentBtn, language === 'en' && { backgroundColor: colors.primary }]}
                 onPress={() => setLanguage('en')}
               >
                 <Text style={[styles.segmentText, { color: language === 'en' ? colors.onPrimary : colors.muted }]}>English</Text>
-              </TouchableOpacity>
+              </HapticTouch>
             </View>
           </View>
 
           <View style={[styles.cardBlock, { backgroundColor: colors.surface }]}>
-            <TouchableOpacity style={styles.linkRow}>
+            <HapticTouch style={styles.linkRow}>
               <View style={styles.rowLeft}>
                 <MaterialIcons name="person" size={20} color={colors.secondary} />
                 <Text style={[styles.rowLabel, { color: colors.primary }]}>{t('settings.accountSettings')}</Text>
               </View>
               <MaterialIcons name="chevron-right" size={20} color={colors.outline} />
-            </TouchableOpacity>
+            </HapticTouch>
             <View style={[styles.divider, { backgroundColor: colors.border }]} />
-            <TouchableOpacity style={styles.linkRow}>
+            <HapticTouch style={styles.linkRow}>
               <View style={styles.rowLeft}>
                 <MaterialIcons name="payments" size={20} color={colors.secondary} />
                 <Text style={[styles.rowLabel, { color: colors.primary }]}>{t('settings.paymentMethods')}</Text>
               </View>
               <MaterialIcons name="chevron-right" size={20} color={colors.outline} />
-            </TouchableOpacity>
+            </HapticTouch>
             <View style={[styles.divider, { backgroundColor: colors.border }]} />
-            <TouchableOpacity style={styles.linkRow}>
+            <HapticTouch style={styles.linkRow}>
               <View style={styles.rowLeft}>
                 <MaterialIcons name="help" size={20} color={colors.secondary} />
                 <Text style={[styles.rowLabel, { color: colors.primary }]}>{t('settings.helpSupport')}</Text>
               </View>
               <MaterialIcons name="chevron-right" size={20} color={colors.outline} />
-            </TouchableOpacity>
+            </HapticTouch>
           </View>
 
-          <TouchableOpacity
+          <HapticTouch
             style={[styles.logoutButton, { borderColor: colors.error }]}
             onPress={handleLogout}
           >
             <MaterialIcons name="logout" size={18} color={colors.error} />
             <Text style={[styles.logoutText, { color: colors.error }]}>{t('settings.logout')}</Text>
-          </TouchableOpacity>
+          </HapticTouch>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -231,6 +254,12 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 16,
     gap: 12,
+  },
+  row: {
+    paddingVertical: 2,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   rowLeft: {
     flexDirection: 'row',

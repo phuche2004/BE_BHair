@@ -9,6 +9,7 @@ import { Colors, Fonts } from '../../constants/theme';
 import { useColorScheme } from '../../hooks/use-color-scheme';
 import { shopApi } from '../../api/shop.api';
 import { MaterialIcons } from '@expo/vector-icons';
+import { HapticTouch } from '../../components/ui/haptic-touch';
 
 const SAMPLE_IMAGES = [
   'https://lh3.googleusercontent.com/aida-public/AB6AXuA1EMmzLiUnvvExlXuuJ5TwhZ-UGvA7TSC12PvpAVXRpB8gbEV_fVp89prjitZINmGKQNMQHKOPZAcyvv6wezOjMviYcaNJWi-wMhzr_GSymToXbhBakwhrdhjstGeaGBdgatqGWfH7c7FA2NCn43vBmhZiqu1MRJ7ivMy4UUPGJ5lk92m5rdc7nehZtKh02Qm5Twl6ybLaUODV3qsHUDzoyVedRi7977qNN2cTeuyIMJTyd4jMzX6ttIg4FVGkV1i6TIoG9n4kGWJe',
@@ -84,9 +85,9 @@ export default function ManagerShopsScreen() {
                   {item.todayAppointments ?? 24} Today
                 </Text>
               </View>
-              <TouchableOpacity style={[styles.circleBtn, { backgroundColor: colors.primary }]}>
+              <HapticTouch style={[styles.circleBtn, { backgroundColor: colors.primary }]}>
                 <MaterialIcons name="chevron-right" size={20} color={primaryText} />
-              </TouchableOpacity>
+              </HapticTouch>
             </View>
           </View>
         </View>
@@ -101,9 +102,9 @@ export default function ManagerShopsScreen() {
           <MaterialIcons name="arrow-back" size={22} color={colors.primary} />
           <Text style={[styles.headerTitle, { color: colors.primary }]}>Tiệm của tôi</Text>
         </View>
-        <TouchableOpacity style={[styles.addButton, { borderColor: colors.border }]} onPress={() => console.log('Navigate to Create Shop')}>
+        <HapticTouch style={[styles.addButton, { borderColor: colors.border }]} onPress={() => console.log('Navigate to Create Shop')}>
           <Text style={[styles.addButtonText, { color: colors.primary }]}>Tạo tiệm</Text>
-        </TouchableOpacity>
+        </HapticTouch>
       </View>
 
       {loading ? (

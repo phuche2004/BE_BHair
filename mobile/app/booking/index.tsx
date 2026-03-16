@@ -18,7 +18,9 @@ import { appointmentApi } from '../../api/appointment.api';
 import { useTranslation } from '../../hooks/useTranslation';
 import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
+import { registerForPushNotificationsAsync } from '../../utils/notification.util';
 import { HeaderMenu } from '../../components/ui/header-menu';
+import { HapticTouch } from '../../components/ui/haptic-touch';
 
 interface ShopInfo {
   slotDuration: number;
@@ -208,8 +210,22 @@ export default function BookingScreen() {
         note: '',
       });
       Alert.alert(t('booking.bookingConfirmed'), t('booking.bookingSuccessMsg'), [
-        { text: t('booking.viewAppointments'), onPress: () => router.replace('/(tabs)/appointments' as any) },
-        { text: t('booking.done'), onPress: () => router.back() },
+        { 
+          text: t('booking.viewAppointments'), 
+          onPress: () => router.replace('/(tabs)/appointments' as any) 
+        },
+        { 
+          text: 'Cấp quyền thông báo', 
+          onPress: async () => {
+            await registerForPushNotificationsAsync();
+            router.back();
+          }
+        },
+        { 
+          text: 'Không', 
+          onPress: () => router.back(),
+          style: 'cancel'
+        },
       ]);
     } catch (error: any) {
       Alert.alert(t('auth.error'), error.response?.data?.message || t('booking.bookFailed'));
@@ -231,9 +247,9 @@ export default function BookingScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       <View style={styles.topBar}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.iconBtn}>
+        <HapticTouch onPress={() => router.back()} style={styles.iconBtn}>
           <MaterialIcons name="arrow-back" size={22} color={colors.primary} />
-        </TouchableOpacity>
+        </HapticTouch>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <Text style={[styles.brand, { color: colors.primary }]}>B_Hair</Text>
           <View style={{ width: 1, height: 14, backgroundColor: colors.border }} />
@@ -254,7 +270,7 @@ export default function BookingScreen() {
               {services.map(svc => {
                 const sel = selectedService?._id === svc._id;
                 return (
-                  <TouchableOpacity
+                  <HapticTouch
                     key={svc._id}
                     style={[styles.chip, {
                       backgroundColor: sel ? colors.primary : isDark ? colors.surfaceAlt : colors.cardAlt,
@@ -267,7 +283,7 @@ export default function BookingScreen() {
                     <Text style={[styles.chipMeta, { color: sel ? (isDark ? `${colors.onPrimary}CC` : '#F0F0F0') : colors.muted }]}>
                       {svc.duration} {t('booking.mins')} · {svc.price.toLocaleString()}đ
                     </Text>
-                  </TouchableOpacity>
+                  </HapticTouch>
                 );
               })}
             </ScrollView>
@@ -285,7 +301,7 @@ export default function BookingScreen() {
               const d = new Date(date + 'T00:00:00');
               const sel = date === selectedDate;
               return (
-                <TouchableOpacity
+                <HapticTouch
                   key={date}
                   style={[styles.dayTab, {
                     backgroundColor: sel ? colors.primary : isDark ? colors.surfaceAlt : colors.surface,
@@ -299,7 +315,7 @@ export default function BookingScreen() {
                   <Text style={[styles.dayTabNum, { color: sel ? colors.onPrimary : colors.primary }]}>
                     {d.getDate()}
                   </Text>
-                </TouchableOpacity>
+                </HapticTouch>
               );
             })}
           </ScrollView>
@@ -354,7 +370,7 @@ export default function BookingScreen() {
                 : null;
 
               return (
-                <TouchableOpacity
+                <HapticTouch
                   key={slot.time}
                   activeOpacity={canPress ? 0.7 : 1}
                   disabled={!canPress}
@@ -399,7 +415,7 @@ export default function BookingScreen() {
                       <Text style={[styles.capacityText, { color: colors.primary }]}>{capacity}</Text>
                     </View>
                   ) : null}
-                </TouchableOpacity>
+                </HapticTouch>
               );
             })}
           </View>
@@ -420,7 +436,7 @@ export default function BookingScreen() {
             </View>
           </View>
         )}
-        <TouchableOpacity
+        <HapticTouch
           style={[styles.confirmBtn, {
             backgroundColor: (!activeBooking && selectedTime && selectedService) ? colors.primary : colors.surfaceHigh,
           }]}
@@ -432,7 +448,7 @@ export default function BookingScreen() {
             ? <ActivityIndicator color={primaryText} />
             : <Text style={[styles.confirmTxt, { color: (!activeBooking && selectedTime && selectedService) ? primaryText : colors.muted }]}>{t('booking.confirm')}</Text>
           }
-        </TouchableOpacity>
+        </HapticTouch>
       </View>
     </SafeAreaView>
   );

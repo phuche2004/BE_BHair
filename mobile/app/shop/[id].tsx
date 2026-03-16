@@ -8,6 +8,7 @@ import { shopApi } from '../../api/shop.api';
 import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { HeaderMenu } from '../../components/ui/header-menu';
+import { HapticTouch } from '../../components/ui/haptic-touch';
 import { useVideoPlayer, VideoView } from 'expo-video';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -164,9 +165,9 @@ export default function ShopDetailScreen() {
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
             <ScrollView contentContainerStyle={{ paddingBottom: 140 }} showsVerticalScrollIndicator={false}>
                 <View style={styles.topBar}>
-                    <TouchableOpacity onPress={() => router.back()} style={styles.iconBtn}>
+                    <HapticTouch onPress={() => router.back()} style={styles.iconBtn}>
                         <MaterialIcons name="arrow-back" size={22} color={colors.primary} />
-                    </TouchableOpacity>
+                    </HapticTouch>
                     <Text style={[styles.brand, { color: colors.primary }]}>{shop.name}</Text>
                     <HeaderMenu />
                 </View>
@@ -216,7 +217,7 @@ export default function ShopDetailScreen() {
                         contentContainerStyle={styles.thumbnailScroll}
                         keyExtractor={(_, index) => `thumb-${index}`}
                         renderItem={({ item, index }) => (
-                            <TouchableOpacity
+                            <HapticTouch
                                 onPress={() => goToIndex(index)}
                                 style={[
                                     styles.thumbnailItem,
@@ -233,7 +234,7 @@ export default function ShopDetailScreen() {
                                         <MaterialIcons name="play-arrow" size={10} color="#FFF" />
                                     </View>
                                 )}
-                            </TouchableOpacity>
+                            </HapticTouch>
                         )}
                     />
                 </View>
@@ -250,13 +251,13 @@ export default function ShopDetailScreen() {
                         </View>
                     </View>
 
-                    <TouchableOpacity
+                    <HapticTouch
                         style={[styles.reviewsBtn, { backgroundColor: theme === 'dark' ? colors.surfaceAlt : colors.surfaceHighest }]}
                         onPress={() => {/* TODO: Navigate to reviews */ }}
                     >
                         <MaterialIcons name="rate-review" size={20} color={colors.primary} />
                         <Text style={[styles.reviewsBtnText, { color: colors.primary }]}>Reviews</Text>
-                    </TouchableOpacity>
+                    </HapticTouch>
                 </View>
 
                 <View style={styles.infoSection}>
@@ -290,7 +291,7 @@ export default function ShopDetailScreen() {
                         services.map((service) => {
                             const selected = selectedServiceId === service._id;
                             return (
-                                <TouchableOpacity
+                                <HapticTouch
                                     key={service._id}
                                     style={[
                                         styles.serviceCard,
@@ -314,7 +315,7 @@ export default function ShopDetailScreen() {
                                             {selected && <View style={[styles.radioDot, { backgroundColor: colors.onPrimary }]} />}
                                         </View>
                                     </View>
-                                </TouchableOpacity>
+                                </HapticTouch>
                             );
                         })
                     )}
@@ -322,14 +323,14 @@ export default function ShopDetailScreen() {
             </ScrollView>
 
             <View style={[styles.bottomBar, { backgroundColor: colors.background, borderTopColor: colors.border, paddingBottom: insets.bottom + 16 }]}>
-                <TouchableOpacity
+                <HapticTouch
                     style={[styles.bookButton, { backgroundColor: colors.primary }]}
                     onPress={() => router.push({ pathname: '/booking', params: { shopId: id, serviceId: selectedServiceId ?? undefined } } as any)}
                     activeOpacity={0.85}
                 >
                     <MaterialIcons name="calendar-today" size={18} color={primaryText} />
                     <Text style={[styles.bookButtonText, { color: primaryText }]}>{t('shop.bookNow')}</Text>
-                </TouchableOpacity>
+                </HapticTouch>
             </View>
         </SafeAreaView>
     );

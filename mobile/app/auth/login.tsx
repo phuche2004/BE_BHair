@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, KeyboardAvoidingView, Platform, ScrollView, Image } from 'react-native';
 import { useRouter } from 'expo-router';
+import { sendLocalNotification } from '@/utils/notification.util';
 import { MaterialIcons, FontAwesome5 } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
@@ -12,6 +13,7 @@ import { Colors, Fonts } from '../../constants/theme';
 import { useColorScheme } from '../../hooks/use-color-scheme';
 import { useTranslation } from '../../hooks/useTranslation';
 import { FloatingBubble } from '../../components/ui/floating-bubble';
+import { HapticTouch } from '../../components/ui/haptic-touch';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -66,6 +68,10 @@ export default function LoginScreen() {
             setErrorMsg('');
             const data = await authApi.googleLogin(idToken);
             await login(data.user, data.token);
+            await sendLocalNotification(
+                t('auth.success'),
+                'Chào mừng thợ cắt tóc! Bạn đã đăng nhập thành công.'
+            );
             router.replace('/(tabs)');
         } catch (error: any) {
             console.error('Google Login Error:', error.response?.data || error.message || error);
@@ -115,6 +121,10 @@ export default function LoginScreen() {
             const data = await authApi.login(phoneNumber, password);
             // login function in store will save token to AsyncStorage
             await login(data.user, data.token);
+            await sendLocalNotification(
+                t('auth.success'),
+                'Chào mừng bạn đến với B_Hair! Đăng nhập thành công.'
+            );
             router.replace('/(tabs)');
         } catch (error: any) {
             console.error('Login Error:', error.response?.data || error.message || error);
@@ -207,22 +217,21 @@ export default function LoginScreen() {
                             </View>
                         )}
 
-                        <TouchableOpacity
+                        <HapticTouch
                             style={[styles.button, { backgroundColor: colors.primary }]}
                             onPress={handleLogin}
                             disabled={loading}
-                            activeOpacity={0.8}
                         >
                             {loading ? (
                                 <ActivityIndicator color={primaryText} />
                             ) : (
                                 <Text style={[styles.buttonText, { color: primaryText }]}>{t('auth.signIn')}</Text>
                             )}
-                        </TouchableOpacity>
+                        </HapticTouch>
 
-                        <TouchableOpacity style={styles.linkBtn} activeOpacity={0.8}>
+                        <HapticTouch style={styles.linkBtn}>
                             <Text style={[styles.linkText, { color: colors.secondary }]}>{t('auth.forgotPassword')}</Text>
-                        </TouchableOpacity>
+                        </HapticTouch>
 
                         <View style={styles.dividerRow}>
                             <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
@@ -230,24 +239,22 @@ export default function LoginScreen() {
                             <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
                         </View>
 
-                        <TouchableOpacity
+                        <HapticTouch
                             style={[styles.googleButton, { borderColor: colors.border }]}
                             onPress={handleGooglePress}
                             disabled={!request || loading}
-                            activeOpacity={0.8}
                         >
                             <FontAwesome5 name="google" size={18} color={colors.text} />
                             <Text style={[styles.googleButtonText, { color: colors.text }]}>Đăng nhập với Google</Text>
-                        </TouchableOpacity>
+                        </HapticTouch>
 
-                        <TouchableOpacity
+                        <HapticTouch
                             style={[styles.secondaryButton, { borderColor: colors.border }]}
                             onPress={(() => router.push('/auth/register')) as any}
-                            activeOpacity={0.8}
                         >
                             <MaterialIcons name="account-circle" size={20} color={colors.secondary} />
                             <Text style={[styles.secondaryText, { color: colors.secondary }]}>{t('auth.signUp')}</Text>
-                        </TouchableOpacity>
+                        </HapticTouch>
                     </View>
                 </View>
 

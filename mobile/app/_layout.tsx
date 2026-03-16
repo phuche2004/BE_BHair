@@ -2,9 +2,11 @@ import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFonts } from 'expo-font';
+import * as Notifications from 'expo-notifications';
+import { registerForPushNotificationsAsync } from '@/utils/notification.util';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useAuthStore } from '@/store/useAuthStore';
@@ -27,8 +29,38 @@ export default function RootLayout() {
     Manrope: require('../assets/fonts/Manrope-Variable.ttf'),
   });
 
+  const [expoPushToken, setExpoPushToken] = useState<string | undefined>('');
+  const notificationListener = useRef<Notifications.Subscription | undefined>(undefined);
+  const responseListener = useRef<Notifications.Subscription | undefined>(undefined);
+
   useEffect(() => {
     loadTheme();
+
+    // Kiểm tra và lấy token nếu ĐÃ có quyền (không tự động hiện pop-up)
+    Notifications.getPermissionsAsync().then(({ status }) => {
+      if (status === 'granted') {
+        registerForPushNotificationsAsync().then(token => setExpoPushToken(token || ''));
+      }
+    });
+
+    // Lắng nghe thông báo khi app đang mở
+    notificationListener.current = Notifications.addNotificationReceivedListener(notification => {
+      console.log('Notification received:', notification.request.content.title, notification.request.content.body);
+    });
+
+    // Lắng nghe khi người dùng nhấn vào thông báo
+    responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
+      console.log('Notification response:', response);
+    });
+
+    return () => {
+      if (notificationListener.current) {
+        notificationListener.current.remove();
+      }
+      if (responseListener.current) {
+        responseListener.current.remove();
+      }
+    };
   }, [loadTheme]);
 
   useEffect(() => {

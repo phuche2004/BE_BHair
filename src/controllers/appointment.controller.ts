@@ -106,15 +106,20 @@ export const createAppointment = async (req: Request, res: Response) => {
         }
 
         // 6. Create Appointment
+        const customer = await User.findById(req.user.id);
+        if (!customer) return res.status(404).json({ message: 'Customer not found' });
+
         const appointment = new Appointment({
             shopId,
             customerId: req.user.id,
+            customerName: customer.fullName,
+            customerPhone: customer.phoneNumber || customer.email || 'N/A',
             barberId,
             serviceIds,
             bookingDate: startDate,
             endTime: endDate,
             totalPrice,
-            status: AppointmentStatus.PENDING, // Or CONFIRMED if no prepay
+            status: AppointmentStatus.PENDING, 
             bookingCode: generateBookingCode(),
             note
         });
@@ -350,7 +355,6 @@ export const getShopAppointments = async (req: Request, res: Response) => {
         }
 
         const appointments = await Appointment.find({ shopId })
-            .populate('customerId', 'fullName phoneNumber')
             .populate('barberId', 'fullName')
             .populate('serviceIds', 'name duration')
             .sort({ bookingDate: 1 });
