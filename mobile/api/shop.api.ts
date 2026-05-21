@@ -21,6 +21,10 @@ export const shopApi = {
         const response = await axiosInstance.get(`/service/shop/${shopId}`);
         return response.data;
     },
+    updateShop: async (shopId: string, data: any) => {
+        const response = await axiosInstance.put(`/shop/${shopId}`, data);
+        return response.data;
+    },
     getShopHistory: async (shopId: string, date?: string) => {
         const response = await axiosInstance.get(`/shop/${shopId}/history`, { params: { date } });
         return response.data;

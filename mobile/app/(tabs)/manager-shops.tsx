@@ -4,7 +4,7 @@ import {
   ActivityIndicator, TouchableOpacity, RefreshControl
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { Colors, Fonts } from '../../constants/theme';
 import { useColorScheme } from '../../hooks/use-color-scheme';
 import { shopApi } from '../../api/shop.api';
@@ -21,6 +21,7 @@ export default function ManagerShopsScreen() {
   const colors = Colors[theme];
   const isDark = theme === 'dark';
   const primaryText = theme === 'dark' ? colors.text : '#FFF';
+  const router = useRouter();
 
   const [shops, setShops] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -85,8 +86,11 @@ export default function ManagerShopsScreen() {
                   {item.todayAppointments ?? 24} Today
                 </Text>
               </View>
-              <HapticTouch style={[styles.circleBtn, { backgroundColor: colors.primary }]}>
-                <MaterialIcons name="chevron-right" size={20} color={primaryText} />
+              <HapticTouch 
+                style={[styles.circleBtn, { backgroundColor: colors.primary }]}
+                onPress={() => router.push(`/manager/shop-settings/${item._id}` as any)}
+              >
+                <MaterialIcons name="settings" size={20} color={primaryText} />
               </HapticTouch>
             </View>
           </View>

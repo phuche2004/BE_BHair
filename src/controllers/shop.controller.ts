@@ -95,12 +95,19 @@ export const updateShop = async (req: Request, res: Response) => {
         }
 
         // Update basic info
-        const { name, address, phone, gender, isActive } = req.body;
-        if (name) shop.name = name;
-        if (address) shop.address = address;
-        if (phone) shop.phone = phone;
-        if (gender) shop.gender = gender;
+        const { name, address, phone, gender, isActive, openTime, closeTime, breakStart, breakEnd, slotDuration } = req.body;
+        if (name !== undefined) shop.name = name;
+        if (address !== undefined) shop.address = address;
+        if (phone !== undefined) shop.phone = phone;
+        if (gender !== undefined) shop.gender = gender;
         if (isActive !== undefined) shop.isActive = isActive;
+
+        // Schedule info
+        if (openTime !== undefined) shop.openTime = openTime;
+        if (closeTime !== undefined) shop.closeTime = closeTime;
+        if (breakStart !== undefined) shop.breakStart = breakStart;
+        if (breakEnd !== undefined) shop.breakEnd = breakEnd;
+        if (slotDuration !== undefined) shop.slotDuration = slotDuration;
 
         // Note: Logic to update/delete specific images is complex (omitted for brevity).
         // For now, we assume simple updates or re-upload. 
