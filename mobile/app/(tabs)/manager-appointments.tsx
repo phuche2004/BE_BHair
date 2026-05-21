@@ -95,11 +95,9 @@ export default function ManagerAppointmentsScreen() {
     return d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false });
   };
 
-  useFocusEffect(
-    useCallback(() => {
-      fetchAllData(selectedDate);
-    }, [selectedDate, fetchAllData])
-  );
+  useEffect(() => {
+    fetchAllData(selectedDate);
+  }, [selectedDate, fetchAllData]);
 
   useEffect(() => {
     const sub = DeviceEventEmitter.addListener('APP_REFRESH_SCREEN', () => {

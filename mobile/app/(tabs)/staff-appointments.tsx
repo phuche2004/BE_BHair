@@ -96,11 +96,9 @@ export default function StaffAppointmentsScreen() {
     ]);
   }, [fetchSlots, fetchAppointments]);
 
-  useFocusEffect(
-    useCallback(() => {
-      fetchAllData(selectedDate);
-    }, [selectedDate, fetchAllData])
-  );
+  useEffect(() => {
+    fetchAllData(selectedDate);
+  }, [selectedDate, fetchAllData]);
 
   useEffect(() => {
     const sub = DeviceEventEmitter.addListener('APP_REFRESH_SCREEN', () => {

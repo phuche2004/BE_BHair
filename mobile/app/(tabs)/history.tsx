@@ -1,14 +1,25 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, RefreshControl, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, RefreshControl, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from 'expo-router';
 import { Colors } from '../../constants/theme';
 import { useColorScheme } from '../../hooks/use-color-scheme';
+import { MaterialIcons } from '@expo/vector-icons';
 import { shopApi } from '../../api/shop.api';
 import { useAuthStore } from '../../store/useAuthStore';
-import { MaterialIcons } from '@expo/vector-icons';
-import { HeaderMenu } from '../../components/ui/header-menu';
 import { HapticTouch } from '../../components/ui/haptic-touch';
+import { HeaderMenu } from '../../components/ui/header-menu';
+import { Calendar, LocaleConfig } from 'react-native-calendars';
+import { Modal } from 'react-native';
+
+LocaleConfig.locales['vi'] = {
+  monthNames: ['Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6', 'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12'],
+  monthNamesShort: ['Th.1', 'Th.2', 'Th.3', 'Th.4', 'Th.5', 'Th.6', 'Th.7', 'Th.8', 'Th.9', 'Th.10', 'Th.11', 'Th.12'],
+  dayNames: ['Chủ nhật', 'Thứ hai', 'Thứ ba', 'Thứ tư', 'Thứ năm', 'Thứ sáu', 'Thứ bảy'],
+  dayNamesShort: ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'],
+  today: 'Hôm nay'
+};
+LocaleConfig.defaultLocale = 'vi';
 
 function getPast7Days(): string[] {
   const today = new Date();
@@ -34,8 +45,7 @@ export default function HistoryScreen() {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   });
-
-  const days = React.useMemo(() => getPast7Days(), []);
+  const [showPicker, setShowPicker] = useState(false);
 
   const fetchHistory = useCallback(async (dateToFetch: string) => {
     const shopId = (user as any)?.shopId;
@@ -62,20 +72,25 @@ export default function HistoryScreen() {
     }, [fetchHistory, selectedDate])
   );
 
-  useEffect(() => {
-    if (days.includes(selectedDate)) {
-      // scroll to end ideally, but we will just fetch
-      fetchHistory(selectedDate);
-    }
-  }, [selectedDate, fetchHistory, days]);
-
   const getActionIcon = (action: string) => {
     switch (action) {
       case 'CREATED_APPOINTMENT': return 'add-circle';
       case 'UPDATED_STATUS': return 'edit-calendar';
+      case 'DELETED_SERVICE': return 'delete';
       case 'EDITED_SERVICES': return 'build';
       default: return 'info';
     }
+  };
+
+  const handleDayPress = (day: any) => {
+    setShowPicker(false);
+    setSelectedDate(day.dateString);
+    fetchHistory(day.dateString);
+  };
+
+  const getDisplayDate = () => {
+    const [y, m, d] = selectedDate.split('-');
+    return `Ngày ${d}/${m}/${y}`;
   };
 
   const getActionColor = (action: string) => {
@@ -113,43 +128,48 @@ export default function HistoryScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       <View style={styles.topBar}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <Text style={[styles.brand, { color: colors.primary }]}>B_Hair</Text>
-          <View style={{ width: 1, height: 14, backgroundColor: colors.border }} />
-          <Text style={{ fontSize: 13, fontWeight: '600', color: colors.secondary, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-            Lịch sử hoạt động
-          </Text>
-        </View>
+        <Text style={[styles.headerTitle, { color: colors.primary }]}>Lịch sử hoạt động</Text>
         <HeaderMenu />
       </View>
 
-      <View style={styles.dateSelector}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.dateScroll}>
-          {days.map((date) => {
-            const isSelected = selectedDate === date;
-            const d = new Date(date);
-            return (
-              <HapticTouch
-                key={date}
-                style={[
-                  styles.dateItem,
-                  { backgroundColor: isSelected ? colors.primary : colors.surface, borderColor: colors.border },
-                ]}
-                onPress={() => setSelectedDate(date)}
-              >
-                <Text style={[styles.dateDay, { color: isSelected ? colors.onPrimary : colors.secondary }]} allowFontScaling={false} numberOfLines={1}>
-                  {d.toLocaleDateString('vi-VN', { weekday: 'short' })}
-                </Text>
-                <Text style={[styles.dateNum, { color: isSelected ? colors.onPrimary : colors.primary }]} allowFontScaling={false} numberOfLines={1}>
-                  {d.getDate()}
-                </Text>
-              </HapticTouch>
-            );
-          })}
-        </ScrollView>
+      <View style={styles.datePickerContainer}>
+        <HapticTouch style={[styles.dateButton, { backgroundColor: colors.surface }]} onPress={() => setShowPicker(true)}>
+          <MaterialIcons name="calendar-today" size={20} color={colors.primary} />
+          <Text style={[styles.dateButtonText, { color: colors.primary }]}>{getDisplayDate()}</Text>
+          <MaterialIcons name="arrow-drop-down" size={24} color={colors.primary} />
+        </HapticTouch>
       </View>
 
-      {loading ? (
+      <Modal visible={showPicker} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
+            <Calendar
+              current={selectedDate}
+              maxDate={new Date().toISOString().split('T')[0]}
+              onDayPress={handleDayPress}
+              markedDates={{
+                [selectedDate]: { selected: true, disableTouchEvent: true, selectedColor: colors.primary }
+              }}
+              theme={{
+                calendarBackground: colors.background,
+                textSectionTitleColor: colors.secondary,
+                selectedDayBackgroundColor: colors.primary,
+                selectedDayTextColor: colors.onPrimary,
+                todayTextColor: colors.primary,
+                dayTextColor: colors.text,
+                textDisabledColor: colors.muted,
+                arrowColor: colors.primary,
+                monthTextColor: colors.text,
+              }}
+            />
+            <HapticTouch style={[styles.closeBtn, { backgroundColor: colors.surface }]} onPress={() => setShowPicker(false)}>
+              <Text style={{ color: colors.text, fontWeight: '600' }}>Đóng</Text>
+            </HapticTouch>
+          </View>
+        </View>
+      </Modal>
+
+      {loading && !refreshing ? (
         <View style={styles.centered}>
           <ActivityIndicator size="large" color={colors.primary} />
         </View>
@@ -179,43 +199,37 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   topBar: {
+    paddingHorizontal: 20,
+    paddingVertical: 16,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
   },
-  brand: {
+  headerTitle: {
     fontSize: 20,
-    fontWeight: '800',
-    letterSpacing: -0.5,
+    fontWeight: '700',
   },
-  dateSelector: {
-    borderBottomWidth: 1,
-    borderBottomColor: '#00000010',
-    backgroundColor: 'transparent',
+  datePickerContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 16,
+    alignItems: 'center',
   },
-  dateScroll: {
+  dateButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 12,
-    gap: 12,
+    borderRadius: 24,
+    gap: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  dateItem: {
-    width: 60,
-    height: 80,
-    borderRadius: 15,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
-  },
-  dateDay: {
-    fontSize: 13,
+  dateButtonText: {
+    fontSize: 16,
     fontWeight: '600',
-  },
-  dateNum: {
-    fontSize: 18,
-    fontWeight: '700',
   },
   centered: {
     flex: 1,
@@ -279,5 +293,22 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    borderRadius: 20,
+    padding: 16,
+    overflow: 'hidden',
+  },
+  closeBtn: {
+    marginTop: 16,
+    paddingVertical: 12,
+    alignItems: 'center',
+    borderRadius: 12,
   }
 });
