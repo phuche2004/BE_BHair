@@ -10,6 +10,7 @@ import { useAuthStore } from '../../store/useAuthStore';
 import { MaterialIcons } from '@expo/vector-icons';
 import { HeaderMenu } from '../../components/ui/header-menu';
 import { HapticTouch } from '../../components/ui/haptic-touch';
+import { CreateAppointmentModal } from '../../components/ui/create-appointment-modal';
 
 function toDateStr(d: Date): string {
   const y = d.getFullYear();
@@ -40,6 +41,7 @@ export default function ManagerAppointmentsScreen() {
   const [loadingSlots, setLoadingSlots] = useState(true);
   const [loadingAppts, setLoadingAppts] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   const fetchSlots = useCallback(async (date: string) => {
     const shopId = (user as any)?.shopId;
@@ -69,7 +71,7 @@ export default function ManagerAppointmentsScreen() {
       setLoadingAppts(true);
       const res = await appointmentApi.getShopAppointments(shopId);
       const all = Array.isArray(res) ? res : res.data || [];
-      const filtered = all.filter((a: any) => (a.date || '').startsWith(selectedDate));
+      const filtered = all.filter((a: any) => toDateStr(new Date(a.bookingDate || a.date)) === selectedDate);
       setShopAppointments(filtered);
     } catch (error) {
       console.error('Failed to fetch appointments:', error);
@@ -160,10 +162,10 @@ export default function ManagerAppointmentsScreen() {
                 ]}
                 onPress={() => setSelectedDate(date)}
               >
-                <Text style={[styles.dateDay, { color: isSelected ? colors.onPrimary : colors.secondary }]}>
+                <Text style={[styles.dateDay, { color: isSelected ? colors.onPrimary : colors.secondary }]} allowFontScaling={false}>
                   {d.toLocaleDateString('vi-VN', { weekday: 'short' })}
                 </Text>
-                <Text style={[styles.dateNum, { color: isSelected ? colors.onPrimary : colors.primary }]}>
+                <Text style={[styles.dateNum, { color: isSelected ? colors.onPrimary : colors.primary }]} allowFontScaling={false}>
                   {d.getDate()}
                 </Text>
               </HapticTouch>
@@ -188,7 +190,7 @@ export default function ManagerAppointmentsScreen() {
               return (
                 <View key={idx} style={styles.timeSlot}>
                   <View style={styles.timeColumn}>
-                    <Text style={[styles.timeLabel, { color: isPast ? colors.muted : colors.primary }]}>{timeStr}</Text>
+                    <Text style={[styles.timeLabel, { color: isPast ? colors.muted : colors.primary }]} allowFontScaling={false}>{timeStr}</Text>
                   </View>
                   <View style={[styles.slotContent, { borderLeftColor: colors.border }]}>
                     {appts.length > 0 ? (
@@ -211,7 +213,7 @@ export default function ManagerAppointmentsScreen() {
                               <Text style={[styles.serviceName, { color: colors.secondary }]}>{appt.serviceId?.name}</Text>
                             </View>
                             <View style={[styles.statusBadge, { backgroundColor: STATUS_COLOR[appt.status] + '20' }]}>
-                              <Text style={[styles.statusText, { color: STATUS_COLOR[appt.status] }]}>{STATUS_LABEL[appt.status]}</Text>
+                              <Text style={[styles.statusText, { color: STATUS_COLOR[appt.status] }]} allowFontScaling={false}>{STATUS_LABEL[appt.status]}</Text>
                             </View>
                         </HapticTouch>
                       ))
@@ -227,6 +229,23 @@ export default function ManagerAppointmentsScreen() {
           </View>
         )}
       </ScrollView>
+
+      <TouchableOpacity 
+        style={[styles.fab, { backgroundColor: colors.primary }]}
+        onPress={() => setShowCreateModal(true)}
+      >
+        <MaterialIcons name="add" size={28} color="#FFF" />
+      </TouchableOpacity>
+
+      <CreateAppointmentModal 
+        visible={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        selectedDate={selectedDate}
+        onSuccess={() => {
+          setShowCreateModal(false);
+          fetchAllData(selectedDate);
+        }}
+      />
     </SafeAreaView>
   );
 }
@@ -347,6 +366,7 @@ const styles = StyleSheet.create({
   statusText: {
     fontSize: 11,
     fontWeight: '700',
+    includeFontPadding: false,
   },
   serviceName: {
     fontSize: 13,

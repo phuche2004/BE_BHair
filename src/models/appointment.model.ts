@@ -24,6 +24,13 @@ export interface IAppointment extends Document {
     status: AppointmentStatus;
     bookingCode: string;
     note?: string;
+    serviceChanges?: {
+        action: 'ADDED' | 'REMOVED';
+        serviceId: mongoose.Types.ObjectId;
+        byName: string;
+        byId: mongoose.Types.ObjectId;
+        date: Date;
+    }[];
     createdAt: Date;
     updatedAt: Date;
 }
@@ -33,7 +40,7 @@ const AppointmentSchema: Schema = new Schema(
         // Thêm index shopId để Admin dễ dàng lọc đơn hàng theo chi nhánh
         shopId: { type: Schema.Types.ObjectId, ref: 'Shop', required: true, index: true },
 
-        customerId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
+        customerId: { type: Schema.Types.ObjectId, ref: 'User', required: false, index: true },
         customerName: { type: String, required: false },
         customerPhone: { type: String, required: false },
         barberId: { type: Schema.Types.ObjectId, ref: 'User', required: false, index: true },
@@ -49,6 +56,13 @@ const AppointmentSchema: Schema = new Schema(
         },
         bookingCode: { type: String, unique: true, index: true },
         note: { type: String },
+        serviceChanges: [{
+            action: { type: String, enum: ['ADDED', 'REMOVED'], required: true },
+            serviceId: { type: Schema.Types.ObjectId, ref: 'Service', required: true },
+            byName: { type: String, required: true },
+            byId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+            date: { type: Date, default: Date.now }
+        }],
     },
     { timestamps: true }
 );

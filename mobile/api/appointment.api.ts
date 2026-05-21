@@ -24,4 +24,12 @@ export const appointmentApi = {
         const response = await axiosInstance.patch(`/appointment/${id}/status`, { status });
         return response.data;
     },
+    createAppointment: async (data: any) => {
+        const response = await axiosInstance.post(`/appointment`, data);
+        return response.data;
+    },
+    updateAppointmentServices: async (id: string, serviceChanges: any[]) => {
+        const response = await axiosInstance.patch(`/appointment/${id}/services`, { serviceChanges });
+        return response.data;
+    },
 };

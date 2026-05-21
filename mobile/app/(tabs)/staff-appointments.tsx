@@ -10,6 +10,7 @@ import { useAuthStore } from '../../store/useAuthStore';
 import { MaterialIcons } from '@expo/vector-icons';
 import { HeaderMenu } from '../../components/ui/header-menu';
 import { HapticTouch } from '../../components/ui/haptic-touch';
+import { CreateAppointmentModal } from '../../components/ui/create-appointment-modal';
 
 
 function toDateStr(d: Date): string {
@@ -46,6 +47,7 @@ export default function StaffAppointmentsScreen() {
   const [loadingSlots, setLoadingSlots] = useState(true);
   const [loadingAppts, setLoadingAppts] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   const fetchSlots = useCallback(async (date: string) => {
     const shopId = (user as any)?.shopId;
@@ -120,6 +122,14 @@ export default function StaffAppointmentsScreen() {
     apptsByTime[timeStr].push(appt);
   });
 
+  const STATUS_LABEL: Record<string, string> = {
+    PENDING: 'Đang chờ',
+    CONFIRMED: 'Đã xác nhận',
+    COMPLETED: 'Hoàn thành',
+    CANCELLED: 'Đã hủy',
+    NO_SHOW: 'Không đến',
+  };
+
   const STATUS_COLOR: Record<string, string> = {
     PENDING: colors.warning,
     CONFIRMED: colors.secondary,
@@ -155,10 +165,10 @@ export default function StaffAppointmentsScreen() {
                 ]}
                 onPress={() => setSelectedDate(date)}
               >
-                <Text style={[styles.dateDay, { color: isSelected ? colors.onPrimary : colors.secondary }]}>
+                <Text style={[styles.dateDay, { color: isSelected ? colors.onPrimary : colors.secondary }]} allowFontScaling={false}>
                   {d.toLocaleDateString('vi-VN', { weekday: 'short' })}
                 </Text>
-                <Text style={[styles.dateNum, { color: isSelected ? colors.onPrimary : colors.primary }]}>
+                <Text style={[styles.dateNum, { color: isSelected ? colors.onPrimary : colors.primary }]} allowFontScaling={false}>
                   {d.getDate()}
                 </Text>
               </HapticTouch>
@@ -183,7 +193,7 @@ export default function StaffAppointmentsScreen() {
               return (
                 <View key={idx} style={styles.timeSlot}>
                   <View style={styles.timeColumn}>
-                    <Text style={[styles.timeLabel, { color: isPast ? colors.muted : colors.primary }]}>{timeStr}</Text>
+                    <Text style={[styles.timeLabel, { color: isPast ? colors.muted : colors.primary }]} allowFontScaling={false}>{timeStr}</Text>
                   </View>
                   <View style={[styles.slotContent, { borderLeftColor: colors.border }]}>
                     {appts.length > 0 ? (
@@ -205,6 +215,9 @@ export default function StaffAppointmentsScreen() {
                             </Text>
                             <Text style={[styles.serviceName, { color: colors.secondary }]}>{appt.serviceId?.name}</Text>
                           </View>
+                          <View style={[styles.statusBadge, { backgroundColor: STATUS_COLOR[appt.status] + '20' }]}>
+                            <Text style={[styles.statusText, { color: STATUS_COLOR[appt.status] }]} allowFontScaling={false}>{STATUS_LABEL[appt.status]}</Text>
+                          </View>
                         </HapticTouch>
                       ))
                     ) : (
@@ -219,6 +232,23 @@ export default function StaffAppointmentsScreen() {
           </View>
         )}
       </ScrollView>
+
+      <TouchableOpacity 
+        style={[styles.fab, { backgroundColor: colors.primary }]}
+        onPress={() => setShowCreateModal(true)}
+      >
+        <MaterialIcons name="add" size={28} color="#FFF" />
+      </TouchableOpacity>
+
+      <CreateAppointmentModal 
+        visible={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        selectedDate={selectedDate}
+        onSuccess={() => {
+          setShowCreateModal(false);
+          fetchAllData(selectedDate);
+        }}
+      />
     </SafeAreaView>
   );
 }
@@ -342,5 +372,17 @@ const styles = StyleSheet.create({
     height: 1,
     width: '100%',
     borderRadius: 1,
+  },
+  statusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    alignSelf: 'flex-start',
+    marginTop: 8,
+  },
+  statusText: {
+    fontSize: 11,
+    fontWeight: '700',
+    includeFontPadding: false,
   },
 });

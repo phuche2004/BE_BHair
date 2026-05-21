@@ -11,7 +11,7 @@ const generateBookingCode = () => {
 
 export const createAppointment = async (req: Request, res: Response) => {
     try {
-        let { shopId, barberId, serviceIds, bookingDate, note } = req.body; // bookingDate is ISO string
+        let { shopId, barberId, serviceIds, bookingDate, note, isManual, customerId, guestName, guestPhone } = req.body; // bookingDate is ISO string
 
         // 1. Validate Shop
         const shop = await Shop.findById(shopId);
@@ -106,14 +106,37 @@ export const createAppointment = async (req: Request, res: Response) => {
         }
 
         // 6. Create Appointment
-        const customer = await User.findById(req.user.id);
-        if (!customer) return res.status(404).json({ message: 'Customer not found' });
+        let customerIdObj = req.user.id;
+        let cName = '';
+        let cPhone = '';
+
+        if ((req.user.role === UserRole.STAFF || req.user.role === UserRole.MANAGER || req.user.role === UserRole.ADMIN) && isManual) {
+             if (customerId) {
+                 const target = await User.findById(customerId);
+                 if (target) {
+                     customerIdObj = target._id;
+                     cName = target.fullName;
+                     cPhone = target.phoneNumber || target.email || 'N/A';
+                 } else {
+                     return res.status(404).json({ message: 'Target customer not found' });
+                 }
+             } else {
+                 customerIdObj = undefined; // Walk-in
+                 cName = guestName || 'Khách vãng lai';
+                 cPhone = guestPhone || 'N/A';
+             }
+        } else {
+             const customer = await User.findById(req.user.id);
+             if (!customer) return res.status(404).json({ message: 'Customer not found' });
+             cName = customer.fullName;
+             cPhone = customer.phoneNumber || customer.email || 'N/A';
+        }
 
         const appointment = new Appointment({
             shopId,
-            customerId: req.user.id,
-            customerName: customer.fullName,
-            customerPhone: customer.phoneNumber || customer.email || 'N/A',
+            customerId: customerIdObj,
+            customerName: cName,
+            customerPhone: cPhone,
             barberId,
             serviceIds,
             bookingDate: startDate,
@@ -360,6 +383,66 @@ export const getShopAppointments = async (req: Request, res: Response) => {
             .sort({ bookingDate: 1 });
 
         res.json(appointments);
+    } catch (error: any) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+export const updateAppointmentServices = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const { serviceChanges } = req.body; 
+        
+        const appointment = await Appointment.findById(id);
+        if (!appointment) return res.status(404).json({ message: 'Appointment not found' });
+
+        const isAdmin = req.user.role === UserRole.ADMIN;
+        let userShopId = req.user.shopId;
+        if (!userShopId && (req.user.role === UserRole.STAFF || req.user.role === UserRole.MANAGER)) {
+            const dbUser = await User.findById(req.user.id).select('shopId');
+            userShopId = dbUser?.shopId?.toString();
+        }
+        const isShopStaff = (req.user.role === UserRole.STAFF || req.user.role === UserRole.MANAGER) && userShopId?.toString() === appointment.shopId.toString();
+
+        if (!isAdmin && !isShopStaff) return res.status(403).json({ message: 'Not authorized to edit services' });
+        
+        if (appointment.status !== AppointmentStatus.PENDING && appointment.status !== AppointmentStatus.CONFIRMED) {
+            return res.status(400).json({ message: 'Cannot edit services for completed or cancelled appointments' });
+        }
+
+        const updater = await User.findById(req.user.id);
+        if (!updater) return res.status(404).json({ message: 'User not found' });
+
+        let currentServiceIds = appointment.serviceIds.map(s => s.toString());
+        let currentPrice = appointment.totalPrice;
+
+        for (const change of serviceChanges) {
+            const svc = await Service.findById(change.serviceId);
+            if (!svc) continue;
+
+            if (change.action === 'ADDED' && !currentServiceIds.includes(change.serviceId)) {
+                currentServiceIds.push(change.serviceId);
+                currentPrice += svc.price;
+            } else if (change.action === 'REMOVED' && currentServiceIds.includes(change.serviceId)) {
+                currentServiceIds = currentServiceIds.filter(s => s !== change.serviceId);
+                currentPrice -= svc.price;
+            }
+
+            if (!appointment.serviceChanges) appointment.serviceChanges = [];
+            appointment.serviceChanges.push({
+                action: change.action,
+                serviceId: svc._id as Types.ObjectId,
+                byName: updater.fullName,
+                byId: updater._id as Types.ObjectId,
+                date: new Date()
+            });
+        }
+
+        appointment.serviceIds = currentServiceIds as any;
+        appointment.totalPrice = currentPrice;
+        await appointment.save();
+
+        res.json({ message: 'Services updated successfully', appointment });
     } catch (error: any) {
         res.status(500).json({ message: 'Server error', error: error.message });
     }

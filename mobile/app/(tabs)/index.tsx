@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Image, TextInput, DeviceEventEmitter } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, TextInput, DeviceEventEmitter } from 'react-native';
+import { Image } from 'expo-image';
 import { Colors, Fonts } from '../../constants/theme';
 import { useColorScheme } from '../../hooks/use-color-scheme';
 import { useTranslation } from '../../hooks/useTranslation';
@@ -100,78 +101,86 @@ export default function HomeScreen() {
         <HeaderMenu />
       </View>
 
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <View style={styles.greeting}>
-          <Text style={[styles.greetingLabel, { color: colors.secondary }]}>
-            {t('home.welcome')} {user?.fullName || 'bạn'}
-          </Text>
-          {/* <Text style={[styles.greetingTitle, { color: colors.primary }]}>B_Hair</Text> */}
-        </View>
+      <FlatList
+        data={!loading && shops.length > 0 ? shops : []}
+        keyExtractor={(item) => item._id}
+        contentContainerStyle={styles.scroll}
+        showsVerticalScrollIndicator={false}
+        initialNumToRender={3}
+        maxToRenderPerBatch={3}
+        windowSize={3}
+        removeClippedSubviews={true}
+        ListHeaderComponent={
+          <>
+            <View style={styles.greeting}>
+              <Text style={[styles.greetingLabel, { color: colors.secondary }]}>
+                {t('home.welcome')} {user?.fullName || 'bạn'}
+              </Text>
+            </View>
 
-        <HapticTouch
-          activeOpacity={0.8}
-          onPress={() => router.push('/(tabs)/search' as any)}
-          style={[styles.searchBar, { backgroundColor: theme === 'dark' ? colors.surfaceAlt : colors.surfaceHighest }]}
-        >
-          <MaterialIcons name="search" size={20} color={colors.outline} />
-          <TextInput
-            editable={false}
-            value=""
-            placeholder={t('home.searchPlaceholder')}
-            placeholderTextColor={colors.outline}
-            style={[styles.searchInput, { color: colors.text }]}
-          />
-        </HapticTouch>
+            <HapticTouch
+              activeOpacity={0.8}
+              onPress={() => router.push('/(tabs)/search' as any)}
+              style={[styles.searchBar, { backgroundColor: theme === 'dark' ? colors.surfaceAlt : colors.surfaceHighest }]}
+            >
+              <MaterialIcons name="search" size={20} color={colors.outline} />
+              <TextInput
+                editable={false}
+                value=""
+                placeholder={t('home.searchPlaceholder')}
+                placeholderTextColor={colors.outline}
+                style={[styles.searchInput, { color: colors.text }]}
+              />
+            </HapticTouch>
 
-        {loading ? (
-          <View style={styles.loadingBlock}>
-            <ActivityIndicator size="large" color={colors.secondary} />
-          </View>
-        ) : shops.length === 0 ? (
-          <View style={styles.loadingBlock}>
-            <Text style={{ color: colors.muted }}>No shops found.</Text>
-          </View>
-        ) : (
-          <View style={styles.cards}>
-            {shops.map((shop, index) => {
-              const cover = shop.images1?.[0] || shop.image || SAMPLE_IMAGES[index % SAMPLE_IMAGES.length];
-              const rating = shop.rating ?? shop.averageRating ?? (index % 2 ? 4.9 : 4.8);
-              return (
-                <View key={shop._id} style={styles.cardBlock}>
-                  <HapticTouch
-                    activeOpacity={0.9}
-                    style={[styles.cardImageWrap, { backgroundColor: colors.surfaceAlt }]}
-                    onPress={() => router.push({ pathname: '/shop/[id]', params: { id: shop._id } } as any)}
-                  >
-                    <Image source={{ uri: cover }} style={styles.cardImage} />
-                    <View style={[styles.ratingBadge, { backgroundColor: theme === 'dark' ? `${colors.surfaceAlt}E6` : `${colors.cardAlt}E6` }]}>
-                      <MaterialIcons name="star" size={14} color={colors.secondary} />
-                      <Text style={[styles.ratingText, { color: colors.text }]} allowFontScaling={false}>{Number(rating).toFixed(1)}</Text>
-                    </View>
-                  </HapticTouch>
-
-                  <View style={styles.cardMeta}>
-                    <View style={{ flex: 1 }}>
-                      <Text style={[styles.cardTitle, { color: colors.primary }]} numberOfLines={1}>{shop.name}</Text>
-                      <Text style={[styles.cardAddress, { color: colors.muted }]} numberOfLines={1}>{shop.address}</Text>
-                      <Text style={[styles.cardHours, { color: colors.muted }]}>
-                        {shop.openTime || '09:00'} - {shop.closeTime || '20:00'}
-                      </Text>
-                    </View>
-                    <HapticTouch
-                      activeOpacity={0.85}
-                      style={[styles.bookBtn, { backgroundColor: colors.primary }]}
-                      onPress={() => router.push({ pathname: '/shop/[id]', params: { id: shop._id } } as any)}
-                    >
-                      <Text style={[styles.bookText, { color: primaryText }]}>{t('home.book')}</Text>
-                    </HapticTouch>
-                  </View>
+            {loading ? (
+              <View style={styles.loadingBlock}>
+                <ActivityIndicator size="large" color={colors.secondary} />
+              </View>
+            ) : shops.length === 0 ? (
+              <View style={styles.loadingBlock}>
+                <Text style={{ color: colors.muted }}>No shops found.</Text>
+              </View>
+            ) : null}
+          </>
+        }
+        renderItem={({ item: shop, index }) => {
+          const cover = shop.images1?.[0] || shop.image || SAMPLE_IMAGES[index % SAMPLE_IMAGES.length];
+          const rating = shop.rating ?? shop.averageRating ?? (index % 2 ? 4.9 : 4.8);
+          return (
+            <View style={[styles.cardBlock, { marginBottom: 28 }]}>
+              <HapticTouch
+                activeOpacity={0.9}
+                style={[styles.cardImageWrap, { backgroundColor: colors.surfaceAlt }]}
+                onPress={() => router.push({ pathname: '/shop/[id]', params: { id: shop._id } } as any)}
+              >
+                <Image source={{ uri: cover }} style={styles.cardImage} contentFit="cover" transition={200} />
+                <View style={[styles.ratingBadge, { backgroundColor: theme === 'dark' ? `${colors.surfaceAlt}E6` : `${colors.cardAlt}E6` }]}>
+                  <MaterialIcons name="star" size={14} color={colors.secondary} />
+                  <Text style={[styles.ratingText, { color: colors.text }]} numberOfLines={1} allowFontScaling={false}>{Number(rating).toFixed(1)}</Text>
                 </View>
-              );
-            })}
-          </View>
-        )}
-      </ScrollView>
+              </HapticTouch>
+
+              <View style={styles.cardMeta}>
+                  <View style={{ flex: 1, paddingRight: 8 }}>
+                    <Text style={[styles.cardTitle, { color: colors.primary }]} numberOfLines={1}>{shop.name}</Text>
+                  <Text style={[styles.cardAddress, { color: colors.muted }]} numberOfLines={1}>{shop.address}</Text>
+                  <Text style={[styles.cardHours, { color: colors.muted }]}>
+                    {shop.openTime || '09:00'} - {shop.closeTime || '20:00'}
+                  </Text>
+                </View>
+                <HapticTouch
+                  activeOpacity={0.85}
+                  style={[styles.bookBtn, { backgroundColor: colors.primary }]}
+                  onPress={() => router.push({ pathname: '/shop/[id]', params: { id: shop._id } } as any)}
+                >
+                  <Text style={[styles.bookText, { color: primaryText }]} allowFontScaling={false}>{t('home.book')}</Text>
+                </HapticTouch>
+              </View>
+            </View>
+          );
+        }}
+      />
     </SafeAreaView>
   );
 }
@@ -264,8 +273,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 10,
-    flexShrink: 0,
-    minWidth: 46,
     justifyContent: 'center',
   },
   ratingText: {

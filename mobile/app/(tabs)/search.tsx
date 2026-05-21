@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, TextInput, FlatList, TouchableOpacity, ActivityIndicator, DeviceEventEmitter, Image } from 'react-native';
+import { View, Text, StyleSheet, TextInput, FlatList, TouchableOpacity, ActivityIndicator, DeviceEventEmitter } from 'react-native';
+import { Image } from 'expo-image';
 import { Colors, Fonts } from '../../constants/theme';
 import { useColorScheme } from '../../hooks/use-color-scheme';
 import { useTranslation } from '../../hooks/useTranslation';
@@ -10,6 +11,8 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { HapticTouch } from '../../components/ui/haptic-touch';
 import { HeaderMenu } from '../../components/ui/header-menu';
 import { ShopMap } from '../../components/ui/ShopMap';
+
+const MemoizedShopMap = React.memo(ShopMap);
 
 const SAMPLE_IMAGES = [
   'https://lh3.googleusercontent.com/aida-public/AB6AXuA1EMmzLiUnvvExlXuuJ5TwhZ-UGvA7TSC12PvpAVXRpB8gbEV_fVp89prjitZINmGKQNMQHKOPZAcyvv6wezOjMviYcaNJWi-wMhzr_GSymToXbhBakwhrdhjstGeaGBdgatqGWfH7c7FA2NCn43vBmhZiqu1MRJ7ivMy4UUPGJ5lk92m5rdc7nehZtKh02Qm5Twl6ybLaUODV3qsHUDzoyVedRi7977qNN2cTeuyIMJTyd4jMzX6ttIg4FVGkV1i6TIoG9n4kGWJe',
@@ -28,7 +31,6 @@ export default function SearchScreen() {
   const [shops, setShops] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [activeFilter, setActiveFilter] = useState('Gần tôi');
-  const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
 
   const fetchShops = useCallback(async () => {
     try {
@@ -73,13 +75,6 @@ export default function SearchScreen() {
           </Text>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          <HapticTouch onPress={() => setViewMode(viewMode === 'list' ? 'map' : 'list')}>
-            <MaterialIcons 
-              name={viewMode === 'list' ? 'map' : 'view-list'} 
-              size={24} 
-              color={colors.secondary} 
-            />
-          </HapticTouch>
           <HeaderMenu />
         </View>
       </View>
@@ -132,53 +127,63 @@ export default function SearchScreen() {
           </HapticTouch>
         </View>
 
-        <Text style={[styles.sectionLabel, { color: colors.secondary }]}>KẾT QUẢ GỢI Ý</Text>
+        <View 
+          style={[
+            styles.mapWrapper, 
+            keyword.trim() !== '' && styles.hiddenMap
+          ]}
+          pointerEvents={keyword.trim() === '' ? 'auto' : 'none'}
+        >
+          <MemoizedShopMap />
+        </View>
 
-        {viewMode === 'map' ? (
-          <View style={styles.mapWrapper}>
-            <ShopMap />
-          </View>
-        ) : loading ? (
-          <View style={styles.center}>
-            <ActivityIndicator size="large" color={colors.secondary} />
-          </View>
-        ) : (
-          <FlatList
-            data={shops}
-            keyExtractor={(item) => item._id}
-            renderItem={({ item, index }) => {
-              const cover = item.images1?.[0] || item.image || SAMPLE_IMAGES[index % SAMPLE_IMAGES.length];
-              const rating = item.rating ?? item.averageRating ?? (index % 2 ? 4.9 : 4.8);
-              const distance = item.distance ?? `${index + 1}.2 km`;
-              return (
-                <HapticTouch
-                  key={item._id}
-                  style={[styles.card, { backgroundColor: theme === 'dark' ? colors.surfaceAlt : colors.surface }]}
-                  onPress={() => router.push({ pathname: '/shop/[id]', params: { id: item._id } } as any)}
-                >
-                  <Image source={{ uri: cover }} style={styles.cardImage} />
-                  <View style={styles.cardMeta}>
-                    <View style={{ flex: 1 }}>
-                      <Text style={[styles.cardTitle, { color: colors.primary }]} numberOfLines={1}>{item.name}</Text>
-                      <Text style={[styles.cardSubtitle, { color: colors.muted }]}>{item.address?.split(',')[0]} · {distance}</Text>
+        {keyword.trim() !== '' && (
+          loading ? (
+            <View style={styles.center}>
+              <ActivityIndicator size="large" color={colors.secondary} />
+            </View>
+          ) : (
+            <FlatList
+              data={shops}
+              keyExtractor={(item) => item._id}
+              renderItem={({ item, index }) => {
+                const cover = item.images1?.[0] || item.image || SAMPLE_IMAGES[index % SAMPLE_IMAGES.length];
+                const rating = item.rating ?? item.averageRating ?? (index % 2 ? 4.9 : 4.8);
+                const distance = item.distance ?? `${index + 1}.2 km`;
+                return (
+                  <HapticTouch
+                    key={item._id}
+                    style={[styles.card, { backgroundColor: theme === 'dark' ? colors.surfaceAlt : colors.surface }]}
+                    onPress={() => router.push({ pathname: '/shop/[id]', params: { id: item._id } } as any)}
+                  >
+                    <Image source={{ uri: cover }} style={styles.cardImage} contentFit="cover" transition={200} />
+                    <View style={styles.cardMeta}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.cardTitle, { color: colors.primary }]} numberOfLines={1}>{item.name}</Text>
+                        <Text style={[styles.cardSubtitle, { color: colors.muted }]}>{item.address?.split(',')[0]} · {distance}</Text>
+                      </View>
+                      <View style={[styles.ratingBadge, { backgroundColor: theme === 'dark' ? colors.surfaceHigh : colors.cardAlt }]}>
+                        <MaterialIcons name="star" size={14} color={colors.secondary} />
+                        <Text style={[styles.ratingText, { color: colors.primary }]} allowFontScaling={false}>{Number(rating).toFixed(1)}</Text>
+                      </View>
                     </View>
-                    <View style={[styles.ratingBadge, { backgroundColor: theme === 'dark' ? colors.surfaceHigh : colors.cardAlt }]}>
-                      <MaterialIcons name="star" size={14} color={colors.secondary} />
-                      <Text style={[styles.ratingText, { color: colors.primary }]}>{Number(rating).toFixed(1)}</Text>
-                    </View>
-                  </View>
-                </HapticTouch>
-              );
-            }}
-            ListEmptyComponent={() => (
-              <View style={styles.emptyState}>
-                <MaterialIcons name="search-off" size={42} color={colors.outline} />
-                <Text style={[styles.emptyText, { color: colors.outline }]}>Không tìm thấy tiệm phù hợp.</Text>
-              </View>
-            )}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingBottom: 120 }}
-          />
+                  </HapticTouch>
+                );
+              }}
+              ListEmptyComponent={() => (
+                <View style={styles.emptyState}>
+                  <MaterialIcons name="search-off" size={42} color={colors.outline} />
+                  <Text style={[styles.emptyText, { color: colors.outline }]}>Không tìm thấy tiệm phù hợp.</Text>
+                </View>
+              )}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{ paddingBottom: 120 }}
+              initialNumToRender={5}
+              maxToRenderPerBatch={5}
+              windowSize={5}
+              removeClippedSubviews={true}
+            />
+          )
         )}
       </View>
     </SafeAreaView>
@@ -230,6 +235,11 @@ const styles = StyleSheet.create({
     // Add shadow/border to map wrapper if needed
     borderWidth: 1,
     borderColor: 'rgba(0,0,0,0.05)',
+  },
+  hiddenMap: {
+    position: 'absolute',
+    opacity: 0,
+    top: -9999,
   },
   searchBar: {
     flexDirection: 'row',
@@ -304,10 +314,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 10,
+    flexShrink: 0,
   },
   ratingText: {
     fontSize: 12,
     fontWeight: '700',
+    includeFontPadding: false,
   },
   emptyState: {
     alignItems: 'center',

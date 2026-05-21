@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Image, FlatList, Dimensions, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Image, FlatList, Dimensions, NativeSyntheticEvent, NativeScrollEvent, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Colors, Fonts } from '../../constants/theme';
 import { useColorScheme } from '../../hooks/use-color-scheme';
 import { useTranslation } from '../../hooks/useTranslation';
+import { useAuthStore } from '../../store/useAuthStore';
 import { shopApi } from '../../api/shop.api';
 import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -73,6 +74,7 @@ export default function ShopDetailScreen() {
     const { t } = useTranslation();
     const primaryText = colors.onPrimary;
     const insets = useSafeAreaInsets();
+    const { token } = useAuthStore();
 
     const [shop, setShop] = useState<any>(null);
     const [services, setServices] = useState<any[]>([]);
@@ -245,7 +247,7 @@ export default function ShopDetailScreen() {
                         <Text style={[styles.shopTitle, { color: colors.primary }]}>{shop.name}</Text>
                         <View style={styles.ratingRow}>
                             <MaterialIcons name="star" size={16} color={colors.secondary} />
-                            <Text style={[styles.ratingText, { color: colors.text }]}>
+                            <Text style={[styles.ratingText, { color: colors.text }]} allowFontScaling={false}>
                                 {Number(rating).toFixed(1)} ({shop.totalReviews ?? 0} đánh giá)
                             </Text>
                         </View>
@@ -325,7 +327,16 @@ export default function ShopDetailScreen() {
             <View style={[styles.bottomBar, { backgroundColor: colors.background, borderTopColor: colors.border, paddingBottom: insets.bottom + 16 }]}>
                 <HapticTouch
                     style={[styles.bookButton, { backgroundColor: colors.primary }]}
-                    onPress={() => router.push({ pathname: '/booking', params: { shopId: id, serviceId: selectedServiceId ?? undefined } } as any)}
+                    onPress={() => {
+                        if (!token) {
+                            Alert.alert('Đăng nhập', 'Bạn cần đăng nhập để đặt lịch', [
+                                { text: 'Huỷ', style: 'cancel' },
+                                { text: 'Đăng nhập', onPress: () => router.push('/auth/login') }
+                            ]);
+                            return;
+                        }
+                        router.push({ pathname: '/booking', params: { shopId: id, serviceId: selectedServiceId ?? undefined } } as any);
+                    }}
                     activeOpacity={0.85}
                 >
                     <MaterialIcons name="calendar-today" size={18} color={primaryText} />
@@ -426,6 +437,15 @@ const styles = StyleSheet.create({
         fontWeight: '800',
         fontFamily: Fonts.headline,
     },
+    ratingBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 8,
+        flexShrink: 0,
+    },
     ratingRow: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -433,8 +453,9 @@ const styles = StyleSheet.create({
         marginTop: 4,
     },
     ratingText: {
-        fontSize: 13,
-        fontWeight: '600',
+        fontSize: 12,
+        fontWeight: '700',
+        includeFontPadding: false,
     },
     reviewsBtn: {
         flexDirection: 'row',

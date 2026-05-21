@@ -15,6 +15,7 @@ import { HapticTouch } from '../../components/ui/haptic-touch';
 
 
 export default function SettingsScreen() {
+  const router = require('expo-router').useRouter();
   const theme = useColorScheme() ?? 'light';
   const colors = Colors[theme];
   const { user, logout } = useAuthStore();
@@ -69,9 +70,17 @@ export default function SettingsScreen() {
             </View>
           )}
           <View style={styles.profileMeta}>
-            <Text style={[styles.profileLabel, { color: colors.secondary }]}>{t('settings.customer') || 'Khách hàng'}</Text>
-            <Text style={[styles.profileName, { color: colors.primary }]}>{user?.fullName || 'User Name'}</Text>
-            <Text style={[styles.profilePhone, { color: colors.muted }]}>{user?.phoneNumber || t('settings.noPhone')}</Text>
+            <Text style={[styles.profileLabel, { color: colors.secondary }]}>{user ? (t('settings.customer') || 'Khách hàng') : 'Guest'}</Text>
+            <Text style={[styles.profileName, { color: colors.primary }]}>{user?.fullName || 'Khách hàng mới'}</Text>
+            <Text style={[styles.profilePhone, { color: colors.muted }]}>{user?.phoneNumber || 'Vui lòng đăng nhập'}</Text>
+            {!user && (
+              <HapticTouch
+                style={{ marginTop: 8, backgroundColor: colors.primary, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8, alignSelf: 'flex-start' }}
+                onPress={() => router.push('/auth/login' as any)}
+              >
+                <Text style={{ color: colors.onPrimary, fontSize: 13, fontWeight: 'bold' }} allowFontScaling={false}>Đăng nhập</Text>
+              </HapticTouch>
+            )}
           </View>
         </View>
 
@@ -120,13 +129,13 @@ export default function SettingsScreen() {
                 style={[styles.segmentBtn, language === 'vi' && { backgroundColor: colors.primary }]}
                 onPress={() => setLanguage('vi')}
               >
-                <Text style={[styles.segmentText, { color: language === 'vi' ? colors.onPrimary : colors.muted }]}>Tiếng Việt</Text>
+                <Text style={[styles.segmentText, { color: language === 'vi' ? colors.onPrimary : colors.muted }]} allowFontScaling={false}>Tiếng Việt</Text>
               </HapticTouch>
               <HapticTouch
                 style={[styles.segmentBtn, language === 'en' && { backgroundColor: colors.primary }]}
                 onPress={() => setLanguage('en')}
               >
-                <Text style={[styles.segmentText, { color: language === 'en' ? colors.onPrimary : colors.muted }]}>English</Text>
+                <Text style={[styles.segmentText, { color: language === 'en' ? colors.onPrimary : colors.muted }]} allowFontScaling={false}>English</Text>
               </HapticTouch>
             </View>
           </View>
@@ -157,13 +166,15 @@ export default function SettingsScreen() {
             </HapticTouch>
           </View>
 
-          <HapticTouch
-            style={[styles.logoutButton, { borderColor: colors.error }]}
-            onPress={handleLogout}
-          >
-            <MaterialIcons name="logout" size={18} color={colors.error} />
-            <Text style={[styles.logoutText, { color: colors.error }]}>{t('settings.logout')}</Text>
-          </HapticTouch>
+          {user && (
+            <HapticTouch
+              style={[styles.logoutButton, { borderColor: colors.error }]}
+              onPress={handleLogout}
+            >
+              <MaterialIcons name="logout" size={18} color={colors.error} />
+              <Text style={[styles.logoutText, { color: colors.error }]}>{t('settings.logout')}</Text>
+            </HapticTouch>
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -284,6 +295,7 @@ const styles = StyleSheet.create({
   segmentText: {
     fontSize: 12,
     fontWeight: '700',
+    includeFontPadding: false,
   },
   linkRow: {
     flexDirection: 'row',

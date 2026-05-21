@@ -15,6 +15,7 @@ import { registerForPushNotificationsAsync } from '../../utils/notification.util
 import { Colors, Fonts } from '../../constants/theme';
 import { useColorScheme } from '../../hooks/use-color-scheme';
 import { useTranslation } from '../../hooks/useTranslation';
+import { useAuthStore } from '../../store/useAuthStore';
 import { appointmentApi } from '../../api/appointment.api';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
@@ -30,6 +31,7 @@ export default function AppointmentsScreen() {
   const insets = useSafeAreaInsets();
   const primaryText = colors.onPrimary;
 
+  const { token } = useAuthStore();
   const [appointments, setAppointments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<'upcoming' | 'past'>('upcoming');
@@ -41,6 +43,10 @@ export default function AppointmentsScreen() {
   };
 
   const fetchAppointments = useCallback(async () => {
+    if (!token) {
+      setLoading(false);
+      return;
+    }
     try {
       setLoading(true);
       const res = await appointmentApi.getMyAppointments();
@@ -50,7 +56,7 @@ export default function AppointmentsScreen() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [token]);
 
   useFocusEffect(
     useCallback(() => {
@@ -97,7 +103,7 @@ export default function AppointmentsScreen() {
             </Text>
           </View>
           <View style={[styles.statusBadge, { backgroundColor: STATUS_COLOR[appt.status] + '20' }]}>
-            <Text style={[styles.statusText, { color: STATUS_COLOR[appt.status] }]}>
+            <Text style={[styles.statusText, { color: STATUS_COLOR[appt.status] }]} allowFontScaling={false}>
               {STATUS_LABEL[appt.status] || appt.status}
             </Text>
           </View>
@@ -128,7 +134,7 @@ export default function AppointmentsScreen() {
           </Text>
           {!isPast && (
              <View style={[styles.actionBtn, { backgroundColor: colors.primary }]}>
-              <Text style={[styles.actionText, { color: colors.onPrimary }]}>
+              <Text style={[styles.actionText, { color: colors.onPrimary }]} allowFontScaling={false}>
                 {t('home.book')}
               </Text>
             </View>
@@ -137,6 +143,37 @@ export default function AppointmentsScreen() {
       </HapticTouch>
     );
   };
+
+
+  if (!token) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+        <View style={styles.topBar}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Text style={[styles.brand, { color: colors.primary }]}>B_Hair</Text>
+            <View style={{ width: 1, height: 14, backgroundColor: colors.border }} />
+            <Text style={{ fontSize: 13, fontWeight: '600', color: colors.secondary, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+              {t('appointments.title')}
+            </Text>
+          </View>
+        </View>
+        <View style={styles.emptyContainer}>
+          <View style={[styles.emptyIconBg, { backgroundColor: colors.surfaceAlt }]}>
+            <MaterialIcons name="lock-outline" size={60} color={colors.secondary} />
+          </View>
+          <Text style={[styles.emptyText, { color: colors.primary }]}>Vui lòng đăng nhập</Text>
+          <Text style={[styles.emptySubText, { color: colors.muted }]}>Bạn cần đăng nhập để xem lịch hẹn của mình.</Text>
+          <HapticTouch 
+            style={[styles.emptyButton, { backgroundColor: colors.primary }]}
+            onPress={() => router.push('/auth/login')}
+          >
+            <Text style={[styles.emptyButtonText, { color: colors.onPrimary }]}>Đăng nhập ngay</Text>
+            <MaterialIcons name="login" size={18} color={colors.onPrimary} />
+          </HapticTouch>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
@@ -156,7 +193,7 @@ export default function AppointmentsScreen() {
           style={[styles.tab, tab === 'upcoming' && { borderBottomColor: colors.primary, borderBottomWidth: 2 }]}
           onPress={() => setTab('upcoming')}
         >
-          <Text style={[styles.tabText, tab === 'upcoming' ? { color: colors.primary, fontWeight: '700' } : { color: colors.secondary }]}>
+          <Text style={[styles.tabText, tab === 'upcoming' ? { color: colors.primary, fontWeight: '700' } : { color: colors.secondary }]} allowFontScaling={false}>
             {t('appointments.upcoming')}
           </Text>
         </HapticTouch>
@@ -164,7 +201,7 @@ export default function AppointmentsScreen() {
           style={[styles.tab, tab === 'past' && { borderBottomColor: colors.primary, borderBottomWidth: 2 }]}
           onPress={() => setTab('past')}
         >
-          <Text style={[styles.tabText, tab === 'past' ? { color: colors.primary, fontWeight: '700' } : { color: colors.secondary }]}>
+          <Text style={[styles.tabText, tab === 'past' ? { color: colors.primary, fontWeight: '700' } : { color: colors.secondary }]} allowFontScaling={false}>
             {t('appointments.past')}
           </Text>
         </HapticTouch>

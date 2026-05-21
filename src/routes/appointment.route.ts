@@ -12,6 +12,7 @@ router.get('/:id', authMiddleware.verifyToken, appointmentController.getAppointm
 
 // Manager/Admin/Staff Routes
 router.patch('/:id/status', authMiddleware.verifyToken, appointmentController.updateAppointmentStatus);
+router.patch('/:id/services', authMiddleware.verifyToken, appointmentController.updateAppointmentServices);
 router.get('/shop/:shopId', authMiddleware.verifyToken, appointmentController.getShopAppointments);
 
 export default router;

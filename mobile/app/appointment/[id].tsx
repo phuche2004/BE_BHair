@@ -9,12 +9,16 @@ import {
   Alert,
   ImageBackground,
   DeviceEventEmitter,
+  Modal,
+  FlatList,
+  Switch,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Colors, Fonts } from '../../constants/theme';
 import { useColorScheme } from '../../hooks/use-color-scheme';
 import { appointmentApi } from '../../api/appointment.api';
+import { shopApi } from '../../api/shop.api';
 import { useAuthStore } from '../../store/useAuthStore';
 import { MaterialIcons } from '@expo/vector-icons';
 import { HeaderMenu } from '../../components/ui/header-menu';
@@ -59,6 +63,60 @@ export default function AppointmentDetailScreen() {
   const [appt, setAppt] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
+  
+  const [showEditServices, setShowEditServices] = useState(false);
+  const [shopServices, setShopServices] = useState<any[]>([]);
+  const [tempChanges, setTempChanges] = useState<any[]>([]);
+  const [loadingServices, setLoadingServices] = useState(false);
+
+  const openEditServices = async () => {
+    setShowEditServices(true);
+    setTempChanges(appt.serviceChanges || []);
+    if (shopServices.length === 0) {
+      setLoadingServices(true);
+      try {
+         const sId = typeof appt.shopId === 'object' ? appt.shopId._id : appt.shopId;
+         const res = await shopApi.getShopServices(sId);
+         setShopServices(Array.isArray(res) ? res : res.data ?? []);
+      } catch(e) {
+         console.log(e);
+      } finally {
+         setLoadingServices(false);
+      }
+    }
+  };
+
+  const handleSaveServices = async () => {
+     try {
+       setUpdating(true);
+       await appointmentApi.updateAppointmentServices(id as string, tempChanges);
+       setShowEditServices(false);
+       Alert.alert('Thành công', 'Đã cập nhật dịch vụ');
+       fetchData();
+     } catch (error) {
+       console.log(error);
+       Alert.alert('Lỗi', 'Không thể cập nhật dịch vụ');
+     } finally {
+       setUpdating(false);
+     }
+  };
+
+  const toggleService = (svc: any, isOriginal: boolean) => {
+     const existingChangeIdx = tempChanges.findIndex((c) => (c.serviceId._id || c.serviceId) === svc._id);
+     if (isOriginal) {
+        if (existingChangeIdx >= 0) {
+           setTempChanges(prev => prev.filter((_, i) => i !== existingChangeIdx));
+        } else {
+           setTempChanges(prev => [...prev, { action: 'REMOVED', serviceId: svc, byName: user?.fullName || 'Barber' }]);
+        }
+     } else {
+        if (existingChangeIdx >= 0) {
+           setTempChanges(prev => prev.filter((_, i) => i !== existingChangeIdx));
+        } else {
+           setTempChanges(prev => [...prev, { action: 'ADDED', serviceId: svc, byName: user?.fullName || 'Barber' }]);
+        }
+     }
+  };
 
   const fetchData = useCallback(async () => {
     if (!id) return;
@@ -150,14 +208,16 @@ export default function AppointmentDetailScreen() {
           </View>
         </View>
 
-        <ImageBackground 
-          source={{ uri: (typeof appt.shopId === 'object' && appt.shopId?.images1?.[0]) || HERO }} 
-          style={styles.hero} 
-          imageStyle={styles.heroImage}
-        >
-          <View style={styles.heroOverlay} />
-          <Text style={styles.heroCaption}>Trải nghiệm dịch vụ tại {shopName}</Text>
-        </ImageBackground>
+        {!isManagerOrStaff && (
+          <ImageBackground 
+            source={{ uri: (typeof appt.shopId === 'object' && appt.shopId?.images1?.[0]) || HERO }} 
+            style={styles.hero} 
+            imageStyle={styles.heroImage}
+          >
+            <View style={styles.heroOverlay} />
+            <Text style={styles.heroCaption}>Trải nghiệm dịch vụ tại {shopName}</Text>
+          </ImageBackground>
+        )}
 
         <View style={[styles.card, { backgroundColor: theme === 'dark' ? colors.surfaceAlt : colors.surface }]}>
           <View style={styles.timeRow}>
@@ -173,12 +233,25 @@ export default function AppointmentDetailScreen() {
         </View>
 
         <View style={styles.doubleRow}>
-          <View style={[styles.smallCard, { backgroundColor: theme === 'dark' ? colors.surfaceAlt : colors.surface }]}>
-            <MaterialIcons name="location-on" size={18} color={colors.secondary} />
-            <Text style={[styles.smallLabel, { color: colors.muted }]}>CỬA HÀNG</Text>
-            <Text style={[styles.smallValue, { color: colors.primary }]} numberOfLines={1}>{shopName}</Text>
-            {!!shopAddress && <Text style={[styles.smallSub, { color: colors.muted }]} numberOfLines={1}>{shopAddress}</Text>}
-          </View>
+          {isCustomer ? (
+            <View style={[styles.smallCard, { backgroundColor: theme === 'dark' ? colors.surfaceAlt : colors.surface }]}>
+              <MaterialIcons name="location-on" size={18} color={colors.secondary} />
+              <Text style={[styles.smallLabel, { color: colors.muted }]}>CỬA HÀNG</Text>
+              <Text style={[styles.smallValue, { color: colors.primary }]} numberOfLines={1}>{shopName}</Text>
+              {!!shopAddress && <Text style={[styles.smallSub, { color: colors.muted }]} numberOfLines={1}>{shopAddress}</Text>}
+            </View>
+          ) : (
+            <View style={[styles.smallCard, { backgroundColor: theme === 'dark' ? colors.surfaceAlt : colors.surface }]}>
+              <MaterialIcons name="person" size={18} color={colors.secondary} />
+              <Text style={[styles.smallLabel, { color: colors.muted }]}>KHÁCH HÀNG</Text>
+              <Text style={[styles.smallValue, { color: colors.primary }]} numberOfLines={1}>
+                {appt.customerName || appt.userId?.fullName || 'Khách vãng lai'}
+              </Text>
+              <Text style={[styles.smallSub, { color: colors.muted }]}>
+                {appt.customerPhone || appt.userId?.phoneNumber || appt.userId?.email || 'N/A'}
+              </Text>
+            </View>
+          )}
           <View style={[styles.smallCard, { backgroundColor: theme === 'dark' ? colors.surfaceAlt : colors.surface }]}>
             <MaterialIcons name="content-cut" size={18} color={colors.secondary} />
             <Text style={[styles.smallLabel, { color: colors.muted }]}>BARBER</Text>
@@ -190,27 +263,68 @@ export default function AppointmentDetailScreen() {
         </View>
 
         <View style={styles.servicesSection}>
-          <Text style={[styles.servicesTitle, { color: colors.primary }]}>Dịch vụ</Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+             <Text style={[styles.servicesTitle, { color: colors.primary, marginBottom: 0 }]}>Dịch vụ</Text>
+             {isManagerOrStaff && isActive && (
+               <TouchableOpacity style={styles.editBtn} onPress={openEditServices}>
+                 <MaterialIcons name="edit" size={16} color={colors.primary} />
+                 <Text style={{ color: colors.primary, fontSize: 13, fontWeight: '600' }}>Cập nhật</Text>
+               </TouchableOpacity>
+             )}
+          </View>
+
           {services.map((svc: any, idx: number) => {
+            const svcId = typeof svc === 'object' ? svc._id : svc;
             const name = typeof svc === 'object' ? svc.name : svc;
             const price = typeof svc === 'object' ? svc.price : null;
             const dur = typeof svc === 'object' ? svc.duration : null;
+            
+            const isRemoved = appt.serviceChanges?.some((c: any) => c.action === 'REMOVED' && (c.serviceId._id === svcId || c.serviceId === svcId));
+            const removedBy = isRemoved ? appt.serviceChanges.find((c: any) => c.action === 'REMOVED' && (c.serviceId._id === svcId || c.serviceId === svcId))?.byName : null;
+
             return (
-              <View key={idx} style={styles.serviceRow}>
+              <View key={idx} style={[styles.serviceRow, isRemoved && { opacity: 0.5 }]}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                   {typeof svc === 'object' && !!svc.image && (
                     <ImageBackground source={{ uri: svc.image }} style={styles.serviceImage} imageStyle={{ borderRadius: 8 }} />
                   )}
                   <View>
-                    <Text style={[styles.serviceName, { color: colors.primary }]}>{name}</Text>
-                    <Text style={[styles.serviceMeta, { color: colors.muted }]}>{dur ? `${dur} phút` : ''}</Text>
+                    <Text style={[styles.serviceName, { color: colors.primary, textDecorationLine: isRemoved ? 'line-through' : 'none' }]}>{name}</Text>
+                    {dur && !isRemoved && <Text style={[styles.serviceMeta, { color: colors.muted }]}>{dur} phút</Text>}
+                    {isRemoved && (
+                      <Text style={{ color: colors.error, fontSize: 11, fontWeight: '700', marginTop: 2 }}>
+                         {isCustomer ? 'Đã hủy' : `Hủy bởi ${removedBy || 'Barber'}`}
+                      </Text>
+                    )}
                   </View>
                 </View>
-                <Text style={[styles.servicePrice, { color: colors.secondary }]}>
+                <Text style={[styles.servicePrice, { color: colors.secondary, textDecorationLine: isRemoved ? 'line-through' : 'none' }]}>
                   {price ? `${price.toLocaleString()}đ` : ''}
                 </Text>
               </View>
             );
+          })}
+
+          {appt.serviceChanges?.filter((c: any) => c.action === 'ADDED').map((change: any, idx: number) => {
+            const svc = change.serviceId;
+            return (
+              <View key={`add-${idx}`} style={styles.serviceRow}>
+                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                   {!!svc.image && (
+                    <ImageBackground source={{ uri: svc.image }} style={styles.serviceImage} imageStyle={{ borderRadius: 8 }} />
+                   )}
+                   <View>
+                     <Text style={[styles.serviceName, { color: colors.primary }]}>{svc.name}</Text>
+                     <Text style={{ color: colors.success, fontSize: 11, fontWeight: '700', marginTop: 2 }}>
+                       {isCustomer ? 'Dịch vụ thêm' : `Thêm bởi ${change.byName || 'Barber'}`}
+                     </Text>
+                   </View>
+                 </View>
+                 <Text style={[styles.servicePrice, { color: colors.secondary }]}>
+                   {svc.price ? `${svc.price.toLocaleString()}đ` : ''}
+                 </Text>
+              </View>
+            )
           })}
 
           <View style={[styles.divider, { backgroundColor: colors.border }]} />
@@ -218,7 +332,16 @@ export default function AppointmentDetailScreen() {
           <View style={styles.totalRow}>
             <Text style={[styles.totalLabel, { color: colors.muted }]}>TỔNG CỘNG</Text>
             <Text style={[styles.totalValue, { color: colors.primary }]}>
-              {(appt.totalPrice ?? 0).toLocaleString()}đ
+              {(() => {
+                 let t = appt.totalPrice || 0;
+                 if (appt.serviceChanges) {
+                    appt.serviceChanges.forEach((c: any) => {
+                       if (c.action === 'ADDED') t += (c.serviceId.price || 0);
+                       if (c.action === 'REMOVED') t -= (c.serviceId.price || 0);
+                    });
+                 }
+                 return t.toLocaleString();
+              })()}đ
             </Text>
           </View>
         </View>
@@ -271,6 +394,54 @@ export default function AppointmentDetailScreen() {
           </View>
         )}
       </ScrollView>
+
+      {/* Edit Modal */}
+      <Modal visible={showEditServices} animationType="slide" transparent>
+         <View style={styles.modalBg}>
+            <View style={[styles.modalContainer, { backgroundColor: theme === 'dark' ? colors.surface : '#fff' }]}>
+               <View style={styles.modalHeader}>
+                 <Text style={[styles.modalTitle, { color: colors.primary }]}>Chỉnh sửa dịch vụ</Text>
+                 <TouchableOpacity onPress={() => setShowEditServices(false)}>
+                   <MaterialIcons name="close" size={24} color={colors.primary} />
+                 </TouchableOpacity>
+               </View>
+               {loadingServices ? <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 40 }} /> : (
+                 <FlatList 
+                   data={shopServices}
+                   keyExtractor={(item) => item._id}
+                   contentContainerStyle={{ padding: 20 }}
+                   renderItem={({ item }) => {
+                     const isOriginal = services.some((s: any) => (s._id || s) === item._id);
+                     const change = tempChanges.find((c) => c.serviceId._id === item._id || c.serviceId === item._id);
+                     
+                     let isActive = false;
+                     if (isOriginal && (!change || change.action !== 'REMOVED')) isActive = true;
+                     if (!isOriginal && change?.action === 'ADDED') isActive = true;
+
+                     return (
+                       <View style={styles.modalServiceRow}>
+                         <View style={{ flex: 1, paddingRight: 10 }}>
+                           <Text style={[styles.serviceName, { color: colors.primary }]}>{item.name}</Text>
+                           <Text style={{ color: colors.secondary, fontSize: 13, marginTop: 4 }}>{item.price?.toLocaleString()}đ</Text>
+                         </View>
+                         <Switch 
+                           value={isActive} 
+                           onValueChange={() => toggleService(item, isOriginal)}
+                           trackColor={{ true: colors.primary, false: colors.border }}
+                         />
+                       </View>
+                     )
+                   }}
+                 />
+               )}
+               <View style={styles.modalFooter}>
+                 <TouchableOpacity style={[styles.filledBtn, { backgroundColor: colors.primary, width: '100%' }]} onPress={handleSaveServices}>
+                    <Text style={styles.filledText}>Lưu thay đổi</Text>
+                 </TouchableOpacity>
+               </View>
+            </View>
+         </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -485,5 +656,48 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '700',
     fontSize: 14,
+  },
+  editBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(0,0,0,0.05)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  modalBg: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'flex-end',
+  },
+  modalContainer: {
+    height: '75%',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.05)',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  modalServiceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.05)',
+  },
+  modalFooter: {
+    padding: 20,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0,0,0,0.05)',
   },
 });
