@@ -42,6 +42,7 @@ export default function ManagerAppointmentsScreen() {
   const [loadingAppts, setLoadingAppts] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState('');
 
   const fetchSlots = useCallback(async (date: string) => {
     const shopId = (user as any)?.shopId;
@@ -162,10 +163,10 @@ export default function ManagerAppointmentsScreen() {
                 ]}
                 onPress={() => setSelectedDate(date)}
               >
-                <Text style={[styles.dateDay, { color: isSelected ? colors.onPrimary : colors.secondary }]} allowFontScaling={false}>
+                <Text style={[styles.dateDay, { color: isSelected ? colors.onPrimary : colors.secondary }]} allowFontScaling={false} numberOfLines={1}>
                   {d.toLocaleDateString('vi-VN', { weekday: 'short' })}
                 </Text>
-                <Text style={[styles.dateNum, { color: isSelected ? colors.onPrimary : colors.primary }]} allowFontScaling={false}>
+                <Text style={[styles.dateNum, { color: isSelected ? colors.onPrimary : colors.primary }]} allowFontScaling={false} numberOfLines={1}>
                   {d.getDate()}
                 </Text>
               </HapticTouch>
@@ -191,6 +192,15 @@ export default function ManagerAppointmentsScreen() {
                 <View key={idx} style={styles.timeSlot}>
                   <View style={styles.timeColumn}>
                     <Text style={[styles.timeLabel, { color: isPast ? colors.muted : colors.primary }]} allowFontScaling={false}>{timeStr}</Text>
+                    <TouchableOpacity 
+                      style={{ marginTop: 12, alignItems: 'center', width: '100%' }}
+                      onPress={() => {
+                        setSelectedTimeSlot(timeStr);
+                        setShowCreateModal(true);
+                      }}
+                    >
+                       <MaterialIcons name="add-circle" size={28} color={colors.primary} />
+                    </TouchableOpacity>
                   </View>
                   <View style={[styles.slotContent, { borderLeftColor: colors.border }]}>
                     {appts.length > 0 ? (
@@ -202,18 +212,31 @@ export default function ManagerAppointmentsScreen() {
                         >
                           <View style={styles.cardInfo}>
                               <View style={styles.nameRow}>
-                                <Text style={[styles.customerName, { color: colors.primary }]}>
+                                <Text style={[styles.customerName, { color: colors.primary }]} numberOfLines={1} allowFontScaling={false}>
                                   {appt.customerName || appt.userId?.fullName || 'Khách vãng lai'}
                                 </Text>
                                 <View style={[styles.statusDot, { backgroundColor: STATUS_COLOR[appt.status] || colors.primary }]} />
                               </View>
-                              <Text style={[styles.customerContact, { color: colors.muted }]}>
+                              <Text style={[styles.customerContact, { color: colors.muted }]} numberOfLines={1} allowFontScaling={false}>
                                 {appt.customerPhone || appt.userId?.phoneNumber || appt.userId?.email || 'N/A'}
                               </Text>
-                              <Text style={[styles.serviceName, { color: colors.secondary }]}>{appt.serviceId?.name}</Text>
+                              {appt.serviceIds && appt.serviceIds.length > 0 ? (
+                                <View style={{ marginTop: 2 }}>
+                                  {appt.serviceIds.slice(0, 2).map((s: any, i: number) => (
+                                    <Text key={i} style={[styles.serviceName, { color: colors.secondary, marginTop: 2 }]} numberOfLines={1} allowFontScaling={false}>• {s.name}</Text>
+                                  ))}
+                                  {appt.serviceIds.length > 2 && (
+                                    <Text style={[styles.serviceName, { color: colors.secondary, marginTop: 0 }]} allowFontScaling={false}>...</Text>
+                                  )}
+                                </View>
+                              ) : (
+                                <Text style={[styles.serviceName, { color: colors.secondary }]} numberOfLines={1} allowFontScaling={false}>
+                                  {appt.serviceId?.name || 'Chưa chọn dịch vụ'}
+                                </Text>
+                              )}
                             </View>
                             <View style={[styles.statusBadge, { backgroundColor: STATUS_COLOR[appt.status] + '20' }]}>
-                              <Text style={[styles.statusText, { color: STATUS_COLOR[appt.status] }]} allowFontScaling={false}>{STATUS_LABEL[appt.status]}</Text>
+                              <Text style={[styles.statusText, { color: STATUS_COLOR[appt.status] }]} numberOfLines={1} allowFontScaling={false}>{STATUS_LABEL[appt.status]}</Text>
                             </View>
                         </HapticTouch>
                       ))
@@ -230,17 +253,11 @@ export default function ManagerAppointmentsScreen() {
         )}
       </ScrollView>
 
-      <TouchableOpacity 
-        style={[styles.fab, { backgroundColor: colors.primary }]}
-        onPress={() => setShowCreateModal(true)}
-      >
-        <MaterialIcons name="add" size={28} color="#FFF" />
-      </TouchableOpacity>
-
       <CreateAppointmentModal 
         visible={showCreateModal}
         onClose={() => setShowCreateModal(false)}
         selectedDate={selectedDate}
+        initialTime={selectedTimeSlot}
         onSuccess={() => {
           setShowCreateModal(false);
           fetchAllData(selectedDate);

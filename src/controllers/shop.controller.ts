@@ -113,3 +113,40 @@ export const updateShop = async (req: Request, res: Response) => {
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 };
+
+export const getShopHistory = async (req: Request, res: Response) => {
+    try {
+        const { shopId } = req.params;
+        const HistoryLog = require('../models/history.model').default;
+        
+        // Pagination
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = parseInt(req.query.limit as string) || 20;
+        const skip = (page - 1) * limit;
+        
+        let query: any = { shopId };
+        
+        // Date filtering
+        if (req.query.date) {
+            const startDate = new Date(req.query.date as string);
+            startDate.setHours(0, 0, 0, 0);
+            
+            const endDate = new Date(startDate);
+            endDate.setDate(endDate.getDate() + 1);
+            
+            query.createdAt = {
+                $gte: startDate,
+                $lt: endDate
+            };
+        }
+
+        const logs = await HistoryLog.find(query)
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit);
+
+        res.json(logs);
+    } catch (error: any) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};

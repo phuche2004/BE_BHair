@@ -76,6 +76,15 @@ export default function TabLayout() {
           tabBarItemStyle: { display: isManager ? 'flex' : 'none' },
         }}
       />
+      <Tabs.Screen
+        name="history"
+        options={{
+          title: t('tabs.history') || 'Lịch sử',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="clock.fill" color={color} />,
+          href: isManager || isStaff ? '/history' : null,
+          tabBarItemStyle: { display: isManager || isStaff ? 'flex' : 'none' },
+        }}
+      />
 
       {/* ---------------- STAFF TABS ---------------- */}
       <Tabs.Screen

@@ -149,6 +149,24 @@ export const createAppointment = async (req: Request, res: Response) => {
 
         await appointment.save();
 
+        // --- HISTORY LOG ---
+        try {
+            const HistoryLog = require('../models/history.model').default;
+            const { HistoryAction } = require('../models/history.model');
+            let actorName = req.user.role === 'CUSTOMER' ? appointment.customerName : 'Nhân viên';
+            if (isManual) {
+                const creator = await User.findById(req.user.id);
+                actorName = creator ? creator.fullName : 'Nhân viên';
+            }
+            await HistoryLog.create({
+                shopId: appointment.shopId,
+                actorId: req.user.id,
+                actorName: actorName,
+                action: HistoryAction.CREATED_APPOINTMENT,
+                details: `Đã tạo lịch hẹn mới (Mã: ${appointment.bookingCode})`
+            });
+        } catch(e) { console.log('History Log Error:', e); }
+
         // --- CHANGE START: Notification Logic ---
         try {
             const { getIO } = require('../utils/socket'); // Dynamic import to avoid circular dependency issues if any
@@ -304,6 +322,20 @@ export const cancelAppointment = async (req: Request, res: Response) => {
         appointment.status = AppointmentStatus.CANCELLED;
         await appointment.save();
 
+        // --- HISTORY LOG ---
+        try {
+            const HistoryLog = require('../models/history.model').default;
+            const { HistoryAction } = require('../models/history.model');
+            const actor = await User.findById(req.user.id);
+            await HistoryLog.create({
+                shopId: appointment.shopId,
+                actorId: req.user.id,
+                actorName: actor ? actor.fullName : 'Hệ thống',
+                action: HistoryAction.UPDATED_STATUS,
+                details: `Đã hủy lịch hẹn (Mã: ${appointment.bookingCode})`
+            });
+        } catch(e) { console.log('History Log Error:', e); }
+
         res.json({ message: 'Appointment cancelled successfully', appointment });
     } catch (error: any) {
         res.status(500).json({ message: 'Server error', error: error.message });
@@ -350,6 +382,20 @@ export const updateAppointmentStatus = async (req: Request, res: Response) => {
 
         appointment.status = status;
         await appointment.save();
+
+        // --- HISTORY LOG ---
+        try {
+            const HistoryLog = require('../models/history.model').default;
+            const { HistoryAction } = require('../models/history.model');
+            const actor = await User.findById(req.user.id);
+            await HistoryLog.create({
+                shopId: appointment.shopId,
+                actorId: req.user.id,
+                actorName: actor ? actor.fullName : 'Hệ thống',
+                action: HistoryAction.UPDATED_STATUS,
+                details: `Đã cập nhật trạng thái đơn ${appointment.bookingCode} thành ${status}`
+            });
+        } catch(e) { console.log('History Log Error:', e); }
 
         res.json({ message: `Appointment status updated to ${status}`, appointment });
     } catch (error: any) {
@@ -441,6 +487,21 @@ export const updateAppointmentServices = async (req: Request, res: Response) => 
         appointment.serviceIds = currentServiceIds as any;
         appointment.totalPrice = currentPrice;
         await appointment.save();
+
+        // --- HISTORY LOG ---
+        try {
+            const HistoryLog = require('../models/history.model').default;
+            const { HistoryAction } = require('../models/history.model');
+            let added = serviceChanges.filter((c:any) => c.action === 'ADDED').length;
+            let removed = serviceChanges.filter((c:any) => c.action === 'REMOVED').length;
+            await HistoryLog.create({
+                shopId: appointment.shopId,
+                actorId: req.user.id,
+                actorName: updater.fullName,
+                action: HistoryAction.EDITED_SERVICES,
+                details: `Đã thay đổi dịch vụ đơn ${appointment.bookingCode} (Thêm: ${added}, Xoá: ${removed})`
+            });
+        } catch(e) { console.log('History Log Error:', e); }
 
         res.json({ message: 'Services updated successfully', appointment });
     } catch (error: any) {

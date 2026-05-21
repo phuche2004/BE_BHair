@@ -22,6 +22,7 @@ const MAPPING = {
   'calendar': 'event',
   'magnifyingglass': 'search',
   'gear': 'settings',
+  'clock.fill': 'history',
 } as IconMapping;
 
 /**

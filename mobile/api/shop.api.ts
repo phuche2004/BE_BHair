@@ -21,6 +21,10 @@ export const shopApi = {
         const response = await axiosInstance.get(`/service/shop/${shopId}`);
         return response.data;
     },
+    getShopHistory: async (shopId: string, date?: string) => {
+        const response = await axiosInstance.get(`/shops/${shopId}/history`, { params: { date } });
+        return response.data;
+    },
     getShopSlots: async (shopId: string, date: string, barberId?: string) => {
         // BE route: GET /shop/:shopId/slots?date=YYYY-MM-DD
         let url = `/shop/${shopId}/slots?date=${date}`;
