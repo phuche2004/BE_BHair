@@ -5,6 +5,7 @@ export const vi = {
         appointments: 'Lịch hẹn',
         settings: 'Cài đặt',
         myShops: 'Tiệm của tôi',
+        history: 'Lịch sử',
     },
     auth: {
         welcomeBack: 'Chào mừng quay trở lại',

@@ -29,23 +29,27 @@ export default function HistoryScreen() {
   const [logs, setLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState(() => {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   });
-  
+
   const days = React.useMemo(() => getPast7Days(), []);
 
   const fetchHistory = useCallback(async (dateToFetch: string) => {
     const shopId = (user as any)?.shopId;
     if (!shopId) return setLoading(false);
-    
+
     try {
       setLoading(true);
+      setError(null);
       const res = await shopApi.getShopHistory(shopId, dateToFetch);
       setLogs(Array.isArray(res) ? res : res.data ?? []);
-    } catch (e) {
+    } catch (e: any) {
       console.log('Failed to fetch history', e);
+      setError(e.response?.data?.message || e.message || 'Lỗi khi tải dữ liệu');
+      setLogs([]);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -66,7 +70,7 @@ export default function HistoryScreen() {
   }, [selectedDate, fetchHistory, days]);
 
   const getActionIcon = (action: string) => {
-    switch(action) {
+    switch (action) {
       case 'CREATED_APPOINTMENT': return 'add-circle';
       case 'UPDATED_STATUS': return 'edit-calendar';
       case 'EDITED_SERVICES': return 'build';
@@ -75,7 +79,7 @@ export default function HistoryScreen() {
   };
 
   const getActionColor = (action: string) => {
-    switch(action) {
+    switch (action) {
       case 'CREATED_APPOINTMENT': return colors.success;
       case 'UPDATED_STATUS': return colors.primary;
       case 'EDITED_SERVICES': return colors.secondary;
@@ -91,16 +95,16 @@ export default function HistoryScreen() {
     return (
       <View style={[styles.logCard, { backgroundColor: theme === 'dark' ? colors.surfaceAlt : colors.card }]}>
         <View style={[styles.iconBox, { backgroundColor: getActionColor(item.action) + '20' }]}>
-           <MaterialIcons name={getActionIcon(item.action) as any} size={24} color={getActionColor(item.action)} />
+          <MaterialIcons name={getActionIcon(item.action) as any} size={24} color={getActionColor(item.action)} />
         </View>
         <View style={styles.logContent}>
-           <Text style={[styles.details, { color: colors.text }]} numberOfLines={2} allowFontScaling={false}>{item.details}</Text>
-           <View style={styles.logMeta}>
-              <MaterialIcons name="person" size={14} color={colors.muted} />
-              <Text style={[styles.actor, { color: colors.muted }]} numberOfLines={1} allowFontScaling={false}>{item.actorName}</Text>
-              <Text style={[styles.dot, { color: colors.muted }]} allowFontScaling={false}>•</Text>
-              <Text style={[styles.time, { color: colors.muted }]} numberOfLines={1} allowFontScaling={false}>{timeStr} - {dateStr}</Text>
-           </View>
+          <Text style={[styles.details, { color: colors.text }]} numberOfLines={2} allowFontScaling={false}>{item.details}</Text>
+          <View style={styles.logMeta}>
+            <MaterialIcons name="person" size={14} color={colors.muted} />
+            <Text style={[styles.actor, { color: colors.muted }]} numberOfLines={1} allowFontScaling={false}>{item.actorName}</Text>
+            <Text style={[styles.dot, { color: colors.muted }]} allowFontScaling={false}>•</Text>
+            <Text style={[styles.time, { color: colors.muted }]} numberOfLines={1} allowFontScaling={false}>{timeStr} - {dateStr}</Text>
+          </View>
         </View>
       </View>
     );
@@ -158,8 +162,10 @@ export default function HistoryScreen() {
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchHistory(selectedDate); }} tintColor={colors.primary} />}
           ListEmptyComponent={
             <View style={styles.empty}>
-              <MaterialIcons name="history" size={48} color={colors.border} />
-              <Text style={[styles.emptyText, { color: colors.muted }]}>Chưa có lịch sử hoạt động</Text>
+              <MaterialIcons name={error ? "error-outline" : "history"} size={48} color={error ? colors.error : colors.border} />
+              <Text style={[styles.emptyText, { color: error ? colors.error : colors.muted }]}>
+                {error ? `Lỗi: ${error}` : "Chưa có lịch sử hoạt động"}
+              </Text>
             </View>
           }
         />
@@ -171,6 +177,7 @@ export default function HistoryScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',

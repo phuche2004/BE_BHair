@@ -4,7 +4,8 @@ export const en = {
         search: 'Search',
         appointments: 'Appointments',
         settings: 'Settings',
-        myShops: 'My Shops'
+        myShops: 'My Shops',
+        history: 'History',
     },
     auth: {
         welcomeBack: 'Welcome back to the best barbershop',

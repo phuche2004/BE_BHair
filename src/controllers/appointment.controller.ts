@@ -257,7 +257,7 @@ export const getAppointmentById = async (req: Request, res: Response) => {
             return res.status(404).json({ message: 'Appointment not found' });
         }
         // ── Kiểm tra quyền xem ──────────────────────────────────────────────
-        const isOwner = appointment.customerId.toString() === req.user.id;
+        const isOwner = appointment.customerId && appointment.customerId.toString() === req.user.id;
         const isAdmin = req.user.role === UserRole.ADMIN;
 
         let userShopId = req.user.shopId;
@@ -296,7 +296,7 @@ export const cancelAppointment = async (req: Request, res: Response) => {
         }
 
         // ── Kiểm tra quyền hủy ──────────────────────────────────────────────
-        const isOwner = appointment.customerId.toString() === req.user.id;
+        const isOwner = appointment.customerId && appointment.customerId.toString() === req.user.id;
         const isAdmin = req.user.role === UserRole.ADMIN;
 
         // shopId từ JWT (sau khi fix) hoặc DB lookup cho token cũ

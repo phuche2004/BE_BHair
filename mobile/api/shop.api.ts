@@ -22,7 +22,7 @@ export const shopApi = {
         return response.data;
     },
     getShopHistory: async (shopId: string, date?: string) => {
-        const response = await axiosInstance.get(`/shops/${shopId}/history`, { params: { date } });
+        const response = await axiosInstance.get(`/shop/${shopId}/history`, { params: { date } });
         return response.data;
     },
     getShopSlots: async (shopId: string, date: string, barberId?: string) => {
