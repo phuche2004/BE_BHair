@@ -16,10 +16,7 @@ export default function BookingPage() {
   const [step, setStep] = useState(1);
   const [shop, setShop] = useState<Shop | null>(null);
   const [services, setServices] = useState<Service[]>([]);
-  const [staff, setStaff] = useState<Barber[]>([]);
-  
   const [selectedServices, setSelectedServices] = useState<Service[]>([]);
-  const [selectedBarber, setSelectedBarber] = useState<Barber | null>(null);
   
   const days = getNext7Days();
   const [selectedDate, setSelectedDate] = useState<string>(days[0]);
@@ -101,7 +98,7 @@ export default function BookingPage() {
       }
     };
     fetchSlots();
-  }, [shopId, selectedDate, selectedBarber, step]);
+  }, [shopId, selectedDate, step]);
 
   const toggleService = (svc: Service) => {
     setSelectedServices(prev => 
@@ -120,7 +117,7 @@ export default function BookingPage() {
       await appointmentApi.createAppointment({
         shopId,
         serviceIds: selectedServices.map(s => s._id),
-        barberId: selectedBarber?._id || null,
+        barberId: null,
         bookingDate,
         note,
       });

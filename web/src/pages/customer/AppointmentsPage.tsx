@@ -89,9 +89,9 @@ export default function AppointmentsPage() {
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {displayList.map(appt => {
-              const shop = appt.shopId as Record<string, unknown>;
+              const shop = appt.shopId as any;
               const shopName = (shop?.name as string) || 'Barbershop';
-              const services = appt.serviceIds as Record<string, unknown>[];
+              const services = appt.serviceIds as any[];
               const serviceNames = services?.map(s => s.name).join(', ') || t('common.notSelected');
               
               const STATUS_LABEL: Record<string, string> = {
@@ -102,7 +102,7 @@ export default function AppointmentsPage() {
                 NO_SHOW: t('appointments.status.NO_SHOW'),
               };
 
-              const dateStr = appt.bookingDate || (appt as Record<string, string>).date;
+              const dateStr = appt.bookingDate || (appt as any).date;
 
               return (
                 <div 

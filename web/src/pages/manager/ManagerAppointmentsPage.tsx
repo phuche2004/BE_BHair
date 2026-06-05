@@ -31,7 +31,7 @@ export default function ManagerAppointmentsPage() {
       const allAppts = Array.isArray(apptRes) ? apptRes : apptRes.data || apptRes.metadata || [];
       
       const filtered = allAppts.filter((a: Appointment) => {
-        const d = a.bookingDate || (a as Record<string, string>).date;
+        const d = a.bookingDate || (a as any).date;
         return d && d.startsWith(selectedDate);
       });
       setAppointments(filtered);
@@ -48,7 +48,7 @@ export default function ManagerAppointmentsPage() {
 
   const apptsByTime: Record<string, Appointment[]> = {};
   appointments.forEach(a => {
-    const d = a.bookingDate || (a as Record<string, string>).date;
+    const d = a.bookingDate || (a as any).date;
     let time = a.startTime || '00:00';
     if (d) {
       const dateObj = new Date(d);
@@ -115,9 +115,9 @@ export default function ManagerAppointmentsPage() {
                       <div style={{ fontSize: 13, color: 'var(--outline)', paddingTop: 10 }}>Trống</div>
                     ) : (
                       slotAppts.map(a => {
-                        const services = a.serviceIds as Record<string, unknown>[];
+                        const services = a.serviceIds as any[];
                         const serviceNames = services?.map(s => s.name).join(', ') || 'Dịch vụ';
-                        const customerName = a.customerName || (a.customerId as Record<string, string>)?.fullName || 'Khách hàng';
+                        const customerName = a.customerName || (a.customerId as any)?.fullName || 'Khách hàng';
                         
                         return (
                           <div key={a._id} className="appt-card" onClick={() => navigate(`/appointments/${a._id}`)}>

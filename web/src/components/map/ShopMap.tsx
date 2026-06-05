@@ -15,7 +15,7 @@ interface Props {
   highlightedId?: string | null;
 }
 
-const libraries: ("places" | "drawing" | "geometry" | "localContext" | "visualization")[] = ["places"];
+const libraries: any[] = ["places"];
 
 export function ShopMapWrapper(props: Props) {
   const { isLoaded, loadError } = useLoadScript({

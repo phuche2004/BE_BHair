@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { shopApi } from '../../api/shop.api';
 import { useTranslation } from '../../hooks/useTranslation';
 import { Shop, Service, Barber, Review } from '../../types';
-import { formatCurrency, formatDate, SAMPLE_IMAGES } from '../../utils/format';
+import { formatCurrency, SAMPLE_IMAGES } from '../../utils/format';
 
 export default function ShopDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -12,8 +12,6 @@ export default function ShopDetailPage() {
 
   const [shop, setShop] = useState<Shop | null>(null);
   const [services, setServices] = useState<Service[]>([]);
-  const [staff, setStaff] = useState<Barber[]>([]);
-  const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -64,7 +62,7 @@ export default function ShopDetailPage() {
 
   const image = shop.images?.[0] || shop.images1?.[0] || SAMPLE_IMAGES[0];
   const rating = shop.rating ?? shop.averageRating;
-  const revCount = shop.reviewCount ?? reviews.length;
+  const revCount = shop.reviewCount ?? 0;
 
   const openMaps = () => {
     const coords = shop.location?.coordinates;

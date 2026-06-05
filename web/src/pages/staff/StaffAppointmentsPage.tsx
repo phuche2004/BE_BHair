@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { appointmentApi } from '../../api/appointment.api';
 import { shopApi } from '../../api/shop.api';
 import { useAuthStore } from '../../store/useAuthStore';
@@ -29,8 +29,8 @@ export default function StaffAppointmentsPage() {
       const allAppts = Array.isArray(apptRes) ? apptRes : apptRes.data || apptRes.metadata || [];
       
       const filtered = allAppts.filter((a: Appointment) => {
-        const d = a.bookingDate || (a as Record<string, string>).date;
-        const bId = typeof a.barberId === 'object' ? a.barberId?._id : a.barberId;
+        const d = a.bookingDate || (a as any).date;
+        const bId = typeof a.barberId === 'object' ? (a.barberId as any)?._id : a.barberId;
         // Staff can only see their own appts + any appt on selected date
         return d && d.startsWith(selectedDate) && (bId === user?._id || !bId);
       });
@@ -59,7 +59,7 @@ export default function StaffAppointmentsPage() {
 
   const apptsByTime: Record<string, Appointment[]> = {};
   appointments.forEach(a => {
-    const d = a.bookingDate || (a as Record<string, string>).date;
+    const d = a.bookingDate || (a as any).date;
     let time = a.startTime || '00:00';
     if (d) {
       const dateObj = new Date(d);
@@ -119,9 +119,9 @@ export default function StaffAppointmentsPage() {
                       <div style={{ fontSize: 13, color: 'var(--outline)', paddingTop: 10 }}>Trống</div>
                     ) : (
                       slotAppts.map(a => {
-                        const services = a.serviceIds as Record<string, unknown>[];
+                        const services = a.serviceIds as any[];
                         const serviceNames = services?.map(s => s.name).join(', ') || 'Dịch vụ';
-                        const customerName = a.customerName || (a.customerId as Record<string, string>)?.fullName || 'Khách hàng';
+                        const customerName = a.customerName || (a.customerId as any)?.fullName || 'Khách hàng';
                         
                         return (
                           <div key={a._id} className="appt-card" style={{ flexDirection: 'column', gap: 8 }}>

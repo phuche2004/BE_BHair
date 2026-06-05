@@ -43,7 +43,6 @@ const ShopIcon = ({ filled }: { filled?: boolean }) => (
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { user } = useAuthStore();
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const location = useLocation();
 
   const role = user?.role;

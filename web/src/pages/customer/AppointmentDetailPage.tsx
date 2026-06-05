@@ -62,9 +62,9 @@ export default function AppointmentDetailPage() {
     }
   };
 
-  const shop = appt?.shopId as Record<string, unknown>;
-  const barber = appt?.barberId as Record<string, unknown>;
-  const services = appt?.serviceIds as Record<string, unknown>[];
+  const shop = appt?.shopId as any;
+  const barber = appt?.barberId as any;
+  const services = appt?.serviceIds as any[];
 
   const STATUS_LABEL: Record<string, string> = {
     PENDING: 'Chờ xác nhận', CONFIRMED: 'Đã xác nhận',
@@ -114,11 +114,11 @@ export default function AppointmentDetailPage() {
         <div className="detail-label">Chi tiết lịch hẹn</div>
         <div className="detail-row">
           <span>📅</span>
-          <span>{formatDate(appt.bookingDate || (appt as Record<string, string>).date)}</span>
+          <span>{formatDate(appt.bookingDate || (appt as any).date)}</span>
         </div>
         <div className="detail-row">
           <span>🕐</span>
-          <span>{formatTime(appt.bookingDate || (appt as Record<string, string>).date)}</span>
+          <span>{formatTime(appt.bookingDate || (appt as any).date)}</span>
         </div>
         {barber && typeof barber === 'object' && (barber.fullName as string) && (
           <div className="detail-row">
