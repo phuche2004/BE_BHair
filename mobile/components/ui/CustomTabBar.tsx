@@ -70,7 +70,7 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
     return (
         <View style={[
             styles.container,
-            { bottom: Math.max(insets.bottom, 16) }
+            { bottom: Math.max(insets.bottom + 12, 24) }
         ]}>
             <View style={[
                 styles.tabBar,

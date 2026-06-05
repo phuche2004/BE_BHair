@@ -135,15 +135,14 @@ export const getShopHistory = async (req: Request, res: Response) => {
         
         // Date filtering
         if (req.query.date) {
-            const startDate = new Date(req.query.date as string);
-            startDate.setHours(0, 0, 0, 0);
-            
-            const endDate = new Date(startDate);
-            endDate.setDate(endDate.getDate() + 1);
+            const dateStr = req.query.date as string;
+            // Parse using Vietnam Time (UTC+7) to avoid timezone mismatch
+            const startDate = new Date(`${dateStr}T00:00:00+07:00`);
+            const endDate = new Date(`${dateStr}T23:59:59.999+07:00`);
             
             query.createdAt = {
                 $gte: startDate,
-                $lt: endDate
+                $lte: endDate
             };
         }
 

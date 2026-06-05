@@ -13,7 +13,7 @@ import {
   FlatList,
   Switch,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Colors, Fonts } from '../../constants/theme';
 import { useColorScheme } from '../../hooks/use-color-scheme';
@@ -55,6 +55,7 @@ const STATUS_COLOR: Record<string, string> = {
 export default function AppointmentDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const theme = useColorScheme() ?? 'light';
   const colors = Colors[theme];
   const isDark = theme === 'dark';
@@ -434,7 +435,7 @@ export default function AppointmentDetailScreen() {
                    }}
                  />
                )}
-               <View style={styles.modalFooter}>
+               <View style={[styles.modalFooter, { paddingBottom: Math.max(insets.bottom, 20) }]}>
                  <TouchableOpacity style={[styles.filledBtn, { backgroundColor: colors.primary, width: '100%' }]} onPress={handleSaveServices}>
                     <Text style={styles.filledText}>Lưu thay đổi</Text>
                  </TouchableOpacity>
