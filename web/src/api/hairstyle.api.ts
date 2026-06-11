@@ -48,9 +48,9 @@ export interface TryStyleResponse {
 
 export async function analyzePhoto(file: File): Promise<AnalyzeResponse> {
   const formData = new FormData();
-  formData.append('file', file);
+  formData.append('image', file);
 
-  const response = await aiAxios.post<AnalyzeResponse>('/api/analyze', formData, {
+  const response = await aiAxios.post<AnalyzeResponse>('/analyze', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
   });
 
@@ -59,10 +59,10 @@ export async function analyzePhoto(file: File): Promise<AnalyzeResponse> {
 
 export async function tryStyle(file: File, style: string): Promise<TryStyleResponse> {
   const formData = new FormData();
-  formData.append('file', file);
+  formData.append('image', file);
 
   const response = await aiAxios.post<TryStyleResponse>(
-    `/api/try-style?style=${encodeURIComponent(style)}`,
+    `/try-style?style=${encodeURIComponent(style)}`,
     formData,
     { headers: { 'Content-Type': 'multipart/form-data' } }
   );
