@@ -215,9 +215,28 @@ export default function HairstyleAdvisorPage() {
     }
   }, []);
 
-  /* ────────────────────────────────────────────────────── */
-  /*  RENDER                                                 */
-  /* ────────────────────────────────────────────────────── */
+/* ── Translators ───────────────────────────────────────── */
+const shapeTranslations: Record<string, string> = {
+  Oval: 'Trái xoan',
+  Round: 'Tròn',
+  Square: 'Vuông',
+  Heart: 'Trái tim',
+  Oblong: 'Thuôn dài',
+  Diamond: 'Kim cương',
+};
+
+const skinToneTranslations: Record<string, string> = {
+  Warm: 'Ấm',
+  Cool: 'Lạnh',
+  Neutral: 'Trung tính',
+};
+
+const tShape = (shape: string) => shapeTranslations[shape] || shape;
+const tSkin = (skin: string) => skinToneTranslations[skin] || skin;
+
+/* ────────────────────────────────────────────────────── */
+/*  RENDER                                                 */
+/* ────────────────────────────────────────────────────── */
   return (
     <div className="page hairstyle-page">
       {/* Header */}
@@ -384,11 +403,11 @@ export default function HairstyleAdvisorPage() {
             <div className="analysis-grid">
               <div className="analysis-item">
                 <span className="analysis-label">Hình dạng</span>
-                <span className="analysis-value">{result.analysis.face_shape}</span>
+                <span className="analysis-value">{tShape(result.analysis.face_shape)}</span>
               </div>
               <div className="analysis-item">
                 <span className="analysis-label">Tông da</span>
-                <span className="analysis-value">{result.analysis.skin_tone}</span>
+                <span className="analysis-value">{tSkin(result.analysis.skin_tone)}</span>
               </div>
             </div>
 
@@ -398,7 +417,7 @@ export default function HairstyleAdvisorPage() {
                 .sort(([, a], [, b]) => b - a)
                 .map(([shape, pct]) => (
                   <div key={shape} className="score-row">
-                    <span className="score-label">{shape}</span>
+                    <span className="score-label">{tShape(shape)}</span>
                     <div className="score-track">
                       <div
                         className="score-fill"
