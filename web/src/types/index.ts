@@ -17,7 +17,11 @@ export interface Shop {
   address: string;
   phone: string;
   images: string[];
+  image?: string;
   images1?: string[];
+  images2?: string[];
+  images3?: string[];
+  videos?: string[];
   openTime: string;
   closeTime: string;
   slotDuration: number;
