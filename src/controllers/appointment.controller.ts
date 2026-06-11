@@ -24,7 +24,7 @@ export const createAppointment = async (req: Request, res: Response) => {
         });
         if (existingActive) {
             return res.status(409).json({
-                message: 'You already have an active appointment. Please wait until it is completed before booking another.',
+                message: 'Bạn đã có một lịch hẹn đang chờ. Vui lòng hoàn tất hoặc hủy lịch hẹn hiện tại trước khi đặt lịch mới.',
                 existingAppointmentId: existingActive._id,
             });
         }

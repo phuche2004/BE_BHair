@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import { ProtectedRoute } from '../components/layout/ProtectedRoute';
 import { AppShell } from '../components/layout/AppShell';
@@ -33,62 +33,88 @@ const PageLoader = () => (
   </div>
 );
 
-export function AppRouter() {
+// Keep-Alive wrapper for bottom-nav tabs
+function KeepAliveTabs() {
+  const { user } = useAuthStore();
+  const location = useLocation();
+  const path = location.pathname;
+  const role = user?.role;
+
+  // Authorization redirects for protected paths
+  if (!user) return <Navigate to="/login" replace />;
+  
+  if (role === 'CUSTOMER' && (path.includes('/manager/') || path.includes('/staff/'))) {
+    return <Navigate to="/home" replace />;
+  }
+  if ((role === 'MANAGER' || role === 'ADMIN') && (path.includes('/staff/') || ['/home', '/search', '/hairstyle', '/appointments'].includes(path))) {
+    return <Navigate to="/manager/appointments" replace />;
+  }
+  if (role === 'STAFF' && (path.includes('/manager/') || ['/home', '/search', '/hairstyle', '/appointments'].includes(path))) {
+    return <Navigate to="/staff/appointments" replace />;
+  }
+
   return (
-    <BrowserRouter>
-      <React.Suspense fallback={<PageLoader />}>
+    <AppShell>
+      {/* Customer Tabs */}
+      {(!role || role === 'CUSTOMER') && (
+        <>
+          <div style={{ display: path === '/home' ? 'block' : 'none', height: '100%' }}><HomePage /></div>
+          <div style={{ display: path === '/search' ? 'block' : 'none', height: '100%' }}><SearchPage /></div>
+          <div style={{ display: path === '/hairstyle' ? 'block' : 'none', height: '100%' }}><HairstyleAdvisorPage /></div>
+          <div style={{ display: path === '/appointments' ? 'block' : 'none', height: '100%' }}><AppointmentsPage /></div>
+          <div style={{ display: path === '/settings' ? 'block' : 'none', height: '100%' }}><SettingsPage /></div>
+        </>
+      )}
+
+      {/* Manager Tabs */}
+      {(role === 'MANAGER' || role === 'ADMIN') && (
+        <>
+          <div style={{ display: path === '/manager/appointments' ? 'block' : 'none', height: '100%' }}><ManagerAppointmentsPage /></div>
+          <div style={{ display: path === '/manager/shops' ? 'block' : 'none', height: '100%' }}><MyShopsPage /></div>
+          <div style={{ display: path === '/settings' ? 'block' : 'none', height: '100%' }}><SettingsPage /></div>
+        </>
+      )}
+
+      {/* Staff Tabs */}
+      {role === 'STAFF' && (
+        <>
+          <div style={{ display: path === '/staff/appointments' ? 'block' : 'none', height: '100%' }}><StaffAppointmentsPage /></div>
+          <div style={{ display: path === '/settings' ? 'block' : 'none', height: '100%' }}><SettingsPage /></div>
+        </>
+      )}
+    </AppShell>
+  );
+}
+
+const TAB_PATHS = [
+  '/home', '/search', '/hairstyle', '/appointments', '/settings',
+  '/manager/appointments', '/manager/shops', '/staff/appointments'
+];
+
+function MainApp() {
+  const location = useLocation();
+  const path = location.pathname;
+  const isTabRoute = TAB_PATHS.includes(path);
+
+  return (
+    <>
+      <div style={{ display: isTabRoute ? 'block' : 'none', height: '100%' }}>
+        <KeepAliveTabs />
+      </div>
+
+      {!isTabRoute && (
         <Routes>
           {/* Public */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/" element={<RootRedirect />} />
 
-          {/* Customer routes */}
-          <Route
-            path="/home"
-            element={
-              <AppShell>
-                <HomePage />
-              </AppShell>
-            }
-          />
-          <Route
-            path="/search"
-            element={
-              <AppShell>
-                <SearchPage />
-              </AppShell>
-            }
-          />
-          <Route
-            path="/appointments"
-            element={
-              <AppShell>
-                <AppointmentsPage />
-              </AppShell>
-            }
-          />
+          {/* NON-TAB ROUTES */}
           <Route
             path="/appointments/:id"
             element={
               <AppShell>
                 <AppointmentDetailPage />
-              </AppShell>
-            }
-          />
-          <Route
-            path="/settings"
-            element={
-              <AppShell>
-                <SettingsPage />
-              </AppShell>
-            }
-          />
-          <Route
-            path="/hairstyle"
-            element={
-              <AppShell>
-                <HairstyleAdvisorPage />
               </AppShell>
             }
           />
@@ -111,43 +137,19 @@ export function AppRouter() {
             }
           />
 
-          {/* Manager routes */}
-          <Route
-            path="/manager/appointments"
-            element={
-              <ProtectedRoute allowedRoles={['MANAGER', 'ADMIN']}>
-                <AppShell>
-                  <ManagerAppointmentsPage />
-                </AppShell>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/manager/shops"
-            element={
-              <ProtectedRoute allowedRoles={['MANAGER', 'ADMIN']}>
-                <AppShell>
-                  <MyShopsPage />
-                </AppShell>
-              </ProtectedRoute>
-            }
-          />
-
-          {/* Staff routes */}
-          <Route
-            path="/staff/appointments"
-            element={
-              <ProtectedRoute allowedRoles={['STAFF']}>
-                <AppShell>
-                  <StaffAppointmentsPage />
-                </AppShell>
-              </ProtectedRoute>
-            }
-          />
-
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+      )}
+    </>
+  );
+}
+
+export function AppRouter() {
+  return (
+    <BrowserRouter>
+      <React.Suspense fallback={<PageLoader />}>
+        <MainApp />
       </React.Suspense>
     </BrowserRouter>
   );
