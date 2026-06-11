@@ -13,6 +13,7 @@ interface Props {
   userLat?: number | null;
   userLong?: number | null;
   highlightedId?: string | null;
+  onRequestLocation?: () => void;
 }
 
 const libraries: any[] = ["places"];
@@ -32,7 +33,7 @@ export function ShopMapWrapper(props: Props) {
 // Ensure the old export name "ShopMap" is used by consumers
 export const ShopMap = ShopMapWrapper;
 
-function ShopMapInner({ shops, userLat, userLong, highlightedId }: Props) {
+function ShopMapInner({ shops, userLat, userLong, highlightedId, onRequestLocation }: Props) {
   const navigate = useNavigate();
   const defaultCenter = { lat: 10.7769, lng: 106.7009 }; // HCM City
   const center = userLat && userLong ? { lat: userLat, lng: userLong } : defaultCenter;
@@ -84,7 +85,7 @@ function ShopMapInner({ shops, userLat, userLong, highlightedId }: Props) {
   };
 
   const userMarkerIcon = {
-    path: 0, // google.maps.SymbolPath.CIRCLE
+    path: window.google?.maps?.SymbolPath?.CIRCLE || 0,
     fillColor: '#4285F4',
     fillOpacity: 1,
     strokeColor: '#ffffff',
@@ -93,17 +94,18 @@ function ShopMapInner({ shops, userLat, userLong, highlightedId }: Props) {
   };
 
   return (
-    <GoogleMap
-      mapContainerStyle={containerStyle}
-      center={center}
-      zoom={13}
-      onLoad={onLoad}
-      onUnmount={onUnmount}
-      options={{
-        mapTypeControl: false,
-        streetViewControl: false,
-      }}
-    >
+    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+      <GoogleMap
+        mapContainerStyle={containerStyle}
+        center={center}
+        zoom={13}
+        onLoad={onLoad}
+        onUnmount={onUnmount}
+        options={{
+          mapTypeControl: false,
+          streetViewControl: false,
+        }}
+      >
       {userLat && userLong && (
         <Marker
           position={{ lat: userLat, lng: userLong }}
@@ -164,6 +166,7 @@ function ShopMapInner({ shops, userLat, userLong, highlightedId }: Props) {
           </div>
         </InfoWindow>
       )}
-    </GoogleMap>
+      </GoogleMap>
+    </div>
   );
 }

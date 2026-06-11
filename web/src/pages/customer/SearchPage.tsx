@@ -95,7 +95,7 @@ function ShopListCard({ shop, onClick }: ShopCardProps) {
 export default function SearchPage() {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { lat, long, loading: geoLoading, getLocation } = useGeolocation(false);
+  const { lat, long, loading: geoLoading, getLocation } = useGeolocation(true);
 
   /* State */
   const [keyword, setKeyword] = useState('');
@@ -434,23 +434,9 @@ export default function SearchPage() {
               shops={allShops}
               userLat={lat}
               userLong={long}
+              onRequestLocation={getLocation}
             />
           </div>
-
-          {/* Nearby result count hint */}
-          {nearMeActive && lat && long && !loading && (
-            <p
-              style={{
-                fontSize: 12,
-                color: 'var(--text-muted)',
-                textAlign: 'center',
-                marginTop: 8,
-                fontWeight: 600,
-              }}
-            >
-              📍 {visibleShops.length} tiệm trong bán kính 5 km
-            </p>
-          )}
         </div>
       )}
     </div>

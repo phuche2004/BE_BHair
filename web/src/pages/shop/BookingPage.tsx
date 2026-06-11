@@ -180,7 +180,7 @@ export default function BookingPage() {
 
 
 
-            <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, padding: 20, background: 'var(--surface)', borderTop: '1px solid var(--border)' }}>
+            <div style={{ position: 'sticky', bottom: 0, padding: 20, background: 'var(--surface)', borderTop: '1px solid var(--border)', zIndex: 100, marginLeft: -24, marginRight: -24 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
                 <span style={{ color: 'var(--text-muted)' }}>{selectedServices.length} dịch vụ ({totalDuration}p)</span>
                 <span style={{ fontWeight: 800, fontSize: 18, color: 'var(--color-primary)' }}>{formatCurrency(totalPrice)}</span>
@@ -244,7 +244,7 @@ export default function BookingPage() {
               style={{ resize: 'none' }}
             />
 
-            <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, padding: 20, background: 'var(--surface)', borderTop: '1px solid var(--border)' }}>
+            <div style={{ position: 'sticky', bottom: 0, padding: 20, background: 'var(--surface)', borderTop: '1px solid var(--border)', zIndex: 100, marginLeft: -24, marginRight: -24 }}>
               <button 
                 className="btn btn-primary btn-full btn-lg" 
                 disabled={!selectedTime}
@@ -288,7 +288,7 @@ export default function BookingPage() {
               </div>
             </div>
 
-            <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, padding: 20, background: 'var(--surface)', borderTop: '1px solid var(--border)' }}>
+            <div style={{ position: 'sticky', bottom: 0, padding: 20, background: 'var(--surface)', borderTop: '1px solid var(--border)', zIndex: 100, marginLeft: -24, marginRight: -24 }}>
               <button 
                 className="btn btn-primary btn-full btn-lg" 
                 onClick={handleSubmit}

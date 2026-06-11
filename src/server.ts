@@ -24,6 +24,7 @@ import searchRoutes from './routes/search.route';
 import reviewRoutes from './routes/review.route';
 import notificationRoutes from './routes/notification.route';
 import slotRoutes from './routes/slot.route';
+import aiRoutes from './routes/ai.route';
 
 // Middleware
 app.use(cors());
@@ -41,6 +42,7 @@ app.use('/api/v1/appointment', appointmentRoutes);
 app.use('/api/v1/search', searchRoutes);
 app.use('/api/v1/review', reviewRoutes);
 app.use('/api/v1/notification', notificationRoutes);
+app.use('/api/v1/ai', aiRoutes);
 app.use('/api/v1', slotRoutes); // Mount at root /api/v1 because route already has /shop prefix
 
 app.get('/', (req: Request, res: Response) => {

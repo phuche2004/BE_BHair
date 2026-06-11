@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { shopApi } from '../../api/shop.api';
 import { useTranslation } from '../../hooks/useTranslation';
@@ -13,6 +13,22 @@ export default function ShopDetailPage() {
   const [shop, setShop] = useState<Shop | null>(null);
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  const media = useMemo(() => {
+    if (!shop) return [{ type: 'image', url: SAMPLE_IMAGES[0] }];
+    const items: { type: 'image' | 'video'; url: string }[] = [];
+    if (shop.images1?.length) shop.images1.forEach((u: string) => items.push({ type: 'image', url: u }));
+    if (shop.images2?.length) shop.images2.forEach((u: string) => items.push({ type: 'image', url: u }));
+    if (shop.images3?.length) shop.images3.forEach((u: string) => items.push({ type: 'image', url: u }));
+    if (shop.videos?.length) shop.videos.forEach((u: string) => items.push({ type: 'video', url: u }));
+
+    if (items.length === 0 && shop.image) items.push({ type: 'image', url: shop.image });
+    if (items.length === 0 && shop.images?.[0]) items.push({ type: 'image', url: shop.images[0] });
+    if (items.length === 0) items.push({ type: 'image', url: SAMPLE_IMAGES[0] });
+
+    return items;
+  }, [shop]);
 
   useEffect(() => {
     if (!id) return;
@@ -60,7 +76,6 @@ export default function ShopDetailPage() {
     );
   }
 
-  const image = shop.images?.[0] || shop.images1?.[0] || SAMPLE_IMAGES[0];
   const rating = shop.rating ?? shop.averageRating;
   const revCount = shop.reviewCount ?? 0;
 
@@ -74,27 +89,73 @@ export default function ShopDetailPage() {
   };
 
   return (
-    <div className="page" style={{ paddingBottom: 100 }}>
-      {/* Header back button overlay */}
-      <div style={{ position: 'absolute', top: 16, left: 16, zIndex: 10 }}>
-        <button 
-          onClick={() => navigate(-1)}
-          style={{ width: 40, height: 40, borderRadius: 20, background: 'rgba(255,255,255,0.8)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-        >
-          ←
-        </button>
-      </div>
-
+    <div className="page" style={{ paddingBottom: 100, position: 'relative' }}>
       {/* Hero Image */}
-      <div style={{ position: 'relative', width: '100%', aspectRatio: '16/10' }}>
-        <img src={image} alt={shop.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, transparent 40%, rgba(0,0,0,0.7) 100%)' }} />
+      <div style={{ position: 'relative', width: '100%' }} className="hero-img-wrap">
+        <div style={{ position: 'absolute', top: 16, left: 16, zIndex: 10 }}>
+          <button 
+            onClick={() => navigate(-1)}
+            style={{ width: 40, height: 40, borderRadius: 20, background: 'rgba(255,255,255,0.8)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer', color: '#000' }}
+          >
+            ←
+          </button>
+        </div>
+        {media[activeIndex]?.type === 'video' ? (
+          <video 
+            src={media[activeIndex].url} 
+            controls 
+            autoPlay 
+            muted 
+            loop 
+            className="shop-card-img" 
+            style={{ width: '100%', objectFit: 'contain', height: 360, backgroundColor: '#000', display: 'block' }} 
+          />
+        ) : (
+          <img src={media[activeIndex]?.url} alt={shop.name} className="shop-card-img" style={{ width: '100%', objectFit: 'cover', height: 360, backgroundColor: '#000' }} />
+        )}
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, transparent 40%, rgba(0,0,0,0.7) 100%)', pointerEvents: 'none' }} />
         {rating && (
           <div className="rating-badge" style={{ top: 16, right: 16 }}>
             <span className="star">★</span> {Number(rating).toFixed(1)} ({revCount})
           </div>
         )}
       </div>
+
+      {/* Thumbnails */}
+      {media.length > 1 && (
+        <div className="section" style={{ paddingTop: 16, paddingBottom: 0 }}>
+          <div style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 8, scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
+            {media.map((item, idx) => (
+              <div 
+                key={idx} 
+                onClick={() => setActiveIndex(idx)}
+                style={{ 
+                  flexShrink: 0, 
+                  width: 72, 
+                  height: 72, 
+                  borderRadius: 12, 
+                  overflow: 'hidden',
+                  border: activeIndex === idx ? '2px solid var(--color-primary)' : '2px solid transparent',
+                  cursor: 'pointer',
+                  position: 'relative',
+                  backgroundColor: 'var(--surface-alt)'
+                }}
+              >
+                {item.type === 'video' ? (
+                  <video src={item.url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  <img src={item.url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                )}
+                {item.type === 'video' && (
+                  <div style={{ position: 'absolute', top: 4, right: 4, background: 'rgba(0,0,0,0.6)', borderRadius: 4, width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <span style={{ fontSize: 10, color: '#fff' }}>▶</span>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="section" style={{ paddingTop: 20, paddingBottom: 24 }}>
         <h1 style={{ fontSize: 24, fontWeight: 800, fontFamily: 'var(--font-headline)', color: 'var(--color-primary)', marginBottom: 8 }}>
@@ -150,7 +211,7 @@ export default function ShopDetailPage() {
       </div>
 
       {/* Floating Book Button */}
-      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, padding: '16px 20px', background: 'var(--surface)', borderTop: '1px solid var(--border)', zIndex: 100 }}>
+      <div style={{ position: 'sticky', bottom: 0, padding: '16px 20px', background: 'var(--surface)', borderTop: '1px solid var(--border)', zIndex: 100, marginLeft: -24, marginRight: -24 }}>
         <button className="btn btn-primary btn-full btn-lg" onClick={() => navigate(`/booking/${shop._id}`)}>
           {t('shop.bookNow')}
         </button>

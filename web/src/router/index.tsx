@@ -12,6 +12,7 @@ const SearchPage = React.lazy(() => import('../pages/customer/SearchPage'));
 const AppointmentsPage = React.lazy(() => import('../pages/customer/AppointmentsPage'));
 const AppointmentDetailPage = React.lazy(() => import('../pages/customer/AppointmentDetailPage'));
 const SettingsPage = React.lazy(() => import('../pages/customer/SettingsPage'));
+const HairstyleAdvisorPage = React.lazy(() => import('../pages/customer/HairstyleAdvisorPage'));
 const ShopDetailPage = React.lazy(() => import('../pages/shop/ShopDetailPage'));
 const BookingPage = React.lazy(() => import('../pages/shop/BookingPage'));
 const ManagerAppointmentsPage = React.lazy(() => import('../pages/manager/ManagerAppointmentsPage'));
@@ -80,6 +81,14 @@ export function AppRouter() {
             element={
               <AppShell>
                 <SettingsPage />
+              </AppShell>
+            }
+          />
+          <Route
+            path="/hairstyle"
+            element={
+              <AppShell>
+                <HairstyleAdvisorPage />
               </AppShell>
             }
           />

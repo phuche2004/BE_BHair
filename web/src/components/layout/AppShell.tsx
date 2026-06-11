@@ -40,6 +40,12 @@ const ShopIcon = ({ filled }: { filled?: boolean }) => (
   </svg>
 );
 
+const AIIcon = ({ filled }: { filled?: boolean }) => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={filled ? 0 : 2}>
+    <path d="M12 2L14.09 8.26L20 9.27L15.55 13.97L16.91 20L12 16.9L7.09 20L8.45 13.97L4 9.27L9.91 8.26L12 2Z" />
+  </svg>
+);
+
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { user } = useAuthStore();
   const { t } = useTranslation();
@@ -50,6 +56,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const customerNav = [
     { to: '/', label: t('tabs.home'), Icon: HomeIcon },
     { to: '/search', label: t('tabs.search'), Icon: SearchIcon },
+    { to: '/hairstyle', label: 'AI', Icon: AIIcon },
     { to: '/appointments', label: t('tabs.appointments'), Icon: CalendarIcon },
     { to: '/settings', label: t('tabs.settings'), Icon: SettingsIcon },
   ];
@@ -93,11 +100,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* Main content */}
       <div className="main-content">
-        {children}
+        <div className="content-container">
+          {children}
+        </div>
       </div>
 
       {/* Bottom nav — mobile */}
-      <nav className="bottom-nav" style={{ display: location.pathname.includes('/shop/') || location.pathname.includes('/booking/') ? 'none' : 'flex' }}>
+      <nav className="bottom-nav" style={{ display: location.pathname.includes('/shop/') || location.pathname.includes('/booking/') ? 'none' : undefined }}>
         {navItems.map(({ to, label, Icon }) => (
           <NavLink
             key={to}
