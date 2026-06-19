@@ -17,7 +17,7 @@ const cpUpload = upload.fields([
 router.post('/', authMiddleware.verifyToken, cpUpload, shopController.createShop);
 router.get('/my-shops', authMiddleware.verifyToken, shopController.getMyShops);
 router.get('/:shopId/history', authMiddleware.verifyToken, shopController.getShopHistory);
-router.put('/:id', authMiddleware.verifyToken, shopController.updateShop);
+router.put('/:id', authMiddleware.verifyToken, cpUpload, shopController.updateShop);
 
 // Public Routes
 router.get('/:id', shopController.getShopById);

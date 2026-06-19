@@ -16,7 +16,7 @@ export default function ShopDetailPage() {
   const [activeIndex, setActiveIndex] = useState(0);
 
   const media = useMemo(() => {
-    if (!shop) return [{ type: 'image', url: SAMPLE_IMAGES[0] }];
+    if (!shop) return [];
     const items: { type: 'image' | 'video'; url: string }[] = [];
     if (shop.images1?.length) shop.images1.forEach((u: string) => items.push({ type: 'image', url: u }));
     if (shop.images2?.length) shop.images2.forEach((u: string) => items.push({ type: 'image', url: u }));
@@ -25,7 +25,6 @@ export default function ShopDetailPage() {
 
     if (items.length === 0 && shop.image) items.push({ type: 'image', url: shop.image });
     if (items.length === 0 && shop.images?.[0]) items.push({ type: 'image', url: shop.images[0] });
-    if (items.length === 0) items.push({ type: 'image', url: SAMPLE_IMAGES[0] });
 
     return items;
   }, [shop]);
@@ -110,8 +109,21 @@ export default function ShopDetailPage() {
             className="shop-card-img" 
             style={{ width: '100%', objectFit: 'contain', height: 360, backgroundColor: '#000', display: 'block' }} 
           />
-        ) : (
+        ) : media[activeIndex]?.url ? (
           <img src={media[activeIndex]?.url} alt={shop.name} className="shop-card-img" style={{ width: '100%', objectFit: 'cover', height: 360, backgroundColor: '#000' }} />
+        ) : (
+          <div style={{
+            width: '100%',
+            height: 360,
+            background: 'linear-gradient(135deg, var(--surface-alt) 0%, var(--border) 100%)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: 64,
+            color: 'var(--text-muted)'
+          }}>
+            🏬
+          </div>
         )}
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, transparent 40%, rgba(0,0,0,0.7) 100%)', pointerEvents: 'none' }} />
         {rating && (

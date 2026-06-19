@@ -28,6 +28,7 @@ export const en: Translations = {
     haveAccount: 'Already have an account? ',
     passwordsNotMatch: 'Passwords do not match',
     fillAllFields: 'Please fill in all fields',
+    invalidPhone: 'Invalid phone number (must be 10-11 digits)',
     loginFailed: 'Login failed. Please check your credentials.',
     registerFailed: 'Registration failed. Please try again.',
     success: 'Success',
@@ -38,6 +39,7 @@ export const en: Translations = {
     roleLabel: 'Account type',
     customer: 'Customer',
     manager: 'Shop manager',
+    barber: 'Barber',
   },
   settings: {
     title: 'Settings',

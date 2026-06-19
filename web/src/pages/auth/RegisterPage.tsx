@@ -5,7 +5,7 @@ import { useTranslation } from '../../hooks/useTranslation';
 import { GoogleLogin, CredentialResponse } from '@react-oauth/google';
 import { useAuthStore } from '../../store/useAuthStore';
 
-type RoleOption = 'CUSTOMER' | 'MANAGER';
+type RoleOption = 'CUSTOMER' | 'MANAGER' | 'STAFF';
 
 export default function RegisterPage() {
   const navigate = useNavigate();
@@ -39,6 +39,12 @@ export default function RegisterPage() {
 
     if (!fullName.trim() || !phoneNumber.trim() || !password.trim() || !confirmPassword.trim()) {
       setError(t('auth.fillAllFields'));
+      return;
+    }
+
+    const phoneRegex = /^[0-9]{10,11}$/;
+    if (!phoneRegex.test(phoneNumber.trim())) {
+      setError(t('auth.invalidPhone'));
       return;
     }
 
@@ -266,6 +272,13 @@ export default function RegisterPage() {
                 onClick={() => setRole('MANAGER')}
               >
                 {t('auth.manager')}
+              </button>
+              <button
+                type="button"
+                className={`segment-btn${role === 'STAFF' ? ' active' : ''}`}
+                onClick={() => setRole('STAFF')}
+              >
+                {t('auth.barber')}
               </button>
             </div>
           </div>

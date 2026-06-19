@@ -16,6 +16,7 @@ export interface Shop {
   name: string;
   address: string;
   phone: string;
+  gender?: 'MALE' | 'FEMALE' | 'BOTH';
   images: string[];
   image?: string;
   images1?: string[];

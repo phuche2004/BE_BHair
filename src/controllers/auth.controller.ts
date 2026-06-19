@@ -17,7 +17,13 @@ const generateToken = (user: any) => {
 
 export const register = async (req: Request, res: Response) => {
     try {
-        const { fullName, phoneNumber, password } = req.body;
+        const { fullName, phoneNumber, password, role } = req.body;
+
+        // Validate phone number format (only digits, 10-11 characters)
+        const phoneRegex = /^[0-9]{10,11}$/;
+        if (!phoneNumber || !phoneRegex.test(phoneNumber)) {
+            return res.status(400).json({ message: 'Invalid phone number format. Must be 10-11 digits.' });
+        }
 
         // Check user exists
         const existingUser = await User.findOne({ phoneNumber });
@@ -35,11 +41,19 @@ export const register = async (req: Request, res: Response) => {
             avatarUrl = req.file.path; // Cloudinary URL automatically returned by multer-storage-cloudinary
         }
 
+        // Resolve registration role
+        let userRole = UserRole.CUSTOMER;
+        if (role === 'MANAGER') {
+            userRole = UserRole.MANAGER;
+        } else if (role === 'STAFF' || role === 'BARBER') {
+            userRole = UserRole.STAFF;
+        }
+
         const newUser = new User({
             fullName,
             phoneNumber,
             password: hashedPassword,
-            role: UserRole.CUSTOMER, // Default role
+            role: userRole,
             avatar: avatarUrl
         });
 

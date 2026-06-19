@@ -26,6 +26,7 @@ export const vi = {
     haveAccount: 'Đã có tài khoản? ',
     passwordsNotMatch: 'Mật khẩu không khớp',
     fillAllFields: 'Vui lòng điền đầy đủ thông tin',
+    invalidPhone: 'Số điện thoại không hợp lệ (phải gồm 10-11 chữ số)',
     loginFailed: 'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.',
     registerFailed: 'Đăng ký thất bại. Vui lòng thử lại.',
     success: 'Thành công',
@@ -36,6 +37,7 @@ export const vi = {
     roleLabel: 'Loại tài khoản',
     customer: 'Khách hàng',
     manager: 'Quản lý tiệm',
+    barber: 'Thợ cắt tóc',
   },
   settings: {
     title: 'Cài đặt',

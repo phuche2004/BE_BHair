@@ -41,7 +41,11 @@ function KeepAliveTabs() {
   const role = user?.role;
 
   // Authorization redirects for protected paths
-  if (!user) return <Navigate to="/login" replace />;
+  if (!user) {
+    const isPublicRoute = ['/login', '/register'].includes(path) || path.startsWith('/shop/');
+    if (isPublicRoute) return null;
+    return <Navigate to="/login" replace />;
+  }
   
   if (role === 'CUSTOMER' && (path.includes('/manager/') || path.includes('/staff/'))) {
     return <Navigate to="/home" replace />;

@@ -1,6 +1,19 @@
 import { Request, Response } from 'express';
 import Shop from '../models/shop.model';
 import User, { UserRole } from '../models/user.model';
+import cloudinary from '../config/cloudinary.config';
+
+const getCloudinaryPublicIdAndType = (url: string) => {
+    const regex = /\/(image|video)\/upload\/(?:v\d+\/)?(.+)$/;
+    const match = url.match(regex);
+    if (match) {
+        const resourceType = match[1]; // 'image' or 'video'
+        const fullPath = match[2];
+        const publicId = fullPath.split('.').slice(0, -1).join('.');
+        return { publicId, resourceType };
+    }
+    return null;
+};
 
 export const createShop = async (req: Request, res: Response) => {
     try {
@@ -95,7 +108,7 @@ export const updateShop = async (req: Request, res: Response) => {
         }
 
         // Update basic info
-        const { name, address, phone, gender, isActive, openTime, closeTime, breakStart, breakEnd, slotDuration } = req.body;
+        const { name, address, phone, gender, isActive, openTime, closeTime, breakStart, breakEnd, slotDuration, coordinates, deleteUrls } = req.body;
         if (name !== undefined) shop.name = name;
         if (address !== undefined) shop.address = address;
         if (phone !== undefined) shop.phone = phone;
@@ -109,9 +122,81 @@ export const updateShop = async (req: Request, res: Response) => {
         if (breakEnd !== undefined) shop.breakEnd = breakEnd;
         if (slotDuration !== undefined) shop.slotDuration = slotDuration;
 
-        // Note: Logic to update/delete specific images is complex (omitted for brevity).
-        // For now, we assume simple updates or re-upload. 
-        // Real implementation would allow removing specific existing images.
+        // Update coordinates
+        if (coordinates) {
+            try {
+                const parsedCoordinates = typeof coordinates === 'string' ? JSON.parse(coordinates) : coordinates;
+                if (Array.isArray(parsedCoordinates) && parsedCoordinates.length === 2) {
+                    shop.location = {
+                        type: 'Point',
+                        coordinates: parsedCoordinates
+                    };
+                }
+            } catch (e) {
+                // Ignore parsing errors
+            }
+        }
+
+        // Handle deleting specific images/videos
+        if (deleteUrls) {
+            let urlsToDelete: string[] = [];
+            try {
+                urlsToDelete = typeof deleteUrls === 'string' ? JSON.parse(deleteUrls) : deleteUrls;
+            } catch (e) {
+                if (Array.isArray(deleteUrls)) urlsToDelete = deleteUrls;
+            }
+
+            if (urlsToDelete.length > 0) {
+                shop.images1 = (shop.images1 || []).filter((u: string) => !urlsToDelete.includes(u));
+                shop.images2 = (shop.images2 || []).filter((u: string) => !urlsToDelete.includes(u));
+                shop.images3 = (shop.images3 || []).filter((u: string) => !urlsToDelete.includes(u));
+                shop.videos = (shop.videos || []).filter((u: string) => !urlsToDelete.includes(u));
+
+                // Delete from Cloudinary to free storage quota
+                for (const url of urlsToDelete) {
+                    const mediaInfo = getCloudinaryPublicIdAndType(url);
+                    if (mediaInfo) {
+                        try {
+                            await cloudinary.uploader.destroy(mediaInfo.publicId, { resource_type: mediaInfo.resourceType });
+                            console.log(`Successfully deleted from Cloudinary: ${mediaInfo.publicId} (${mediaInfo.resourceType})`);
+                        } catch (err: any) {
+                            console.error(`Failed to delete Cloudinary asset: ${url}`, err.message);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Handle new file uploads
+        const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+        const getPaths = (fieldname: string) => {
+            return files?.[fieldname]?.map((file) => file.path) || [];
+        };
+
+        const newImages1 = getPaths('images1');
+        const newImages2 = getPaths('images2');
+        const newImages3 = getPaths('images3');
+        const newVideos = getPaths('videos');
+
+        if (newImages1.length > 0) {
+            if (shop.images1 && shop.images1.length > 0) {
+                for (const url of shop.images1) {
+                    const mediaInfo = getCloudinaryPublicIdAndType(url);
+                    if (mediaInfo) {
+                        try {
+                            await cloudinary.uploader.destroy(mediaInfo.publicId, { resource_type: mediaInfo.resourceType });
+                            console.log(`Auto-deleted old cover image: ${mediaInfo.publicId}`);
+                        } catch (err: any) {
+                            console.error(`Failed to delete old cover image: ${url}`, err.message);
+                        }
+                    }
+                }
+            }
+            shop.images1 = newImages1;
+        }
+        if (newImages2.length > 0) shop.images2 = [...(shop.images2 || []), ...newImages2];
+        if (newImages3.length > 0) shop.images3 = [...(shop.images3 || []), ...newImages3];
+        if (newVideos.length > 0) shop.videos = [...(shop.videos || []), ...newVideos];
 
         await shop.save();
         res.json({ message: 'Shop updated', shop });
