@@ -219,15 +219,32 @@ export const googleLogin = async (req: Request, res: Response) => {
 
     } catch (error: any) {
         console.error('Google Login Verification Error:', error.message);
-        res.status(401).json({ 
-            message: 'Invalid ID Token', 
+
+        // Phân loại lỗi để trả về thông báo hữu ích hơn
+        let message = 'Xác thực Google thất bại';
+        let httpStatus = 401;
+
+        if (error.message?.includes('no registered origin')) {
+            message = 'Lỗi cấu hình Google OAuth: Origin chưa được đăng ký trong Google Cloud Console. ' +
+                      'Vào Google Cloud Console → Credentials → OAuth 2.0 Client ID (Web) → ' +
+                      'Authorized JavaScript origins → thêm origin của bạn (VD: http://localhost:5173)';
+            httpStatus = 400;
+        } else if (error.message?.includes('invalid_client')) {
+            message = 'Lỗi cấu hình Google OAuth: Client ID không hợp lệ hoặc chưa được đăng ký đúng origin/redirect URI';
+            httpStatus = 400;
+        } else if (error.message?.includes('Wrong number of segments') || error.message?.includes('Invalid token')) {
+            message = 'ID Token không hợp lệ hoặc đã hết hạn';
+        }
+
+        res.status(httpStatus).json({
+            message,
             error: error.message,
             debug: {
-                configuredAudiences: [
-                    !!process.env.GOOGLE_CLIENT_ID_ANDROID,
-                    !!process.env.GOOGLE_CLIENT_ID_WEB,
-                    !!process.env.GOOGLE_CLIENT_ID_IOS
-                ]
+                configuredAudiences: {
+                    ANDROID: !!process.env.GOOGLE_CLIENT_ID_ANDROID,
+                    WEB: !!process.env.GOOGLE_CLIENT_ID_WEB,
+                    IOS: !!process.env.GOOGLE_CLIENT_ID_IOS
+                }
             }
         });
     }

@@ -75,8 +75,12 @@ export default function RegisterPage() {
       login(data.user, data.token);
       redirectByRole(data.user.role);
     } catch (err: unknown) {
+      const serverMsg =
+        (err as any)?.response?.data?.message ||
+        (err as any)?.response?.data?.error;
       const message =
-        err instanceof Error ? err.message : t('auth.registerFailed');
+        serverMsg ||
+        (err instanceof Error ? err.message : t('auth.registerFailed'));
       setError(message || t('auth.registerFailed'));
     } finally {
       setGoogleLoading(false);

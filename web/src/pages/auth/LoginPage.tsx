@@ -61,9 +61,14 @@ export default function LoginPage() {
       login(data.user, data.token);
       redirectByRole(data.user.role);
     } catch (err: unknown) {
+      // Lấy message lỗi từ server response nếu có
+      const serverMsg =
+        (err as any)?.response?.data?.message ||
+        (err as any)?.response?.data?.error;
       const message =
-        err instanceof Error ? err.message : t('auth.loginFailed');
-      setError(message || t('auth.loginFailed'));
+        serverMsg ||
+        (err instanceof Error ? err.message : t('auth.loginFailed'));
+      setError(message);
     } finally {
       setGoogleLoading(false);
     }

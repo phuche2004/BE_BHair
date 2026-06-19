@@ -409,7 +409,7 @@ Tất cả routes mount tại `/api/v1/...`
 web/
 ├── index.html
 ├── package.json
-├── vite.config.ts              # Vite config + proxy /api → localhost:3000
+├── vite.config.ts              # Vite config + proxy /api → localhost:1000
 ├── vercel.json                 # Deploy config
 ├── public/
 └── src/
@@ -634,7 +634,7 @@ npm run preview      # Preview production build
 
 ## 📝 7. CÁC LƯU Ý / KNOWN ISSUES
 
-1. **Vite config proxy** trỏ tới `http://localhost:3000` nhưng BE chạy port 1000. Proxy chưa đúng.
+1. ~~**Vite config proxy** trỏ tới `http://localhost:3000` nhưng BE chạy port 1000.~~ ✅ **Đã sửa 19/06/2026** — proxy target đổi thành `http://localhost:1000`.
 2. **Appointment model** thiếu `bookingCode` auto-generate trong schema (chỉ có trong controller). Nếu tạo trực tiếp từ DB sẽ thiếu.
 3. **Review model** lưu `userId` trong FE types nhưng BE dùng `customerId`.
 4. **Hairstyle API** có `analyzeFace` response trả về `images.original` là base64, nhưng mobile/web parse khác nhau (BE trả base64, FE cần xử lý).
@@ -643,6 +643,7 @@ npm run preview      # Preview production build
 7. **Socket connection** chưa có auth — client có thể join bất kỳ room nào bằng userId.
 8. **slot.route.ts** mount tại `/api/v1` nhưng route path là `/shop/:shopId/slots` → full path: `/api/v1/shop/:shopId/slots` (chú ý: route trong `server.ts` không có prefix `/shop`).
 9. **App.tsx** là file template mặc định của Vite, không được dùng. Router handle tất cả.
+10. **Google OAuth "no registered origin":** Nếu gặp lỗi này, vào [Google Cloud Console](https://console.cloud.google.com/apis/credentials) → OAuth 2.0 Client ID Web (`GOOGLE_CLIENT_ID_WEB`) → thêm **Authorized JavaScript origins**: `http://localhost:5173` (dev) và `https://web-b-hair.vercel.app` (production). BE đã có error handler phân loại lỗi này và trả về message hướng dẫn chi tiết.
 
 ---
 
@@ -677,4 +678,22 @@ npm run preview      # Preview production build
 
 ---
 
-*Tài liệu tạo ngày: 18/06/2026 — Dự án B_Hair*
+## 🤖 9. AI CODING RULES (3 tầng — tiết kiệm token)
+
+| File | Khi load | Nội dung |
+|---|---|---|
+| `.github/copilot-instructions.md` | Luôn luôn | Core: doc, no-hardcode, no-mock, **output rules**, API format, known issues |
+| `.github/instructions/be.instructions.md` | Sửa `src/**` | BE: architecture, auth, DB, external services, code style |
+| `.github/instructions/fe.instructions.md` | Sửa `web/src/**` | FE: architecture, auth, i18n, types sync, code style |
+| `.github/skills/update-docs/SKILL.md` | Gọi `/update-docs` | Cập nhật DOCUMENTATION.md sau code change |
+
+### 🎯 Output rules (quan trọng)
+- **Code trước, giải thích sau** — ưu tiên edits, chỉ giải thích khi hỏi.
+- **Dùng `// ...existing code...`** thay vì copy nguyên file.
+- **Mỗi response 1 hành động chính.**
+- **TypeScript strict** — không `any`, dùng type từ `types/`.
+- **Sau sửa:** chạy `get_errors` kiểm tra.
+
+---
+
+*Tài liệu cập nhật: 19/06/2026 — Dự án B_Hair*
