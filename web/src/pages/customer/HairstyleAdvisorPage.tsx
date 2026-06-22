@@ -79,8 +79,15 @@ export default function HairstyleAdvisorPage() {
       return;
     }
 
-    setCurrentFile(file);
-    setPreviewUrl(URL.createObjectURL(file));
+    // Optimize/Compress image client-side to save network bandwidth and API token usage
+    compressImage(file, 1024, 1024, 0.85).then(compressedFile => {
+      setCurrentFile(compressedFile);
+      setPreviewUrl(URL.createObjectURL(compressedFile));
+    }).catch(() => {
+      setCurrentFile(file);
+      setPreviewUrl(URL.createObjectURL(file));
+    });
+
     setError('');
     setCameraActive(false);
     if (streamRef.current) {
@@ -126,8 +133,15 @@ export default function HairstyleAdvisorPage() {
     canvas.toBlob((blob) => {
       if (!blob) return;
       const file = new File([blob], 'webcam-capture.jpg', { type: 'image/jpeg' });
-      setCurrentFile(file);
-      setPreviewUrl(URL.createObjectURL(blob));
+      
+      // Optimize/Compress camera capture client-side
+      compressImage(file, 1024, 1024, 0.85).then(compressedFile => {
+        setCurrentFile(compressedFile);
+        setPreviewUrl(URL.createObjectURL(compressedFile));
+      }).catch(() => {
+        setCurrentFile(file);
+        setPreviewUrl(URL.createObjectURL(blob));
+      });
 
       // Stop camera
       if (streamRef.current) {
@@ -579,4 +593,61 @@ function formatAdviceText(text: string): string {
     .replace(/\n/g, '<br/>')
     .replace(/^/, '<p>')
     .replace(/$/, '</p>');
+}
+
+/* ── Helper: Client-side Image Compression ───────────── */
+function compressImage(file: File, maxWidth = 1024, maxHeight = 1024, quality = 0.85): Promise<File> {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target?.result as string;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          resolve(file);
+          return;
+        }
+
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) {
+              resolve(file);
+              return;
+            }
+            const compressedFile = new File([blob], file.name, {
+              type: 'image/jpeg',
+              lastModified: Date.now(),
+            });
+            resolve(compressedFile);
+          },
+          'image/jpeg',
+          quality
+        );
+      };
+      img.onerror = () => resolve(file);
+    };
+    reader.onerror = () => resolve(file);
+  });
 }
