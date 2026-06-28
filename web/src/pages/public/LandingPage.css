@@ -1,136 +1,297 @@
-.landing-page {
-  --bg-dark: #121212;
-  --bg-card: #1e1e1e;
-  --text-primary: #ffffff;
-  --text-secondary: #a0a0a0;
-  --accent: #bb86fc;
-  --accent-hover: #9965f4;
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;800&family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap');
 
-  background-color: var(--bg-dark);
-  color: var(--text-primary);
-  font-family: 'Inter', sans-serif;
-  min-height: 100vh;
+/* B_Hair Native Document Setting */
+html {
+  overflow-x: hidden;
+}
+
+body {
   margin: 0;
   padding: 0;
-  line-height: 1.6;
+  background-color: #030303;
+  color: #f0f0f0;
+  width: 100%;
+  overflow-x: hidden;
 }
 
-.landing-container {
-  max-width: 1000px;
-  margin: 0 auto;
-  padding: 40px 20px;
+/* Base styles */
+.landing-wrapper {
+  --c-bg: #030303;
+  --c-text: #f0f0f0;
+  --c-muted: #888888;
+  --c-accent: #c49b66;
+  --c-glass: rgba(20, 20, 20, 0.6);
+  --c-border: rgba(255, 255, 255, 0.05);
+
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  font-family: 'Inter', sans-serif;
+  background-color: var(--c-bg);
+  background-image: 
+    linear-gradient(var(--c-border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--c-border) 1px, transparent 1px);
+  background-size: 80px 80px;
 }
 
-.landing-header {
-  text-align: center;
-  margin-bottom: 60px;
-  padding: 80px 20px;
-  background: linear-gradient(135deg, rgba(187, 134, 252, 0.1) 0%, rgba(18, 18, 18, 1) 100%);
-  border-bottom: 1px solid #333;
+/* B_Hair Custom Particle System Canvas */
+#particle-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 0;
 }
 
-.landing-title {
-  font-size: 3.5rem;
+/* Sections */
+.landing-section {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 1;
+  padding: 120px 20px;
+}
+
+/* Typography chuẩn Minimal Premium */
+.ag-title {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 7vw;
   font-weight: 800;
-  margin: 0 0 16px 0;
-  background: linear-gradient(90deg, #bb86fc, #03dac6);
+  line-height: 1.2;
+  padding: 10px 0;
+  letter-spacing: -0.04em;
+  margin: 0 0 24px 0;
+  text-align: center;
+  background: linear-gradient(180deg, #fff 0%, #888 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
-.landing-subtitle {
-  font-size: 1.25rem;
-  color: var(--text-secondary);
+.ag-subtitle {
+  font-size: 1.4rem;
+  color: var(--c-muted);
   max-width: 600px;
-  margin: 0 auto 30px auto;
+  text-align: center;
+  font-weight: 400;
+  line-height: 1.6;
+  margin-bottom: 50px;
 }
 
-.landing-btn {
-  display: inline-block;
-  background-color: var(--accent);
-  color: #000;
-  padding: 14px 36px;
-  border-radius: 30px;
-  text-decoration: none;
-  font-weight: 700;
-  font-size: 1.1rem;
-  transition: all 0.3s ease;
+.ag-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--c-text);
+  border: 1px solid var(--c-border);
+  padding: 18px 40px;
+  border-radius: 100px;
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: 1px;
   cursor: pointer;
-  border: none;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
 }
 
-.landing-btn:hover {
-  background-color: var(--accent-hover);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(187, 134, 252, 0.3);
+.ag-btn:hover {
+  background: var(--c-text);
+  color: var(--c-bg);
+  transform: scale(1.05);
+  box-shadow: 0 0 20px rgba(255,255,255,0.1);
 }
 
-.landing-features {
+/* Features Glassmorphism */
+.ag-features {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 24px;
-  margin-bottom: 60px;
+  max-width: 1200px;
+  width: 100%;
+  margin-top: 60px;
 }
 
-.landing-feature-card {
-  background-color: var(--bg-card);
-  padding: 30px;
-  border-radius: 16px;
-  border: 1px solid #2a2a2a;
-  transition: transform 0.3s ease, border-color 0.3s ease;
+.ag-card {
+  background: var(--c-glass);
+  border: 1px solid var(--c-border);
+  border-radius: 24px;
+  padding: 40px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.4s ease;
 }
 
-.landing-feature-card:hover {
-  transform: translateY(-5px);
-  border-color: var(--accent);
+.ag-card:hover {
+  transform: translateY(-10px);
+  border-color: rgba(196,155,102,0.3);
 }
 
-.landing-feature-icon {
-  font-size: 2.5rem;
-  margin-bottom: 20px;
+.ag-card h3 {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1.8rem;
+  margin: 0 0 16px 0;
+  font-weight: 600;
 }
 
-.landing-feature-card h3 {
-  font-size: 1.5rem;
-  margin: 0 0 12px 0;
-  color: var(--text-primary);
-}
-
-.landing-feature-card p {
-  color: var(--text-secondary);
+.ag-card p {
+  color: var(--c-muted);
+  line-height: 1.6;
   margin: 0;
 }
 
-.landing-system-info {
-  background-color: var(--bg-card);
-  padding: 40px;
-  border-radius: 16px;
-  text-align: center;
-}
-
-.landing-system-info h2 {
-  margin-top: 0;
-}
-
-.landing-tech-stack {
+/* Bố cục thư viện ảnh ngẫu hứng */
+.ag-gallery {
   display: flex;
+  flex-direction: column;
+  gap: 40px;
+  width: 100%;
+  max-width: 1200px;
+}
+
+.ag-gallery-row {
+  display: flex;
+  gap: 40px;
+  height: 400px;
+}
+
+.ag-img-box {
+  flex: 1;
+  border-radius: 24px;
+  overflow: hidden;
+  position: relative;
+  border: 1px solid var(--c-border);
+}
+
+.ag-img-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: grayscale(80%) contrast(1.2);
+  transition: filter 0.5s ease, transform 0.8s ease;
+}
+
+.ag-img-box:hover img {
+  filter: grayscale(0%) contrast(1);
+  transform: scale(1.05);
+}
+
+/* Reviews Grid (Khách Hàng Nói Gì) */
+.ag-reviews-grid {
+  display: flex;
+  gap: 30px;
+  justify-content: center;
+  align-items: stretch;
+  margin-top: 40px;
+  flex-wrap: wrap;
+}
+
+.ag-review-card {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(196, 155, 102, 0.2);
+  border-radius: 20px;
+  padding: 40px 30px;
+  width: 320px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
   justify-content: center;
   gap: 20px;
-  flex-wrap: wrap;
-  margin-top: 20px;
+  transition: transform 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
+  backdrop-filter: blur(10px);
 }
 
-.landing-tech-badge {
-  background-color: #2a2a2a;
-  padding: 8px 16px;
+.ag-review-card:hover {
+  transform: translateY(-10px);
+  border-color: rgba(196, 155, 102, 0.8);
+  box-shadow: 0 10px 30px rgba(196, 155, 102, 0.1);
+}
+
+.ag-review-card .stars {
+  color: #c49b66;
+  font-size: 1.5rem;
+  letter-spacing: 2px;
+}
+
+.ag-review-card p {
+  font-size: 1.1rem;
+  line-height: 1.6;
+  font-style: italic;
+  color: #ddd;
+}
+
+.ag-review-card h4 {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  color: #fff;
+  margin: 0;
+  font-weight: 600;
+  font-size: 1.2rem;
+}
+
+/* Scroll Hint in Hero */
+.ag-scroll-hint {
+  position: absolute;
+  bottom: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  color: var(--c-muted);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  animation: floatBounce 2s infinite ease-in-out;
+}
+
+.ag-scroll-hint .mouse {
+  width: 24px;
+  height: 36px;
+  border: 2px solid var(--c-muted);
   border-radius: 20px;
-  font-size: 0.9rem;
-  color: var(--text-secondary);
+  position: relative;
 }
 
-.landing-footer {
-  text-align: center;
-  padding: 40px 0;
-  color: var(--text-secondary);
-  font-size: 0.9rem;
+.ag-scroll-hint .mouse::before {
+  content: '';
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 6px;
+  background-color: var(--c-muted);
+  border-radius: 2px;
+  animation: mouseScroll 2s infinite cubic-bezier(0.15, 0.41, 0.69, 0.94);
+}
+
+@keyframes floatBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(10px); }
+}
+
+@keyframes mouseScroll {
+  0% { opacity: 0; transform: translate(-50%, 0); }
+  10% { opacity: 1; transform: translate(-50%, 0); }
+  100% { opacity: 0; transform: translate(-50%, 15px); }
+}
+
+@media (max-width: 992px) {
+  .ag-features {
+    grid-template-columns: 1fr;
+  }
+  .ag-gallery-row {
+    flex-direction: column;
+    height: auto;
+  }
+  .ag-img-box {
+    height: 300px;
+  }
+  .ag-title {
+    font-size: 12vw;
+  }
 }

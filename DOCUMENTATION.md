@@ -557,6 +557,20 @@ interface AuthResponse { user: User, token: string }
 | **Dark mode** | Toggle dark/light theme | SettingsPage |
 | **Push Notification** | FCM + Socket.io realtime | (Cần app mobile để nhận push) |
 
+#### 3.7.1. Landing Page (Kiến trúc Mới)
+- **Giao diện (Aesthetic):** Dark Theme cực kỳ sang trọng (chữ Vàng/Đồng `#c49b66` trên nền đen tuyền), phông chữ `Plus Jakarta Sans`, định hướng trải nghiệm "Độc Bản & Đẳng Cấp".
+- **Hiệu ứng Scroll:** Sử dụng thư viện `lenis` cho Smooth Scrolling tự do (Free smooth scroll). Toàn bộ thuật toán nam châm cũ đã được loại bỏ để nhường chỗ cho thao tác cuộn mượt mà tự nhiên.
+- **Particle Physics Engine:** Tích hợp Canvas tự code để vẽ hàng trăm hạt ánh sáng 3D. Các hạt tương tác đẩy lùi khi có chuột (Repulsion) và có hiệu ứng gió 3D (Parallax Wind) đẩy các hạt to bay nhanh hơn hạt nhỏ khi cuộn trang.
+- **GSAP Animations:** 
+  - Hiệu ứng Universal "Pop-up Fade In" (`.ag-fade-up`) cho toàn bộ thành phần (Cards, Title, Button) với gia tốc nảy `back.out(1.5)` khi cuộn chạm mốc 90% màn hình.
+  - Hiệu ứng Hero Scrub Animation: Chữ mờ và bay dần lên khi bắt đầu cuộn xuống.
+- **Cấu trúc 5 phân đoạn:**
+  1. Hero: Tiêu đề B_Hair + CTA.
+  2. Kiến Tạo Trải Nghiệm (Tính năng): 3 thẻ giới thiệu công nghệ (AI, Booking realtime).
+  3. Khách Hàng Nói Gì (Mock Reviews): Grid 3 thẻ kính mờ (Glassmorphism) với đánh giá 5 sao.
+  4. Không Gian Độc Bản (Gallery): Bố cục Masonry 4 ảnh với Cinematic effect (từ xám Grayscale sang ảnh màu sắc nét khi hover).
+  5. Sẵn Sàng Thay Đổi (Footer).
+
 ---
 
 ### 3.8. External Libraries (FE)
