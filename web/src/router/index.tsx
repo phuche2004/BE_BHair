@@ -19,13 +19,8 @@ const ManagerAppointmentsPage = React.lazy(() => import('../pages/manager/Manage
 const MyShopsPage = React.lazy(() => import('../pages/manager/MyShopsPage'));
 const StaffAppointmentsPage = React.lazy(() => import('../pages/staff/StaffAppointmentsPage'));
 
-function RootRedirect() {
-  const { user, token } = useAuthStore();
-  if (!token) return <Navigate to="/login" replace />;
-  if (user?.role === 'MANAGER' || user?.role === 'ADMIN') return <Navigate to="/manager/appointments" replace />;
-  if (user?.role === 'STAFF') return <Navigate to="/staff/appointments" replace />;
-  return <Navigate to="/home" replace />;
-}
+// Landing page now handles the root logic
+const LandingPage = React.lazy(() => import('../pages/public/LandingPage'));
 
 const PageLoader = () => (
   <div className="spinner-wrap" style={{ minHeight: '50dvh' }}>
@@ -42,7 +37,7 @@ function KeepAliveTabs() {
 
   // Authorization redirects for protected paths
   if (!user) {
-    const isPublicRoute = ['/login', '/register'].includes(path) || path.startsWith('/shop/');
+    const isPublicRoute = ['/', '/login', '/register'].includes(path) || path.startsWith('/shop/');
     if (isPublicRoute) return null;
     return <Navigate to="/login" replace />;
   }
@@ -111,7 +106,7 @@ function MainApp() {
           {/* Public */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
-          <Route path="/" element={<RootRedirect />} />
+          <Route path="/" element={<LandingPage />} />
 
           {/* NON-TAB ROUTES */}
           <Route

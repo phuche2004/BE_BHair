@@ -433,6 +433,9 @@ web/
     │   │   └── ProtectedRoute.tsx # Route guard với allowedRoles
     │   └── map/                # Map components
     ├── pages/
+    │   ├── public/
+    │   │   ├── LandingPage.tsx # Landing page giới thiệu (trang chủ gốc)
+    │   │   └── LandingPage.css # Styles cho Landing page
     │   ├── auth/
     │   │   ├── LoginPage.tsx   # Login form + Google OAuth
     │   │   └── RegisterPage.tsx # Register form + role selector
@@ -468,10 +471,10 @@ web/
 **Base:** `BrowserRouter` trong `AppRouter`
 
 **Phân chia theo role tự động:**
-- `CUSTOMER`: Home (`/`), Search (`/search`), Hairstyle Advisor (`/hairstyle`), Appointments (`/appointments`), Settings (`/settings`)
+- `CUSTOMER`: Home (`/home`), Search (`/search`), Hairstyle Advisor (`/hairstyle`), Appointments (`/appointments`), Settings (`/settings`)
 - `MANAGER / ADMIN`: Manager Appointments (`/manager/appointments`), My Shops (`/manager/shops`), Settings (`/settings`)
 - `STAFF`: Staff Appointments (`/staff/appointments`), Settings (`/settings`)
-- **Public:** Login (`/login`), Register (`/register`)
+- **Public:** Landing Page (`/`), Login (`/login`), Register (`/register`)
 
 **KeepAlive Tabs Pattern:**
 - Các tab route (list ở trên) được render đồng thời qua `KeepAliveTabs`, chỉ hiển thị tab active bằng `display: block / none`
@@ -479,7 +482,7 @@ web/
 - Mỗi tab route bọc trong `<AppShell>` để có bottom nav
 
 **Route Guards:**
-- `RootRedirect`: Tự động redirect theo role khi truy cập `/`
+- `LandingPage` (`/`): Đóng vai trò route gốc. Nếu chưa đăng nhập sẽ hiển thị Landing Page, nếu đã đăng nhập sẽ tự động redirect theo role.
 - `ProtectedRoute`: Check auth + role, redirect nếu không đủ quyền
 - Logic redirect trong `KeepAliveTabs`: Ngăn user truy cập route của role khác
 
@@ -542,6 +545,7 @@ interface AuthResponse { user: User, token: string }
 
 | Feature | Mô tả | Trang |
 |---|---|---|
+| **Landing Page** | Giới thiệu chung dự án cho khách truy cập chưa đăng nhập | LandingPage |
 | **Login/Register** | Phone + password hoặc Google OAuth | LoginPage, RegisterPage |
 | **Tìm kiếm shop** | Keyword + geolocation (radius filter) | SearchPage |
 | **Xem shop** | Chi tiết: ảnh, map, services, staff, reviews, giờ mở cửa | ShopDetailPage |
