@@ -39,7 +39,7 @@ function KeepAliveTabs() {
   if (!user) {
     const isPublicRoute = ['/', '/login', '/register'].includes(path) || path.startsWith('/shop/');
     if (isPublicRoute) return null;
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/" replace />;
   }
   
   if (role === 'CUSTOMER' && (path.includes('/manager/') || path.includes('/staff/'))) {

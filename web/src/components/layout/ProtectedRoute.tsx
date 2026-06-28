@@ -9,7 +9,7 @@ interface Props {
   redirectTo?: string;
 }
 
-export function ProtectedRoute({ children, allowedRoles, redirectTo = '/login' }: Props) {
+export function ProtectedRoute({ children, allowedRoles, redirectTo = '/' }: Props) {
   const { token, user, isLoading } = useAuthStore();
   const location = useLocation();
 
