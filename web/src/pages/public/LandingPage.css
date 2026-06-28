@@ -28,7 +28,7 @@ body {
   min-height: 100vh;
   font-family: 'Inter', sans-serif;
   background-color: var(--c-bg);
-  background-image: 
+  background-image:
     linear-gradient(var(--c-border) 1px, transparent 1px),
     linear-gradient(90deg, var(--c-border) 1px, transparent 1px);
   background-size: 80px 80px;
@@ -104,7 +104,7 @@ body {
   background: var(--c-text);
   color: var(--c-bg);
   transform: scale(1.05);
-  box-shadow: 0 0 20px rgba(255,255,255,0.1);
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
 }
 
 /* Features Glassmorphism */
@@ -129,7 +129,7 @@ body {
 
 .ag-card:hover {
   transform: translateY(-10px);
-  border-color: rgba(196,155,102,0.3);
+  border-color: rgba(196, 155, 102, 0.3);
 }
 
 .ag-card h3 {
@@ -149,15 +149,16 @@ body {
 .ag-gallery {
   display: flex;
   flex-direction: column;
-  gap: 40px;
-  width: 100%;
-  max-width: 1200px;
+  gap: 2vw;
+  width: 85vw; /* Dùng vw để luôn khít và tỷ lệ với màn hình */
+  max-width: 1400px;
 }
 
 .ag-gallery-row {
   display: flex;
-  gap: 40px;
-  height: 400px;
+  gap: 2vw;
+  height: 35vh; /* Dùng vh để chiều cao ảnh co giãn theo zoom */
+  min-height: 300px;
 }
 
 .ag-img-box {
@@ -270,28 +271,133 @@ body {
 }
 
 @keyframes floatBounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(10px); }
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(10px);
+  }
 }
 
 @keyframes mouseScroll {
-  0% { opacity: 0; transform: translate(-50%, 0); }
-  10% { opacity: 1; transform: translate(-50%, 0); }
-  100% { opacity: 0; transform: translate(-50%, 15px); }
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 0);
+  }
+
+  10% {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, 15px);
+  }
 }
 
 @media (max-width: 992px) {
   .ag-features {
     grid-template-columns: 1fr;
   }
+
   .ag-gallery-row {
     flex-direction: column;
     height: auto;
   }
+
   .ag-img-box {
-    height: 300px;
+    height: 35vh;
+    min-height: 250px;
   }
+}
+
+@media (max-width: 768px) {
+  .landing-section {
+    min-height: auto;
+    padding: 80px 20px; /* Tăng padding lên chút để không bị dính */
+  }
+
+  /* Đảm bảo Hero Section luôn full màn hình trên mobile để không đè lên content khác */
+  .hero-section {
+    min-height: 100vh;
+  }
+
   .ag-title {
-    font-size: 12vw;
+    font-size: 9.5vw !important;
+    margin-bottom: 4vh !important;
   }
+
+  .ag-subtitle {
+    font-size: 1.1rem;
+    margin-bottom: 30px;
+  }
+
+  .ag-card {
+    padding: 24px;
+  }
+  
+  .ag-card h3 {
+    font-size: 1.4rem;
+  }
+
+  .ag-review-card {
+    padding: 24px 20px;
+    width: 100%;
+  }
+
+  .ag-features {
+    gap: 16px;
+    margin-top: 30px;
+  }
+
+  .ag-reviews-grid {
+    gap: 16px;
+    margin-top: 30px;
+  }
+
+  .ag-gallery {
+    gap: 16px;
+    width: 95vw;
+  }
+
+  .ag-gallery-row {
+    gap: 16px;
+  }
+
+  .floating-nav-buttons {
+    display: none !important;
+  }
+}
+/* Floating Navigation Buttons */
+.floating-nav-buttons {
+  position: fixed;
+  bottom: 40px;
+  right: 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  z-index: 100;
+}
+.nav-btn {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: rgba(26, 26, 26, 0.6);
+  border: 1px solid rgba(196, 155, 102, 0.3);
+  color: var(--c-gold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+}
+.nav-btn:hover {
+  background: rgba(196, 155, 102, 0.2);
+  border-color: rgba(196, 155, 102, 0.8);
+  transform: scale(1.1);
 }

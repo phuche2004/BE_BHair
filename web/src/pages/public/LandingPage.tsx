@@ -27,6 +27,7 @@ export default function LandingPage() {
   }, [token, user, navigate]);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const lenisRef = useRef<any>(null);
 
   // Core Engine: Smooth Scroll (Lenis), Magnetic Snap (GSAP) & Particle Physics
   useEffect(() => {
@@ -42,9 +43,89 @@ export default function LandingPage() {
     gsap.ticker.add((time) => { lenis.raf(time * 1000); });
     gsap.ticker.lagSmoothing(0);
 
-    // --- 2. GSAP SCROLL UPDATE ---
-    // (Xóa bỏ GSAP Snap cũ vì nó xung đột với page không đều nhau)
-    lenis.on('scroll', ScrollTrigger.update);
+    lenisRef.current = lenis;
+
+    /* --- 2. MAGNETIC SNAP (ĐÃ BỊ HUỶ THEO YÊU CẦU) ---
+    // Sửa lỗi con lăn/trackpad: quán tính của trackpad sinh ra các sự kiện cuộn vi mô (micro wheel events)
+    // làm ngắt (abort) hiệu ứng snap của Lenis ngay lập tức.
+    // Giải pháp: dùng `lock: true` để khoá cuộn trong lúc đang snap.
+    let isSnapping = false;
+    let snapTimeout: ReturnType<typeof setTimeout> | null = null;
+
+    const getAllSections = (): HTMLElement[] => {
+      if (!wrapperRef.current) return [];
+      return Array.from(wrapperRef.current.querySelectorAll('.landing-section'));
+    };
+
+    const snapToClosest = () => {
+      if (isSnapping) return;
+      const sections = getAllSections();
+      if (!sections.length) return;
+
+      const viewportCenter = window.innerHeight / 2;
+      let closest: HTMLElement | null = null;
+      let minDistance = Infinity;
+
+      sections.forEach((sec) => {
+        const rect = sec.getBoundingClientRect();
+        const sectionCenter = rect.top + rect.height / 2;
+        const distance = Math.abs(sectionCenter - viewportCenter);
+        if (distance < minDistance) {
+          minDistance = distance;
+          closest = sec;
+        }
+      });
+
+      if (!closest) return;
+
+      const rect = closest.getBoundingClientRect();
+      const sectionHeight = rect.height;
+      const viewportHeight = window.innerHeight;
+      let scrollTarget: number;
+
+      if (sectionHeight > viewportHeight) {
+        scrollTarget = window.scrollY + rect.top;
+      } else {
+        scrollTarget = window.scrollY + rect.top - (viewportHeight - sectionHeight) / 2;
+      }
+
+      // Khong thuc hien snap neu da o rat sat vi tri dich
+      if (Math.abs(window.scrollY - scrollTarget) < 5) return;
+
+      isSnapping = true;
+      lenis.scrollTo(scrollTarget, {
+        duration: 0.4,
+        lock: true, // QUAN TRONG: Khoá cuộn để chống trackpad inertia ngắt snap
+        easing: (t: number) => 1 - Math.pow(1 - t, 4),
+        onComplete: () => {
+          isSnapping = false;
+        }
+      });
+    };
+
+    // Lang nghe su kien scroll cua Lenis de thuc hien snap
+    lenis.on('scroll', (e: any) => {
+      if (isSnapping) return;
+
+      const speed = Math.abs(e.velocity);
+
+      // Khi tốc độ cuộn cao (đang lăn chuột thật), hủy bộ đếm nam châm
+      if (speed > 0.5) {
+        if (snapTimeout) {
+          clearTimeout(snapTimeout);
+          snapTimeout = null;
+        }
+      }
+      // Khi tốc độ giảm xuống mức nhỏ (chỉ còn là quán tính trượt), bắt đầu đếm ngược 100ms để snap ngay
+      // Không clear timeout liên tục nữa để loại bỏ độ trễ (delay)
+      else if (!snapTimeout) {
+        snapTimeout = setTimeout(() => {
+          snapTimeout = null;
+          snapToClosest();
+        }, 0);
+      }
+    });
+    ------------------------------------------------- */
 
     // --- 3. PARTICLE PHYSICS ---
     const canvas = canvasRef.current;
@@ -62,7 +143,6 @@ export default function LandingPage() {
       mouse.y = e.clientY;
     };
 
-    // Đã xóa nam châm vì xung đột phần cứng.
     // Lấy vận tốc mượt từ Lenis cho Particle Wind
     lenis.on('scroll', (e: any) => {
       scrollVelocity = e.velocity * 1.5;
@@ -197,6 +277,45 @@ export default function LandingPage() {
     };
   }, [token]);
 
+  const handleScrollNav = (direction: 'up' | 'down') => {
+    if (!wrapperRef.current || !lenisRef.current) return;
+    const sections = Array.from(wrapperRef.current.querySelectorAll('.landing-section'));
+    if (!sections.length) return;
+
+    const viewportCenter = window.scrollY + window.innerHeight / 2;
+    let currentIndex = 0;
+    let minDistance = Infinity;
+
+    sections.forEach((sec, index) => {
+      const rect = sec.getBoundingClientRect();
+      const sectionCenter = window.scrollY + rect.top + rect.height / 2;
+      const distance = Math.abs(sectionCenter - viewportCenter);
+      if (distance < minDistance) {
+        minDistance = distance;
+        currentIndex = index;
+      }
+    });
+
+    let targetIndex = direction === 'down' ? currentIndex + 1 : currentIndex - 1;
+    if (targetIndex < 0) targetIndex = 0;
+    if (targetIndex >= sections.length) targetIndex = sections.length - 1;
+
+    const targetSection = sections[targetIndex] as HTMLElement;
+    const rect = targetSection.getBoundingClientRect();
+    const sectionHeight = rect.height;
+    const viewportHeight = window.innerHeight;
+
+    let scrollTarget = window.scrollY + rect.top;
+    if (sectionHeight <= viewportHeight) {
+      scrollTarget = scrollTarget - (viewportHeight - sectionHeight) / 2;
+    }
+
+    lenisRef.current.scrollTo(scrollTarget, {
+      duration: 1.0,
+      easing: (t: number) => 1 - Math.pow(1 - t, 4),
+    });
+  };
+
   if (token) return null;
 
   return (
@@ -213,7 +332,7 @@ export default function LandingPage() {
           B_Hair tái định nghĩa trải nghiệm cắt tóc. Mượt mà, trực quan và sang trọng. Đặt lịch ngay hôm nay với công nghệ AI thấu hiểu phong cách của bạn.
         </p>
         <button className="ag-btn hero-anim" onClick={() => navigate('/login')}>
-          Bắt Đầu Khám Phá
+          Đăng Nhập
         </button>
 
         {/* --- Scroll Hint --- */}
@@ -266,7 +385,7 @@ export default function LandingPage() {
 
       {/* --- Gallery Section --- */}
       <section className="landing-section gallery-section">
-        <h2 className="ag-title ag-fade-up" style={{ fontSize: '4vw', marginBottom: '80px' }}>Không Gian Độc Bản</h2>
+        <h2 className="ag-title ag-fade-up" style={{ fontSize: '4vw', marginBottom: '8vh' }}>Không Gian Độc Bản</h2>
         <div className="ag-gallery">
           <div className="ag-gallery-row">
             <div className="ag-img-box ag-fade-up">
@@ -299,6 +418,16 @@ export default function LandingPage() {
           &copy; {new Date().getFullYear()} B_Hair. Antigravity Experience.
         </div>
       </section>
+
+      {/* --- Floating Navigation Buttons --- */}
+      <div className="floating-nav-buttons">
+        <button className="nav-btn up" onClick={() => handleScrollNav('up')} aria-label="Cuộn lên">
+          <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
+        </button>
+        <button className="nav-btn down" onClick={() => handleScrollNav('down')} aria-label="Cuộn xuống">
+          <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </button>
+      </div>
 
     </div>
   );
