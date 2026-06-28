@@ -1,19 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;800&family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap');
 
-/* B_Hair Native Document Setting */
-html {
-  overflow-x: hidden;
-}
-
-body {
-  margin: 0;
-  padding: 0;
-  background-color: #030303;
-  color: #f0f0f0;
-  width: 100%;
-  overflow-x: hidden;
-}
-
 /* Base styles */
 .landing-wrapper {
   --c-bg: #030303;
@@ -28,6 +14,8 @@ body {
   min-height: 100vh;
   font-family: 'Inter', sans-serif;
   background-color: var(--c-bg);
+  color: var(--c-text);
+  overflow-x: hidden;
   background-image:
     linear-gradient(var(--c-border) 1px, transparent 1px),
     linear-gradient(90deg, var(--c-border) 1px, transparent 1px);
