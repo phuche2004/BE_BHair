@@ -98,9 +98,10 @@ export const ParticlesBackground: React.FC = () => {
 
   return (
     <canvas
+      className="particle-canvas"
       ref={canvasRef}
       style={{
-        position: 'absolute',
+        position: 'fixed',
         top: 0,
         left: 0,
         width: '100%',

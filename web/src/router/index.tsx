@@ -21,6 +21,7 @@ const StaffAppointmentsPage = React.lazy(() => import('../pages/staff/StaffAppoi
 
 // Landing page now handles the root logic
 const LandingPage = React.lazy(() => import('../pages/public/LandingPage'));
+const ShowcasePage = React.lazy(() => import('../pages/public/ShowcasePage'));
 
 const PageLoader = () => (
   <div className="spinner-wrap" style={{ minHeight: '50dvh' }}>
@@ -54,7 +55,7 @@ function KeepAliveTabs() {
 
   // Authorization redirects for protected paths
   if (!user) {
-    const isPublicRoute = ['/', '/login', '/register'].includes(path) || path.startsWith('/shop/');
+    const isPublicRoute = ['/', '/login', '/register', '/showcase'].includes(path) || path.startsWith('/shop/');
     if (isPublicRoute) return null;
     return <Navigate to="/" replace />;
   }
@@ -124,6 +125,7 @@ function MainApp() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/" element={<LandingPage />} />
+          <Route path="/showcase" element={<ShowcasePage />} />
 
           {/* NON-TAB ROUTES */}
           <Route

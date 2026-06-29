@@ -419,6 +419,18 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* --- Preview Showcase Button --- */}
+      <button 
+        className="preview-showcase-btn" 
+        onClick={() => navigate('/showcase')}
+        aria-label="Preview Showcase"
+      >
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" style={{ marginRight: 6 }}>
+          <polygon points="5,3 19,12 5,21" />
+        </svg>
+        PREVIEW
+      </button>
+
       {/* --- Floating Navigation Buttons --- */}
       <div className="floating-nav-buttons">
         <button className="nav-btn up" onClick={() => handleScrollNav('up')} aria-label="Cuộn lên">
