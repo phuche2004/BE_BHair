@@ -9,7 +9,7 @@ interface ThemeState {
 }
 
 export const useThemeStore = create<ThemeState>((set) => ({
-  theme: 'light',
+  theme: 'dark',
   language: 'vi',
 
   setTheme: (theme) => {
@@ -24,7 +24,7 @@ export const useThemeStore = create<ThemeState>((set) => ({
   },
 
   loadSettings: () => {
-    const savedTheme = (localStorage.getItem('appTheme') as 'light' | 'dark') || 'light';
+    const savedTheme = (localStorage.getItem('appTheme') as 'light' | 'dark') || 'dark';
     const savedLanguage = localStorage.getItem('appLanguage') || 'vi';
     document.documentElement.setAttribute('data-theme', savedTheme);
     set({ theme: savedTheme, language: savedLanguage });

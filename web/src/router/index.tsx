@@ -29,6 +29,23 @@ const PageLoader = () => (
 );
 
 // Keep-Alive wrapper for bottom-nav tabs
+function TabWrapper({ active, children }: { active: boolean, children: React.ReactNode }) {
+  return (
+    <div style={{
+      position: active ? 'relative' : 'absolute',
+      top: 0, left: 0, right: 0, bottom: active ? 'auto' : 0,
+      height: active ? '100%' : 'auto',
+      opacity: active ? 1 : 0,
+      visibility: active ? 'visible' : 'hidden',
+      transition: 'opacity 0.3s ease, visibility 0.3s ease',
+      zIndex: active ? 1 : 0,
+      pointerEvents: active ? 'auto' : 'none'
+    }}>
+      {children}
+    </div>
+  );
+}
+
 function KeepAliveTabs() {
   const { user } = useAuthStore();
   const location = useLocation();
@@ -56,30 +73,30 @@ function KeepAliveTabs() {
     <AppShell>
       {/* Customer Tabs */}
       {(!role || role === 'CUSTOMER') && (
-        <>
-          <div style={{ display: path === '/home' ? 'block' : 'none', height: '100%' }}><HomePage /></div>
-          <div style={{ display: path === '/search' ? 'block' : 'none', height: '100%' }}><SearchPage /></div>
-          <div style={{ display: path === '/hairstyle' ? 'block' : 'none', height: '100%' }}><HairstyleAdvisorPage /></div>
-          <div style={{ display: path === '/appointments' ? 'block' : 'none', height: '100%' }}><AppointmentsPage /></div>
-          <div style={{ display: path === '/settings' ? 'block' : 'none', height: '100%' }}><SettingsPage /></div>
-        </>
+        <div style={{ position: 'relative', height: '100%' }}>
+          <TabWrapper active={path === '/home'}><HomePage /></TabWrapper>
+          <TabWrapper active={path === '/search'}><SearchPage /></TabWrapper>
+          <TabWrapper active={path === '/hairstyle'}><HairstyleAdvisorPage /></TabWrapper>
+          <TabWrapper active={path === '/appointments'}><AppointmentsPage /></TabWrapper>
+          <TabWrapper active={path === '/settings'}><SettingsPage /></TabWrapper>
+        </div>
       )}
 
       {/* Manager Tabs */}
       {(role === 'MANAGER' || role === 'ADMIN') && (
-        <>
-          <div style={{ display: path === '/manager/appointments' ? 'block' : 'none', height: '100%' }}><ManagerAppointmentsPage /></div>
-          <div style={{ display: path === '/manager/shops' ? 'block' : 'none', height: '100%' }}><MyShopsPage /></div>
-          <div style={{ display: path === '/settings' ? 'block' : 'none', height: '100%' }}><SettingsPage /></div>
-        </>
+        <div style={{ position: 'relative', height: '100%' }}>
+          <TabWrapper active={path === '/manager/appointments'}><ManagerAppointmentsPage /></TabWrapper>
+          <TabWrapper active={path === '/manager/shops'}><MyShopsPage /></TabWrapper>
+          <TabWrapper active={path === '/settings'}><SettingsPage /></TabWrapper>
+        </div>
       )}
 
       {/* Staff Tabs */}
       {role === 'STAFF' && (
-        <>
-          <div style={{ display: path === '/staff/appointments' ? 'block' : 'none', height: '100%' }}><StaffAppointmentsPage /></div>
-          <div style={{ display: path === '/settings' ? 'block' : 'none', height: '100%' }}><SettingsPage /></div>
-        </>
+        <div style={{ position: 'relative', height: '100%' }}>
+          <TabWrapper active={path === '/staff/appointments'}><StaffAppointmentsPage /></TabWrapper>
+          <TabWrapper active={path === '/settings'}><SettingsPage /></TabWrapper>
+        </div>
       )}
     </AppShell>
   );

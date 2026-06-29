@@ -54,7 +54,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const role = user?.role;
 
   const customerNav = [
-    { to: '/', label: t('tabs.home'), Icon: HomeIcon },
+    { to: '/home', label: t('tabs.home'), Icon: HomeIcon },
     { to: '/search', label: t('tabs.search'), Icon: SearchIcon },
     { to: '/hairstyle', label: 'AI', Icon: AIIcon },
     { to: '/appointments', label: t('tabs.appointments'), Icon: CalendarIcon },
@@ -89,7 +89,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <NavLink
             key={to}
             to={to}
-            end={to === '/' || to === '/manager/appointments' || to === '/staff/appointments'}
+            end={to === '/home' || to === '/manager/appointments' || to === '/staff/appointments'}
             className={({ isActive }) => `sidebar-item${isActive ? ' active' : ''}`}
           >
             <Icon filled={false} />
@@ -111,7 +111,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <NavLink
             key={to}
             to={to}
-            end={to === '/' || to === '/manager/appointments' || to === '/staff/appointments'}
+            end={to === '/home' || to === '/manager/appointments' || to === '/staff/appointments'}
             className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
           >
             {({ isActive }) => (

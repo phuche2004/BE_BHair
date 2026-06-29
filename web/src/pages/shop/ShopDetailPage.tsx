@@ -94,7 +94,7 @@ export default function ShopDetailPage() {
         <div style={{ position: 'absolute', top: 16, left: 16, zIndex: 10 }}>
           <button 
             onClick={() => navigate(-1)}
-            style={{ width: 40, height: 40, borderRadius: 20, background: 'rgba(255,255,255,0.8)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer', color: '#000' }}
+            style={{ width: 40, height: 40, borderRadius: 20, background: 'rgba(0, 0, 0, 0.5)', backdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(255, 255, 255, 0.2)', cursor: 'pointer', color: '#fff', boxShadow: '0 4px 12px rgba(0,0,0,0.3)' }}
           >
             ←
           </button>
@@ -125,12 +125,23 @@ export default function ShopDetailPage() {
             🏬
           </div>
         )}
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, transparent 40%, rgba(0,0,0,0.7) 100%)', pointerEvents: 'none' }} />
+      </div>
+
+      {/* Shop Info (Moved from overlay) */}
+      <div style={{ padding: '24px 20px 0' }}>
+        <h1 style={{ fontSize: 26, fontWeight: 800, fontFamily: 'var(--font-headline)', color: '#fff', marginBottom: 8 }}>
+          {shop.name}
+        </h1>
         {rating && (
-          <div className="rating-badge" style={{ top: 16, right: 16 }}>
-            <span className="star">★</span> {Number(rating).toFixed(1)} ({revCount})
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+            <span className="star" style={{ color: 'var(--color-primary)' }}>★</span> 
+            <span style={{ color: '#fff', fontWeight: 600 }}>{Number(rating).toFixed(1)}</span> 
+            <span style={{ color: 'var(--text-muted)', fontSize: 13 }}>({revCount} {t('common.reviews', 'đánh giá')})</span>
           </div>
         )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text-secondary)' }}>
+          <span style={{ color: 'var(--color-danger)' }}>📍</span> {shop.address}
+        </div>
       </div>
 
       {/* Thumbnails */}
@@ -170,12 +181,6 @@ export default function ShopDetailPage() {
       )}
 
       <div className="section" style={{ paddingTop: 20, paddingBottom: 24 }}>
-        <h1 style={{ fontSize: 24, fontWeight: 800, fontFamily: 'var(--font-headline)', color: 'var(--color-primary)', marginBottom: 8 }}>
-          {shop.name}
-        </h1>
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 14, color: 'var(--text-muted)', marginBottom: 8 }}>
-          <span>📍</span> <span>{shop.address}</span>
-        </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, color: 'var(--text-muted)', marginBottom: 8 }}>
           <span>📞</span> <a href={`tel:${shop.phone}`} style={{ color: 'var(--color-secondary)' }}>{shop.phone}</a>
         </div>
@@ -185,32 +190,32 @@ export default function ShopDetailPage() {
 
         {/* Action Buttons */}
         <div style={{ display: 'flex', gap: 12, marginBottom: 32 }}>
-          <button className="btn btn-outline" style={{ flex: 1 }} onClick={() => window.open(`tel:${shop.phone}`)}>
-            📞 {t('shop.call')}
+          <button className="btn glass-card" style={{ flex: 1, padding: '12px 16px', color: '#fff' }} onClick={() => window.open(`tel:${shop.phone}`)}>
+            <span style={{ fontSize: 16 }}>📞</span> {t('shop.call')}
           </button>
-          <button className="btn btn-outline" style={{ flex: 1 }} onClick={openMaps}>
-            🗺 {t('shop.directions')}
+          <button className="btn glass-card" style={{ flex: 1, padding: '12px 16px', color: '#fff' }} onClick={openMaps}>
+            <span style={{ fontSize: 16 }}>🗺</span> {t('shop.directions')}
           </button>
         </div>
 
         {/* Services */}
-        <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>{t('shop.services')}</h2>
+        <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16, fontFamily: 'var(--font-headline)', color: 'var(--color-primary)' }}>{t('shop.services')}</h2>
         {services.length === 0 ? (
           <div style={{ fontSize: 14, color: 'var(--text-muted)', marginBottom: 32 }}>{t('common.noData')}</div>
         ) : (
-          <div style={{ marginBottom: 32 }}>
+          <div style={{ marginBottom: 32, display: 'flex', flexDirection: 'column', gap: 12 }}>
             {services.map(svc => (
-              <div key={svc._id} className="service-item" style={{ cursor: 'default' }}>
+              <div key={svc._id} className="glass-card" style={{ display: 'flex', alignItems: 'center', gap: 16, cursor: 'default' }}>
                 {svc.coverImg ? (
-                  <img src={svc.coverImg} alt={svc.name} style={{ width: 60, height: 60, borderRadius: 10, objectFit: 'cover' }} />
+                  <img src={svc.coverImg} alt={svc.name} style={{ width: 64, height: 64, borderRadius: 12, objectFit: 'cover' }} />
                 ) : (
-                  <div style={{ width: 60, height: 60, borderRadius: 10, background: 'var(--surface-alt)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>✂️</div>
+                  <div style={{ width: 64, height: 64, borderRadius: 12, background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>✂️</div>
                 )}
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-primary)' }}>{svc.name}</div>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: '#fff', marginBottom: 4 }}>{svc.name}</div>
                   <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>{svc.duration} {t('shop.mins')}</div>
                 </div>
-                <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--color-secondary)' }}>
+                <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--color-primary)' }}>
                   {formatCurrency(svc.price)}
                 </div>
               </div>
@@ -223,7 +228,7 @@ export default function ShopDetailPage() {
       </div>
 
       {/* Floating Book Button */}
-      <div style={{ position: 'sticky', bottom: 0, padding: '16px 20px', background: 'var(--surface)', borderTop: '1px solid var(--border)', zIndex: 100, marginLeft: -24, marginRight: -24 }}>
+      <div style={{ position: 'sticky', bottom: 0, padding: '16px 20px', background: 'rgba(15, 15, 15, 0.85)', backdropFilter: 'blur(16px)', borderTop: '1px solid rgba(255,255,255,0.05)', zIndex: 100 }}>
         <button className="btn btn-primary btn-full btn-lg" onClick={() => navigate(`/booking/${shop._id}`)}>
           {t('shop.bookNow')}
         </button>
