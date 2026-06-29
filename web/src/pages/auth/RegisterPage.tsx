@@ -371,7 +371,6 @@ export default function RegisterPage() {
             shape="rectangular"
             theme="filled_black"
             size="large"
-            width="100%"
             text="signup_with"
             logo_alignment="center"
           />

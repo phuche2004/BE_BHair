@@ -240,7 +240,6 @@ export default function LoginPage() {
             shape="rectangular"
             theme="filled_black"
             size="large"
-            width="100%"
             text="continue_with"
             logo_alignment="center"
           />
