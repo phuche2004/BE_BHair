@@ -37,6 +37,9 @@
 
   /* Transitions */
   --transition: 0.18s ease;
+
+  /* Nav */
+  --nav-bg: rgba(255, 255, 255, 0.9);
 }
 
 [data-theme="dark"] {
@@ -53,6 +56,7 @@
   --on-primary: #030303;
   --color-primary: #c49b66;
   --color-secondary: #8d6e4b;
+  --nav-bg: rgba(20, 20, 20, 0.9);
 }
 
 /* ─── Reset ─────────────────────────────────────────── */
@@ -177,7 +181,7 @@ input, textarea, select { font-family: inherit; }
   left: 0;
   right: 0;
   height: var(--nav-h);
-  background: var(--surface);
+  background: var(--nav-bg);
   border-top: 1px solid var(--border);
   display: flex;
   align-items: stretch;

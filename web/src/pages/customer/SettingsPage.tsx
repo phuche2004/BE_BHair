@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useThemeStore } from '../../store/useThemeStore';
@@ -139,7 +140,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Logout Confirm Modal */}
-      {showLogoutConfirm && (
+      {showLogoutConfirm && createPortal(
         <div className="modal-overlay" onClick={() => setShowLogoutConfirm(false)}>
           <div className="modal-box" onClick={(e) => e.stopPropagation()}>
             <div className="modal-handle" />
@@ -156,7 +157,8 @@ export default function SettingsPage() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

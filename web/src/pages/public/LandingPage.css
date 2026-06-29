@@ -420,3 +420,7 @@
   background: #ffffff;
   border-color: #ffffff;
 }
+
+@media (max-width: 768px) {
+  .preview-showcase-btn { display: none; }
+}

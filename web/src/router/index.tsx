@@ -35,7 +35,8 @@ function TabWrapper({ active, children }: { active: boolean, children: React.Rea
     <div style={{
       position: active ? 'relative' : 'absolute',
       top: 0, left: 0, right: 0, bottom: active ? 'auto' : 0,
-      height: active ? '100%' : 'auto',
+      height: active ? '100dvh' : '0',
+      overflowY: active ? 'auto' : 'hidden',
       opacity: active ? 1 : 0,
       visibility: active ? 'visible' : 'hidden',
       transition: 'opacity 0.3s ease, visibility 0.3s ease',
