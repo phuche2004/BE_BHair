@@ -136,7 +136,7 @@ export default function ShopDetailPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
             <span className="star" style={{ color: 'var(--color-primary)' }}>★</span> 
             <span style={{ color: '#fff', fontWeight: 600 }}>{Number(rating).toFixed(1)}</span> 
-            <span style={{ color: 'var(--text-muted)', fontSize: 13 }}>({revCount} {t('common.reviews', 'đánh giá')})</span>
+            <span style={{ color: 'var(--text-muted)', fontSize: 13 }}>({revCount} {t('common.reviews')})</span>
           </div>
         )}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text-secondary)' }}>

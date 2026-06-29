@@ -103,7 +103,7 @@ export default function ShowcasePage() {
           .set(sel, { display: 'none' });
       };
 
-      const scrollDown = (ref: React.RefObject<HTMLDivElement>, scrollDur: number) => {
+      const scrollDown = (ref: React.RefObject<HTMLDivElement | null>, scrollDur: number) => {
         if (!ref.current) return;
         const scrollObj = { y: 0 };
         // Wait 0.5s before scrolling
@@ -172,7 +172,7 @@ export default function ShowcasePage() {
 
       const buildScene = (
         id: string,
-        ref: React.RefObject<HTMLDivElement>,
+        ref: React.RefObject<HTMLDivElement | null>,
         prevId: string | null,
         scrollDur: number = 0
       ) => {
