@@ -12,6 +12,23 @@
   z-index: 9999;
   font-family: 'Inter', system-ui, sans-serif;
   overflow: hidden;
+
+  /* Force Dark Mode Variables */
+  --bg: #030303;
+  --surface: rgba(20, 20, 20, 0.6);
+  --surface-alt: rgba(30, 30, 30, 0.6);
+  --surface-high: rgba(40, 40, 40, 0.6);
+  --surface-highest: rgba(50, 50, 50, 0.6);
+  --card-alt: rgba(20, 20, 20, 0.6);
+  --text: #f0f0f0;
+  --text-muted: #888888;
+  --text-secondary: #aaaaaa;
+  --border: rgba(255, 255, 255, 0.05);
+  --outline: rgba(196, 155, 102, 0.3);
+  --on-primary: #030303;
+  --color-primary: #c49b66;
+  --color-secondary: #8d6e4b;
+  --color-accent: #c49b66;
 }
 
 /* ─── Intro / Outro screens ────────────────────────── */
