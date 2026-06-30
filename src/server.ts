@@ -46,7 +46,7 @@ app.use('/api/v1/ai', aiRoutes);
 app.use('/api/v1', slotRoutes); // Mount at root /api/v1 because route already has /shop prefix
 
 app.get('/', (req: Request, res: Response) => {
-    res.send('API is running...');
+    res.send('API đang chạy...');
 });
 
 // CI/CD Webhook cho Termux Android
