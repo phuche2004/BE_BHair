@@ -22,6 +22,7 @@ const StaffAppointmentsPage = React.lazy(() => import('../pages/staff/StaffAppoi
 // Landing page now handles the root logic
 const LandingPage = React.lazy(() => import('../pages/public/LandingPage'));
 const ShowcasePage = React.lazy(() => import('../pages/public/ShowcasePage'));
+const LocalMediaTestPage = React.lazy(() => import('../pages/public/LocalMediaTestPage'));
 
 const PageLoader = () => (
   <div className="spinner-wrap" style={{ minHeight: '50dvh' }}>
@@ -127,6 +128,7 @@ function MainApp() {
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/" element={<LandingPage />} />
           <Route path="/showcase" element={<ShowcasePage />} />
+          <Route path="/test-local-media" element={<LocalMediaTestPage />} />
 
           {/* NON-TAB ROUTES */}
           <Route

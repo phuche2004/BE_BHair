@@ -25,6 +25,7 @@ import reviewRoutes from './routes/review.route';
 import notificationRoutes from './routes/notification.route';
 import slotRoutes from './routes/slot.route';
 import aiRoutes from './routes/ai.route';
+import localMediaRoutes from './routes/local-media.route';
 
 // Middleware
 app.use(cors());
@@ -43,7 +44,11 @@ app.use('/api/v1/search', searchRoutes);
 app.use('/api/v1/review', reviewRoutes);
 app.use('/api/v1/notification', notificationRoutes);
 app.use('/api/v1/ai', aiRoutes);
+app.use('/api/v1/local-media', localMediaRoutes);
 app.use('/api/v1', slotRoutes); // Mount at root /api/v1 because route already has /shop prefix
+
+import { localMediaDir } from './utils/multer.local';
+app.use('/media', express.static(localMediaDir));
 
 app.get('/', (req: Request, res: Response) => {
     res.send('API đang chạy...');
