@@ -44,11 +44,21 @@ app.use('/api/v1/search', searchRoutes);
 app.use('/api/v1/review', reviewRoutes);
 app.use('/api/v1/notification', notificationRoutes);
 app.use('/api/v1/ai', aiRoutes);
-app.use('/api/v1/local-media', localMediaRoutes);
-app.use('/api/v1', slotRoutes); // Mount at root /api/v1 because route already has /shop prefix
-
 import { localMediaDir } from './utils/multer.local';
-app.use('/media', express.static(localMediaDir));
+
+if (process.env.IS_TERMUX === 'true') {
+    app.use('/api/v1/local-media', localMediaRoutes);
+    app.use('/media', express.static(localMediaDir));
+} else {
+    app.use('/api/v1/local-media', (req: Request, res: Response) => {
+        res.status(403).json({ 
+            success: false, 
+            message: 'Tính năng Cloud Storage đã bị khoá trên Render. Vui lòng kết nối vào server Termux.' 
+        });
+    });
+}
+
+app.use('/api/v1', slotRoutes); // Mount at root /api/v1 because route already has /shop prefix
 
 app.get('/', (req: Request, res: Response) => {
     res.send('API đang chạy...');
