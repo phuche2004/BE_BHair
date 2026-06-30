@@ -46,6 +46,12 @@ const AIIcon = ({ filled }: { filled?: boolean }) => (
   </svg>
 );
 
+const CloudIcon = ({ filled }: { filled?: boolean }) => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={filled ? 0 : 2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+  </svg>
+);
+
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { user } = useAuthStore();
   const { t } = useTranslation();
@@ -64,6 +70,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const managerNav = [
     { to: '/manager/appointments', label: 'Lịch hẹn', Icon: CalendarIcon },
     { to: '/manager/shops', label: t('tabs.myShops'), Icon: ShopIcon },
+    ...(role === 'ADMIN' ? [{ to: '/admin/cloud', label: 'Cloud', Icon: CloudIcon }] : []),
     { to: '/settings', label: t('tabs.settings'), Icon: SettingsIcon },
   ];
 

@@ -22,7 +22,7 @@ const StaffAppointmentsPage = React.lazy(() => import('../pages/staff/StaffAppoi
 // Landing page now handles the root logic
 const LandingPage = React.lazy(() => import('../pages/public/LandingPage'));
 const ShowcasePage = React.lazy(() => import('../pages/public/ShowcasePage'));
-const LocalMediaTestPage = React.lazy(() => import('../pages/public/LocalMediaTestPage'));
+const CloudStoragePage = React.lazy(() => import('../pages/admin/CloudStoragePage'));
 
 const PageLoader = () => (
   <div className="spinner-wrap" style={{ minHeight: '50dvh' }}>
@@ -90,6 +90,7 @@ function KeepAliveTabs() {
         <div style={{ position: 'relative', height: '100%' }}>
           <TabWrapper active={path === '/manager/appointments'}><ManagerAppointmentsPage /></TabWrapper>
           <TabWrapper active={path === '/manager/shops'}><MyShopsPage /></TabWrapper>
+          {role === 'ADMIN' && <TabWrapper active={path === '/admin/cloud'}><CloudStoragePage /></TabWrapper>}
           <TabWrapper active={path === '/settings'}><SettingsPage /></TabWrapper>
         </div>
       )}
@@ -107,7 +108,7 @@ function KeepAliveTabs() {
 
 const TAB_PATHS = [
   '/home', '/search', '/hairstyle', '/appointments', '/settings',
-  '/manager/appointments', '/manager/shops', '/staff/appointments'
+  '/manager/appointments', '/manager/shops', '/staff/appointments', '/admin/cloud'
 ];
 
 function MainApp() {
@@ -128,7 +129,6 @@ function MainApp() {
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/" element={<LandingPage />} />
           <Route path="/showcase" element={<ShowcasePage />} />
-          <Route path="/test-local-media" element={<LocalMediaTestPage />} />
 
           {/* NON-TAB ROUTES */}
           <Route

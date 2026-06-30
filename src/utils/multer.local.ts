@@ -16,7 +16,24 @@ export const localMediaDir = baseUploadDir;
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, localMediaDir);
+        let folderPath = '';
+        if (typeof req.query.path === 'string') {
+            folderPath = req.query.path;
+        } else if (typeof req.body.path === 'string') {
+            folderPath = req.body.path;
+        }
+
+        // Clean and validate path (prevent directory traversal)
+        folderPath = folderPath.replace(/\.+[\\\/]/g, '').replace(/^\/+/g, '');
+
+        const targetDir = path.join(localMediaDir, folderPath);
+        
+        // Ensure directory exists
+        if (!fs.existsSync(targetDir)) {
+            fs.mkdirSync(targetDir, { recursive: true });
+        }
+
+        cb(null, targetDir);
     },
     filename: (req, file, cb) => {
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
