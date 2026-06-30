@@ -1,14 +1,36 @@
-name: Deploy to Android Server
+name: CI/CD Pipeline
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
 
 jobs:
-  deploy:
+  build:
+    name: Build & Verify
     runs-on: ubuntu-latest
+
     steps:
-      - name: Call deploy webhook
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Build TypeScript
+        run: npm run build
+
+  deploy:
+    name: Trigger Termux Deploy
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Call Webhook
         run: |
-          curl -X POST "${{ secrets.DEPLOY_URL }}/api/deploy" \
-            -H "x-deploy-secret: ${{ secrets.DEPLOY_SECRET }}"
+          curl -X POST -H "x-deploy-secret: ${{ secrets.DEPLOY_SECRET }}" ${{ secrets.DEPLOY_URL }}/api/deploy
