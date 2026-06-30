@@ -49,6 +49,22 @@ app.get('/', (req: Request, res: Response) => {
     res.send('API is running...');
 });
 
+// CI/CD Webhook cho Termux Android
+import { execSync } from 'child_process';
+app.post('/api/deploy', (req: Request, res: Response): void => {
+    if (req.headers['x-deploy-secret'] !== (process.env.DEPLOY_SECRET || 'chuoi-bi-mat-cua-tao')) {
+        res.status(403).json({ error: 'Forbidden' });
+        return;
+    }
+    try {
+        console.log('Nhan duoc lenh deploy. Dang pull code...');
+        execSync('git pull origin main && npm run build && pm2 restart BE_BHair', { cwd: process.cwd() });
+        res.json({ status: 'deployed' });
+    } catch (err: any) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // Start server
 import { createServer } from 'http';
 import { initSocket } from './utils/socket';

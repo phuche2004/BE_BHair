@@ -1,0 +1,14 @@
+name: Deploy to Android Server
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call deploy webhook
+        run: |
+          curl -X POST "${{ secrets.DEPLOY_URL }}/api/deploy" \
+            -H "x-deploy-secret: ${{ secrets.DEPLOY_SECRET }}"
