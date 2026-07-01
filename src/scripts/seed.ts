@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
-import bcrypt from 'bcryptjs';
+import bcrypt from 'bcrypt';
 import User, { UserRole } from '../models/user.model';
 import Shop, { Gender } from '../models/shop.model';
 import Service from '../models/service.model';

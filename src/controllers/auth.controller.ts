@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import User, { UserRole } from '../models/user.model';
-import bcrypt from 'bcryptjs';
+import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { OAuth2Client } from 'google-auth-library';
 

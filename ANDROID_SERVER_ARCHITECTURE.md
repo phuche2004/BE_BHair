@@ -47,6 +47,8 @@ Từ giao diện màn hình Termux gốc (`~ $`), gõ lệnh sau để mở đư
 ```bash
 su
 /data/local/start_ubuntu.sh
+cd /root/BE_BHair
+
 ```
 
 ### Quản lý PM2 (Phải ở bên trong Ubuntu)
@@ -59,8 +61,8 @@ su
 ### Cloudflare Tunnel (Locally Managed)
 - Login: `cloudflared tunnel login`
 - Trỏ DNS: `cloudflared tunnel route dns -f bhair-ubuntu api.bhair.site`
-- Chạy Tunnel bằng PM2 (Kèm bùa chống sập): 
-  `pm2 start cloudflared --name "tunnel" --exp-backoff-restart-delay=3000 -- tunnel --protocol http2 --url http://localhost:3000 run bhair-ubuntu`
+- Chạy Tunnel bằng PM2: 
+  `pm2 start cloudflared --name "tunnel" -- tunnel --protocol http2 --url http://localhost:3000 run bhair-ubuntu`
 
 ### Tự động khởi động (Termux:Boot)
 Điện thoại sẽ tự động kích hoạt Server khi sập nguồn mở lại thông qua App **Termux:Boot**.
