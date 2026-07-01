@@ -5,7 +5,7 @@ Tài liệu này ghi chú lại toàn bộ cấu trúc hạ tầng hiện tại 
 ---
 
 ## 1. Thành phần Hệ thống Hiện tại (Stack)
-- **Thiết bị:** Điện thoại Android (không root).
+- **Thiết bị:** Điện thoại Android (Đã Root bằng Magisk).
 - **Môi trường Server:** Termux (Linux emulator).
 - **Backend:** Node.js (TypeScript) + Express.
 - **Database:** MongoDB Atlas (Cloud).
