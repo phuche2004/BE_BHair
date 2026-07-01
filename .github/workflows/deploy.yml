@@ -31,9 +31,13 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git checkout -b production
-          # Xóa bỏ các file mã nguồn thô để tiết kiệm bộ nhớ trên điện thoại
-          rm -rf src/ .github/ tsconfig.json
+          # Ép ghi đè nhánh production (phòng trường hợp nhánh đã tồn tại)
+          git checkout -B production
+          
+          # PHẢI dùng git rm để Git biết là mình xoá file, rm thường Git sẽ phớt lờ!
+          # Xóa sạch sành sanh các thư mục không cần thiết cho Server
+          git rm -rf src/ .github/ tsconfig.json mobile/ web/ scripts/ privacy-policy/ nodemon.json || true
+          
           # Bắt buộc thêm thư mục dist (dù nó có trong .gitignore)
           git add -f dist/
           git commit -m "🚀 Auto-build Artifacts for Production"
