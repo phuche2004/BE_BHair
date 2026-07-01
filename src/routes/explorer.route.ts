@@ -48,5 +48,6 @@ router.post('/upload', upload.single('file'), controller.uploadFile);
 router.post('/mkdir', controller.createFolder);
 router.post('/delete', controller.deleteItem);
 router.get('/download', controller.downloadFile);
+router.get('/stream', controller.streamFile);
 
 export default router;

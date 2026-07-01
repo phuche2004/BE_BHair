@@ -23,7 +23,14 @@
         }
     </style>
 </head>
-<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen p-4 md:p-8 text-gray-800 font-sans">
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen p-4 md:p-8 text-gray-800 font-sans relative">
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="fixed inset-0 z-[100] hidden bg-black/60 backdrop-blur-sm flex-col items-center justify-center text-white">
+        <i class="fa-solid fa-circle-notch fa-spin text-5xl mb-4 text-indigo-400"></i>
+        <h2 class="text-xl font-medium">Đang xử lý...</h2>
+        <p class="text-sm text-gray-300 mt-2">Vui lòng chờ và không đóng trình duyệt</p>
+    </div>
+
     <div class="max-w-5xl mx-auto glass-panel p-6">
         <!-- Header -->
         <div class="flex justify-between items-center mb-6 border-b pb-4">
@@ -139,15 +146,15 @@
                         <td class="p-4 text-right">
                             <div class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <% if (!file.isDirectory) { %>
-                                <a href="/explorer/download?file=<%= encodeURIComponent(currentPath === '/' ? '/' + file.name : currentPath + '/' + file.name) %>" class="text-blue-500 hover:text-blue-700 p-2" title="Tải xuống">
+                                <a href="/explorer/download?file=<%= encodeURIComponent(currentPath === '/' ? '/' + file.name : currentPath + '/' + file.name) %>" class="text-blue-500 hover:text-blue-700 p-2" title="Tải xuống" onclick="event.stopPropagation()">
                                     <i class="fa-solid fa-download"></i>
                                 </a>
                                 <% } %>
                                 
-                                <form action="/explorer/delete" method="POST" class="inline" onsubmit="return confirm('Bạn có chắc chắn muốn xoá <%= file.name %>?')">
+                                <form action="/explorer/delete" method="POST" class="inline" onsubmit="event.stopPropagation(); return confirm('Bạn có chắc chắn muốn xoá <%= file.name %>?')">
                                     <input type="hidden" name="currentPath" value="<%= currentPath %>">
                                     <input type="hidden" name="itemName" value="<%= file.name %>">
-                                    <button type="submit" class="text-red-500 hover:text-red-700 p-2" title="Xoá">
+                                    <button type="submit" class="text-red-500 hover:text-red-700 p-2" title="Xoá" onclick="event.stopPropagation()">
                                         <i class="fa-solid fa-trash"></i>
                                     </button>
                                 </form>
@@ -160,7 +167,58 @@
         </div>
     </div>
 
+    <!-- Media Viewer Modal -->
+    <div id="mediaModal" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+        <div class="relative max-w-5xl w-full max-h-screen flex flex-col items-center justify-center">
+            <!-- Close button -->
+            <button onclick="closeMedia()" class="absolute top-4 right-4 md:-top-10 md:right-0 text-white hover:text-red-400 text-3xl transition-colors">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            
+            <!-- Dynamic Content Container -->
+            <div id="mediaContainer" class="w-full flex justify-center items-center rounded-lg overflow-hidden shadow-2xl">
+                <!-- Image or Video will be injected here -->
+            </div>
+            
+            <!-- File name footer -->
+            <div id="mediaFilename" class="text-white/80 mt-4 text-sm font-mono tracking-wider"></div>
+        </div>
+    </div>
+
     <script>
+        const mediaModal = document.getElementById('mediaModal');
+        const mediaContainer = document.getElementById('mediaContainer');
+        const mediaFilename = document.getElementById('mediaFilename');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+
+        // Show loading when uploading
+        document.getElementById('uploadForm').addEventListener('submit', function() {
+            loadingOverlay.classList.remove('hidden');
+            loadingOverlay.classList.add('flex');
+        });
+
+        function closeMedia() {
+            mediaModal.classList.remove('opacity-100');
+            setTimeout(() => {
+                mediaModal.classList.add('hidden');
+                mediaContainer.innerHTML = ''; // Clear content to stop video
+            }, 300);
+        }
+
+        // Close on escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && !mediaModal.classList.contains('hidden')) {
+                closeMedia();
+            }
+        });
+
+        // Close on clicking backdrop
+        mediaModal.addEventListener('click', (e) => {
+            if (e.target === mediaModal || e.target.parentElement === mediaModal) {
+                closeMedia();
+            }
+        });
+
         function openItem(isDir, name) {
             const currentPath = "<%= currentPath %>";
             const newPath = currentPath === '/' ? '/' + name : currentPath + '/' + name;
@@ -168,8 +226,31 @@
             if (isDir === 'true') {
                 window.location.href = '/explorer?path=' + encodeURIComponent(newPath);
             } else {
-                // Open file preview/download
-                window.open('/explorer/download?file=' + encodeURIComponent(newPath), '_blank');
+                const streamUrl = '/explorer/stream?file=' + encodeURIComponent(newPath);
+                const downloadUrl = '/explorer/download?file=' + encodeURIComponent(newPath);
+                
+                const ext = name.split('.').pop().toLowerCase();
+                const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext);
+                const isVideo = ['mp4', 'webm', 'ogg', 'mov'].includes(ext);
+                
+                if (isImage || isVideo) {
+                    mediaFilename.textContent = name;
+                    
+                    if (isImage) {
+                        mediaContainer.innerHTML = `<img src="${streamUrl}" class="max-w-full max-h-[85vh] object-contain rounded-lg" alt="${name}">`;
+                    } else if (isVideo) {
+                        mediaContainer.innerHTML = `<video src="${streamUrl}" controls autoplay class="max-w-full max-h-[85vh] object-contain rounded-lg shadow-black/50 shadow-2xl"></video>`;
+                    }
+                    
+                    mediaModal.classList.remove('hidden');
+                    // Small delay to allow display:block to apply before animating opacity
+                    setTimeout(() => {
+                        mediaModal.classList.add('opacity-100');
+                    }, 10);
+                } else {
+                    // Open file preview/download normally
+                    window.open(downloadUrl, '_blank');
+                }
             }
         }
     </script>

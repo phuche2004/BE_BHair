@@ -68,6 +68,9 @@ export class ExplorerController {
 
     renderExplorer = async (req: Request, res: Response) => {
         try {
+            // Tắt cache trình duyệt/Cloudflare để luôn cập nhật UI mới nhất
+            res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+            
             const currentPath = (req.query.path as string) || '/';
             const fullPath = this.getSafePath(currentPath);
 
@@ -121,7 +124,9 @@ export class ExplorerController {
                 if (!fs.existsSync(targetDir)) {
                     fs.mkdirSync(targetDir, { recursive: true });
                 }
-                const finalPath = path.join(targetDir, req.file.originalname);
+                // Giải mã Latin1 sang UTF-8 do lỗi của Multer với Tiếng Việt
+                const originalName = Buffer.from(req.file.originalname, 'latin1').toString('utf8');
+                const finalPath = path.join(targetDir, originalName);
                 fs.renameSync(req.file.path, finalPath);
             }
             res.redirect(`/explorer?path=${encodeURIComponent(currentPath)}`);
@@ -182,6 +187,22 @@ export class ExplorerController {
             }
         } catch (error: any) {
             res.status(500).send(`Tải file thất bại: ${error.message}`);
+        }
+    };
+
+    streamFile = async (req: Request, res: Response) => {
+        try {
+            const filePath = (req.query.file as string);
+            if (!filePath) return res.status(400).send('No file specified');
+            
+            const targetPath = this.getSafePath(filePath);
+            if (fs.existsSync(targetPath) && fs.statSync(targetPath).isFile()) {
+                res.sendFile(targetPath);
+            } else {
+                res.status(404).send('File không tồn tại');
+            }
+        } catch (error: any) {
+            res.status(500).send(`Xem file thất bại: ${error.message}`);
         }
     };
 }
