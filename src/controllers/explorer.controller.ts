@@ -7,7 +7,8 @@ import jwt from 'jsonwebtoken';
 
 export class ExplorerController {
     private getBasePath() {
-        return path.join(process.env.HOME || '/data/data/com.termux/files/home', 'phuc_data');
+        // Trỏ thẳng ra thư mục Download ngoài bộ nhớ trong của Android
+        return '/sdcard/Download/Phuc_Data';
     }
 
     private getSafePath(reqPath: string) {
