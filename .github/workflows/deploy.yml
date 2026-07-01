@@ -34,7 +34,7 @@ jobs:
           git checkout -B production
           
           # Xóa sạch sành sanh các thư mục không cần thiết cho Server
-          git rm -rf src/ .github/ tsconfig.json mobile/ web/ scripts/ privacy-policy/ nodemon.json mongo_data/ tmp/ .aider* *.md *.png *.sh || true
+          git rm -rf --ignore-unmatch src/ .github/ tsconfig.json mobile/ web/ scripts/ privacy-policy/ nodemon.json mongo_data/ tmp/ .aider* *.md *.png *.sh
           
           # CỨU HỘ! Phục hồi lại thư mục views chứa giao diện EJS
           git reset HEAD src/views/
