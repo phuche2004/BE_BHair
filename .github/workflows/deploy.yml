@@ -31,15 +31,17 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          # Ép ghi đè nhánh production (phòng trường hợp nhánh đã tồn tại)
           git checkout -B production
           
-          # PHẢI dùng git rm để Git biết là mình xoá file, rm thường Git sẽ phớt lờ!
           # Xóa sạch sành sanh các thư mục không cần thiết cho Server
           git rm -rf src/ .github/ tsconfig.json mobile/ web/ scripts/ privacy-policy/ nodemon.json || true
           
-          # Bắt buộc thêm thư mục dist (dù nó có trong .gitignore)
-          git add -f dist/
+          # CỨU HỘ! Phục hồi lại thư mục views chứa giao diện EJS
+          git reset HEAD src/views/
+          git checkout -- src/views/
+          
+          # Bắt buộc thêm thư mục dist và views
+          git add -f dist/ src/views/
           git commit -m "🚀 Auto-build Artifacts for Production"
           git push -f origin production
 
