@@ -6,6 +6,8 @@ import connectDB from './config/database';
 import { verifyCloudinaryConnection } from './config/cloudinary.config';
 import morgan from 'morgan';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
+import path from 'path';
 
 // Connect to database
 connectDB();
@@ -25,11 +27,17 @@ import reviewRoutes from './routes/review.route';
 import notificationRoutes from './routes/notification.route';
 import slotRoutes from './routes/slot.route';
 import aiRoutes from './routes/ai.route';
+import explorerRoutes from './routes/explorer.route';
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+app.use(cookieParser());
+
+// Cấu hình EJS
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
 if (process.env.NODE_ENV === 'development') {
     app.use(morgan('dev')); // Log HTTP requests
 }
@@ -44,6 +52,7 @@ app.use('/api/v1/review', reviewRoutes);
 app.use('/api/v1/notification', notificationRoutes);
 app.use('/api/v1/ai', aiRoutes);
 app.use('/api/v1', slotRoutes); // Mount at root /api/v1 because route already has /shop prefix
+app.use('/explorer', explorerRoutes);
 
 app.get('/', (req: Request, res: Response) => {
     res.send('API đang chạy...');
