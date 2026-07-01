@@ -11,6 +11,7 @@ Tài liệu này ghi chú lại toàn bộ cấu trúc hạ tầng hiện tại 
 - **Database:** MongoDB Atlas (Cloud).
 - **Lưu trữ Media:** Local Storage (Trỏ trực tiếp ra bộ nhớ trong của điện thoại `/sdcard/Download/Phuc_Data`).
 - **Quản lý tiến trình (Process Manager):** PM2 (giữ server chạy ngầm 24/7).
+- **Điều khiển từ xa (Remote):** SSH Server (OpenSSH) chạy trên cổng `2222`.
 - **Mạng & Domain:** Cloudflare Tunnel (Cloudflared). Chạy ở chế độ **Locally Managed** qua HTTP/2. Expose cổng localhost (3000) ra tên miền quốc tế `https://api.bhair.site`.
 
 ---
@@ -71,7 +72,7 @@ Cấu hình file Boot ở ngoài Termux (`~/.termux/boot/start_server.sh`):
 ```bash
 #!/data/data/com.termux/files/usr/bin/bash
 termux-wake-lock
-su -c '/data/local/start_ubuntu.sh -c "pm2 resurrect"'
+su -c '/data/local/start_ubuntu.sh -c "service ssh start && pm2 resurrect"'
 ```
 *(Lưu ý: Không được quên chmod +x cho file boot này).*
 
@@ -82,3 +83,9 @@ mount -o bind /sdcard /data/local/ubuntu/sdcard
 chroot $UBUNTU_DIR /bin/bash "$@"
 ```
 *(Lưu ý: phải luôn có chữ `"$@"` ở cuối để nhận lệnh từ file Boot truyền vào).*
+
+### Điều khiển Server từ xa (SSH qua VS Code)
+Khi Server đang hoạt động và chung mạng Wifi với máy tính, bạn có thể Code trực tiếp trên điện thoại:
+1. Cài đặt **VS Code** trên máy tính và tải Extension **Remote - SSH**.
+2. Thêm cấu hình kết nối mới: `ssh root@<IP_ĐIỆN_THOẠI> -p 2222`.
+3. Mở VS Code và tận hưởng cảm giác code trực tiếp trên Server cực kỳ chuyên nghiệp.
