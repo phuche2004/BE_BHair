@@ -1,6 +1,9 @@
 import { Request, Response } from 'express';
 import fs from 'fs';
 import path from 'path';
+import User, { UserRole } from '../models/user.model';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 
 export class ExplorerController {
     private getBasePath() {
@@ -13,6 +16,55 @@ export class ExplorerController {
         const safePath = path.normalize(reqPath).replace(/^(\.\.[\/\\])+/, '');
         return path.join(base, safePath);
     }
+
+    renderLogin = (req: Request, res: Response) => {
+        if (req.cookies?.token) {
+            return res.redirect('/explorer');
+        }
+        res.render('login', { error: null });
+    };
+
+    handleLogin = async (req: Request, res: Response) => {
+        try {
+            const { phoneNumber, password } = req.body;
+            
+            const user = await User.findOne({ phoneNumber });
+            if (!user || user.password === undefined) {
+                return res.render('login', { error: 'Số điện thoại hoặc mật khẩu không đúng' });
+            }
+
+            const isMatch = await bcrypt.compare(password, user.password);
+            if (!isMatch) {
+                return res.render('login', { error: 'Số điện thoại hoặc mật khẩu không đúng' });
+            }
+
+            if (user.role !== UserRole.ADMIN && user.role !== UserRole.MANAGER) {
+                return res.render('login', { error: 'Bạn không có quyền quản trị.' });
+            }
+
+            const token = jwt.sign(
+                { id: user._id, role: user.role, fullName: user.fullName, shopId: user.shopId ?? null },
+                process.env.JWT_SECRET as string,
+                { expiresIn: '30d' }
+            );
+
+            // Set HttpOnly cookie
+            res.cookie('token', token, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+            });
+
+            res.redirect('/explorer');
+        } catch (error: any) {
+            res.render('login', { error: 'Lỗi hệ thống: ' + error.message });
+        }
+    };
+
+    handleLogout = (req: Request, res: Response) => {
+        res.clearCookie('token');
+        res.redirect('/explorer/login');
+    };
 
     renderExplorer = async (req: Request, res: Response) => {
         try {
