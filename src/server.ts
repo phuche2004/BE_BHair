@@ -37,7 +37,7 @@ app.use(cookieParser());
 
 // Cấu hình EJS
 app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, 'views'));
+app.set('views', path.join(process.cwd(), 'src/views'));
 if (process.env.NODE_ENV === 'development') {
     app.use(morgan('dev')); // Log HTTP requests
 }
