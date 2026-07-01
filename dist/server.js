@@ -1,0 +1,83 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const dotenv_1 = __importDefault(require("dotenv"));
+dotenv_1.default.config({ quiet: true });
+const express_1 = __importDefault(require("express"));
+const database_1 = __importDefault(require("./config/database"));
+const cloudinary_config_1 = require("./config/cloudinary.config");
+const morgan_1 = __importDefault(require("morgan"));
+const cors_1 = __importDefault(require("cors"));
+const cookie_parser_1 = __importDefault(require("cookie-parser"));
+const path_1 = __importDefault(require("path"));
+// Connect to database
+(0, database_1.default)();
+// Verify Cloudinary
+(0, cloudinary_config_1.verifyCloudinaryConnection)();
+const app = (0, express_1.default)();
+const PORT = process.env.PORT || 1000;
+// Routes
+const auth_route_1 = __importDefault(require("./routes/auth.route"));
+const shop_route_1 = __importDefault(require("./routes/shop.route"));
+const service_route_1 = __importDefault(require("./routes/service.route"));
+const appointment_route_1 = __importDefault(require("./routes/appointment.route"));
+const search_route_1 = __importDefault(require("./routes/search.route"));
+const review_route_1 = __importDefault(require("./routes/review.route"));
+const notification_route_1 = __importDefault(require("./routes/notification.route"));
+const slot_route_1 = __importDefault(require("./routes/slot.route"));
+const ai_route_1 = __importDefault(require("./routes/ai.route"));
+const explorer_route_1 = __importDefault(require("./routes/explorer.route"));
+// Middleware
+app.use((0, cors_1.default)());
+app.use(express_1.default.json());
+app.use(express_1.default.urlencoded({ extended: false }));
+app.use((0, cookie_parser_1.default)());
+// Cấu hình EJS
+app.set('view engine', 'ejs');
+app.set('views', path_1.default.join(process.cwd(), 'src/views'));
+if (process.env.NODE_ENV === 'development') {
+    app.use((0, morgan_1.default)('dev')); // Log HTTP requests
+}
+// Route registrations
+app.use('/api/v1/user', auth_route_1.default);
+app.use('/api/v1/shop', shop_route_1.default);
+app.use('/api/v1/service', service_route_1.default);
+app.use('/api/v1/appointment', appointment_route_1.default);
+app.use('/api/v1/search', search_route_1.default);
+app.use('/api/v1/review', review_route_1.default);
+app.use('/api/v1/notification', notification_route_1.default);
+app.use('/api/v1/ai', ai_route_1.default);
+app.use('/api/v1', slot_route_1.default); // Mount at root /api/v1 because route already has /shop prefix
+app.use('/explorer', explorer_route_1.default);
+app.get('/', (req, res) => {
+    res.send('API đang chạy...');
+});
+// CI/CD Webhook cho Termux Android
+const child_process_1 = require("child_process");
+app.post('/api/deploy', (req, res) => {
+    if (req.headers['x-deploy-secret'] !== (process.env.DEPLOY_SECRET || 'chuoi-bi-mat-cua-tao')) {
+        res.status(403).json({ error: 'Forbidden' });
+        return;
+    }
+    try {
+        console.log('Nhan duoc lenh deploy. Dang pull code tu nhanh production...');
+        (0, child_process_1.execSync)('git fetch origin production && git checkout production && git reset --hard origin/production && npm install --production && pm2 restart BE_BHair', { cwd: process.cwd() });
+        res.json({ status: 'deployed' });
+    }
+    catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+// Start server
+const http_1 = require("http");
+const socket_1 = require("./utils/socket");
+const httpServer = (0, http_1.createServer)(app);
+// Initialize Socket.io
+(0, socket_1.initSocket)(httpServer);
+const HOST = '0.0.0.0';
+httpServer.listen(PORT, HOST, () => {
+    console.log(`\x1b[32m\x1b[1m✓ B_Hair API\x1b[0m  http://192.168.110.117:${PORT}`);
+});
+exports.default = app;
