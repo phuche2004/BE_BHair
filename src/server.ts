@@ -66,8 +66,8 @@ app.post('/api/deploy', (req: Request, res: Response): void => {
         return;
     }
     try {
-        console.log('Nhan duoc lenh deploy. Dang pull code...');
-        execSync('git pull origin main && npm run build && pm2 restart BE_BHair', { cwd: process.cwd() });
+        console.log('Nhan duoc lenh deploy. Dang pull code tu nhanh production...');
+        execSync('git fetch origin production && git checkout production && git reset --hard origin/production && npm install --production && pm2 restart BE_BHair', { cwd: process.cwd() });
         res.json({ status: 'deployed' });
     } catch (err: any) {
         res.status(500).json({ error: err.message });

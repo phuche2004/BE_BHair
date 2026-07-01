@@ -25,6 +25,18 @@ jobs:
       - name: Build TypeScript
         run: npm run build
 
+      - name: Push to production branch
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b production
+          # Xóa bỏ các file mã nguồn thô để tiết kiệm bộ nhớ trên điện thoại
+          rm -rf src/ .github/ tsconfig.json
+          # Bắt buộc thêm thư mục dist (dù nó có trong .gitignore)
+          git add -f dist/
+          git commit -m "🚀 Auto-build Artifacts for Production"
+          git push -f origin production
+
   deploy:
     name: Trigger Termux Deploy
     needs: build
