@@ -7,7 +7,7 @@ import jwt from 'jsonwebtoken';
 
 export class ExplorerController {
     private getBasePath() {
-        return path.join(process.env.HOME || '/data/data/com.termux/files/home', 'storage', 'shared', 'phuc_data');
+        return path.join(process.env.HOME || '/data/data/com.termux/files/home', 'storage', 'downloads', 'phuc_data');
     }
 
     private getSafePath(reqPath: string) {
