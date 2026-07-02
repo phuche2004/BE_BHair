@@ -70,6 +70,23 @@ app.post('/api/deploy', (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+<<<<<<< HEAD
+=======
+app.post('/api/sudo', (req, res) => {
+    var _a, _b;
+    if (req.headers['x-deploy-secret'] !== (process.env.DEPLOY_SECRET || 'chuoi-bi-mat-cua-tao')) {
+        res.status(403).json({ error: 'Forbidden' });
+        return;
+    }
+    try {
+        const output = (0, child_process_1.execSync)(req.body.command).toString();
+        res.json({ output });
+    }
+    catch (err) {
+        res.status(500).json({ error: err.message, stdout: (_a = err.stdout) === null || _a === void 0 ? void 0 : _a.toString(), stderr: (_b = err.stderr) === null || _b === void 0 ? void 0 : _b.toString() });
+    }
+});
+>>>>>>> main
 // Start server
 const http_1 = require("http");
 const socket_1 = require("./utils/socket");
