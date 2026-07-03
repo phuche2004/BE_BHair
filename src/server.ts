@@ -54,10 +54,17 @@ app.use('/api/v1/ai', aiRoutes);
 app.use('/api/v1', slotRoutes); // Mount at root /api/v1 because route already has /shop prefix
 app.use('/explorer', explorerRoutes);
 
-app.get('/', (req: Request, res: Response) => {
-    res.send('API đang chạy...');
-});
+// Phục vụ Frontend (React) từ thư mục web/dist
+app.use(express.static(path.join(process.cwd(), 'web/dist')));
 
+// Bất kỳ route GET nào không phải API sẽ được đẩy về React xử lý (Client-side Routing)
+app.get('*', (req: Request, res: Response, next: express.NextFunction) => {
+    // Không chặn các request bắt đầu bằng /api
+    if (req.path.startsWith('/api')) {
+        return next();
+    }
+    res.sendFile(path.join(process.cwd(), 'web/dist/index.html'));
+});
 // CI/CD Webhook cho Termux Android
 import { execSync } from 'child_process';
 app.post('/api/deploy', (req: Request, res: Response): void => {

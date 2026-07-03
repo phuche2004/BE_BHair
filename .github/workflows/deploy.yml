@@ -25,14 +25,24 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
-      - name: Build TypeScript
+      - name: Build Backend
         run: npm run build
+
+      - name: Build Frontend
+        run: |
+          cd web
+          npm install
+          npm run build
+          cd ..
 
       - name: Push to production branch
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git checkout -B production
+          
+          # Lưu tạm thư mục web/dist để không bị xóa mất do nó chưa nằm trong git tracker
+          cp -r web/dist ./web_dist_backup
           
           # Xóa sạch sành sanh các thư mục không cần thiết cho Server
           git rm -rf --ignore-unmatch src/ .github/ tsconfig.json mobile/ web/ scripts/ privacy-policy/ nodemon.json mongo_data/ tmp/ .aider* *.md *.png *.sh *.bat atlas_backup/
@@ -41,9 +51,13 @@ jobs:
           git reset HEAD src/views/
           git checkout -- src/views/
           
-          # Bắt buộc thêm thư mục dist và views
-          git add -f dist/ src/views/
-          git commit -m "🚀 Auto-build Artifacts for Production"
+          # Khôi phục thư mục web/dist
+          mkdir -p web
+          mv ./web_dist_backup web/dist
+          
+          # Bắt buộc thêm thư mục dist, views và web/dist
+          git add -f dist/ src/views/ web/dist/
+          git commit -m "🚀 Auto-build Artifacts for Production (Fullstack)"
           git push -f origin production
 
   deploy:
