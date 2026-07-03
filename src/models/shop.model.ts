@@ -1,93 +1,258 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import db from '../config/sqlite.config';
+import { v4 as uuidv4 } from 'uuid';
+
 export enum Gender {
     MALE = 'MALE',
     FEMALE = 'FEMALE',
     UNKOWN = 'BOTH'
 }
-export interface IShop extends Document {
-    name: string;           // Tên chi nhánh (VD: 30Shine Cầu Giấy)
-    address: string;        // Địa chỉ hiển thị
+
+export interface IShop {
+    id: string;
+    name: string;
+    address: string;
     gender: Gender;
-    location: {             // Dùng GeoJSON để tìm kiếm theo vị trí (Maps)
-        type: string;
-        coordinates: number[]; // [longitude, latitude]
-    };
-    phone: string;          // Hotline chi nhánh
-    images1: string[];       // Ảnh không gian quán
-    images2: string[];
-    images3: string[];
-    videos: string[]; // Cloudinary URLs
-    managerId: mongoose.Types.ObjectId; // Ai là quản lý chính của tiệm này?
+    latitude: number;
+    longitude: number;
+    phone: string;
+    images1?: string | null; // JSON string
+    images2?: string | null; // JSON string
+    images3?: string | null; // JSON string
+    videos?: string | null; // JSON string
+    managerId?: string | null;
     averageRating: number;
     totalReviews: number;
-    isActive: boolean;      // Còn hoạt động không
-
-    // --- CHANGE START: Subscription ---
-    subscriptionPlan: string; // 'MONTHLY', 'YEARLY', etc.
-    subscriptionExpiry?: Date;
+    isActive: boolean;
+    subscriptionPlan: string;
+    subscriptionExpiry?: string | null;
     isPaid: boolean;
-    // --- CHANGE END ---
-
-    // --- CHANGE START: Scheduling ---
-    openTime: string; // "09:00"
-    closeTime: string; // "21:00"
-    breakStart?: string; // "12:00"
-    breakEnd?: string; // "13:00"
-    slotDuration: number; // minutes (default 30)
-    // --- CHANGE END ---
-
-    createdAt: Date;
-    updatedAt: Date;
+    openTime: string;
+    closeTime: string;
+    breakStart?: string | null;
+    breakEnd?: string | null;
+    slotDuration: number;
+    createdAt?: string;
+    updatedAt?: string;
 }
 
-const ShopSchema: Schema = new Schema(
-    {
-        name: { type: String, required: true },
-        address: { type: String, required: true },
-        gender: { type: String, enum: Object.values(Gender), default: Gender.MALE },
-        // Cấu trúc GeoJSON chuẩn cho MongoDB
-        location: {
-            type: {
-                type: String,
-                enum: ['Point'],
-                default: 'Point',
-            },
-            coordinates: {
-                type: [Number], // [Kinh độ, Vĩ độ]
-                required: true,
-            },
-        },
-        phone: { type: String, required: true },
-        images1: [{ type: String }],
-        images2: [{ type: String }],
-        images3: [{ type: String }],
-        videos: [{ type: String }],
-        // Reference ngược lại user để biết ai là Manager quản lý tiệm này
-        managerId: { type: Schema.Types.ObjectId, ref: 'User' },
-        averageRating: { type: Number, default: 5 },
-        totalReviews: { type: Number, default: 0 },
-        isActive: { type: Boolean, default: true },
+class Shop {
+    static findById(id: string): IShop | undefined {
+        const stmt = db.prepare('SELECT * FROM shops WHERE id = ?');
+        const row = stmt.get(id) as any;
+        return row ? this.mapRow(row) : undefined;
+    }
 
-        // --- CHANGE START: Subscription ---
-        subscriptionPlan: { type: String, default: 'MONTHLY' }, // Mặc định là gói tháng
-        subscriptionExpiry: { type: Date },
-        isPaid: { type: Boolean, default: false }, // Admin sẽ duyệt hoặc tự động qua cổng thanh toán
-        // --- CHANGE END ---
+    static findAll(filters: { isActive?: boolean; isPaid?: boolean } = {}): IShop[] {
+        let query = 'SELECT * FROM shops WHERE 1=1';
+        const params: any[] = [];
+        
+        if (filters.isActive !== undefined) {
+            query += ' AND is_active = ?';
+            params.push(filters.isActive ? 1 : 0);
+        }
+        
+        if (filters.isPaid !== undefined) {
+            query += ' AND is_paid = ?';
+            params.push(filters.isPaid ? 1 : 0);
+        }
+        
+        const stmt = db.prepare(query);
+        const rows = stmt.all(...params) as any[];
+        return rows.map(row => this.mapRow(row));
+    }
 
-        // --- CHANGE START: Scheduling ---
-        openTime: { type: String, default: '09:00' },
-        closeTime: { type: String, default: '21:00' },
-        breakStart: { type: String },
-        breakEnd: { type: String },
-        slotDuration: { type: Number, default: 30 },
-        // --- CHANGE END ---
-    },
-    { timestamps: true }
-);
+    static find(filters: any = {}): IShop[] {
+        return this.findAll(filters);
+    }
 
-// Tạo Index 2dsphere để query tìm quán "Gần đây"
-ShopSchema.index({ location: '2dsphere' });
-// Tạo Index Text để tìm kiếm theo tên và địa chỉ
-ShopSchema.index({ name: 'text', address: 'text' });
+    static create(shopData: {
+        name: string;
+        address: string;
+        gender?: Gender;
+        latitude: number;
+        longitude: number;
+        phone: string;
+        images1?: string[];
+        images2?: string[];
+        images3?: string[];
+        videos?: string[];
+        managerId?: string;
+        averageRating?: number;
+        totalReviews?: number;
+        isActive?: boolean;
+        subscriptionPlan?: string;
+        subscriptionExpiry?: Date;
+        isPaid?: boolean;
+        openTime?: string;
+        closeTime?: string;
+        breakStart?: string;
+        breakEnd?: string;
+        slotDuration?: number;
+    }): IShop {
+        const id = uuidv4();
+        
+        const stmt = db.prepare(`
+            INSERT INTO shops (
+                id, name, address, gender, latitude, longitude, phone,
+                images1, images2, images3, videos, manager_id,
+                average_rating, total_reviews, is_active,
+                subscription_plan, subscription_expiry, is_paid,
+                open_time, close_time, break_start, break_end, slot_duration
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `);
+        
+        stmt.run(
+            id,
+            shopData.name,
+            shopData.address,
+            shopData.gender || Gender.MALE,
+            shopData.latitude,
+            shopData.longitude,
+            shopData.phone,
+            shopData.images1 ? JSON.stringify(shopData.images1) : null,
+            shopData.images2 ? JSON.stringify(shopData.images2) : null,
+            shopData.images3 ? JSON.stringify(shopData.images3) : null,
+            shopData.videos ? JSON.stringify(shopData.videos) : null,
+            shopData.managerId || null,
+            shopData.averageRating || 5,
+            shopData.totalReviews || 0,
+            shopData.isActive !== false ? 1 : 0,
+            shopData.subscriptionPlan || 'MONTHLY',
+            shopData.subscriptionExpiry ? shopData.subscriptionExpiry.toISOString() : null,
+            shopData.isPaid ? 1 : 0,
+            shopData.openTime || '09:00',
+            shopData.closeTime || '21:00',
+            shopData.breakStart || null,
+            shopData.breakEnd || null,
+            shopData.slotDuration || 30
+        );
+        
+        return this.findById(id)!;
+    }
 
-export default mongoose.model<IShop>('Shop', ShopSchema);
+    static findByIdAndUpdate(id: string, updates: Partial<IShop>): IShop | undefined {
+        const fields: string[] = [];
+        const values: any[] = [];
+        
+        const fieldMap: Record<string, string> = {
+            name: 'name',
+            address: 'address',
+            gender: 'gender',
+            latitude: 'latitude',
+            longitude: 'longitude',
+            phone: 'phone',
+            images1: 'images1',
+            images2: 'images2',
+            images3: 'images3',
+            videos: 'videos',
+            managerId: 'manager_id',
+            averageRating: 'average_rating',
+            totalReviews: 'total_reviews',
+            isActive: 'is_active',
+            subscriptionPlan: 'subscription_plan',
+            subscriptionExpiry: 'subscription_expiry',
+            isPaid: 'is_paid',
+            openTime: 'open_time',
+            closeTime: 'close_time',
+            breakStart: 'break_start',
+            breakEnd: 'break_end',
+            slotDuration: 'slot_duration'
+        };
+        
+        Object.keys(updates).forEach(key => {
+            const dbField = fieldMap[key];
+            if (!dbField || key === 'id' || key === 'createdAt' || key === 'updatedAt') return;
+            
+            fields.push(`${dbField} = ?`);
+            
+            if (['images1', 'images2', 'images3', 'videos'].includes(key)) {
+                values.push(updates[key as keyof IShop] ? JSON.stringify(updates[key as keyof IShop]) : null);
+            } else if (['isActive', 'isPaid'].includes(key)) {
+                values.push(updates[key as keyof IShop] ? 1 : 0);
+            } else {
+                values.push(updates[key as keyof IShop]);
+            }
+        });
+        
+        if (fields.length === 0) return this.findById(id);
+        
+        values.push(id);
+        
+        const stmt = db.prepare(`
+            UPDATE shops 
+            SET ${fields.join(', ')}
+            WHERE id = ?
+        `);
+        
+        stmt.run(...values);
+        return this.findById(id);
+    }
+
+    static findNearby(latitude: number, longitude: number, radiusKm: number = 10): IShop[] {
+        // Simple distance calculation using Haversine formula
+        // This is approximate but works for small distances
+        const query = `
+            SELECT *, 
+            (6371 * acos(cos(radians(?)) * cos(radians(latitude)) * 
+            cos(radians(longitude) - radians(?)) + sin(radians(?)) * 
+            sin(radians(latitude)))) AS distance
+            FROM shops
+            WHERE is_active = 1
+            HAVING distance < ?
+            ORDER BY distance
+        `;
+        
+        const stmt = db.prepare(query);
+        const rows = stmt.all(latitude, longitude, latitude, radiusKm) as any[];
+        return rows.map(row => this.mapRow(row));
+    }
+
+    static search(searchText: string): IShop[] {
+        const query = `
+            SELECT * FROM shops
+            WHERE (name LIKE ? OR address LIKE ?)
+            AND is_active = 1
+        `;
+        const searchPattern = `%${searchText}%`;
+        const stmt = db.prepare(query);
+        const rows = stmt.all(searchPattern, searchPattern) as any[];
+        return rows.map(row => this.mapRow(row));
+    }
+
+    // Delete many (for seeding/testing)
+    static deleteMany(filters: any = {}): void {
+        db.prepare('DELETE FROM shops').run();
+    }
+
+    private static mapRow(row: any): IShop {
+        return {
+            id: row.id,
+            name: row.name,
+            address: row.address,
+            gender: row.gender as Gender,
+            latitude: row.latitude,
+            longitude: row.longitude,
+            phone: row.phone,
+            images1: row.images1 ? JSON.parse(row.images1) : [],
+            images2: row.images2 ? JSON.parse(row.images2) : [],
+            images3: row.images3 ? JSON.parse(row.images3) : [],
+            videos: row.videos ? JSON.parse(row.videos) : [],
+            managerId: row.manager_id,
+            averageRating: row.average_rating,
+            totalReviews: row.total_reviews,
+            isActive: row.is_active === 1,
+            subscriptionPlan: row.subscription_plan,
+            subscriptionExpiry: row.subscription_expiry,
+            isPaid: row.is_paid === 1,
+            openTime: row.open_time,
+            closeTime: row.close_time,
+            breakStart: row.break_start,
+            breakEnd: row.break_end,
+            slotDuration: row.slot_duration,
+            createdAt: row.created_at,
+            updatedAt: row.updated_at
+        };
+    }
+}
+
+export default Shop;
