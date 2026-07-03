@@ -17,6 +17,9 @@ verifyCloudinaryConnection();
 const app: Application = express();
 const PORT = process.env.PORT || 1000;
 
+// Trust Cloudflare Tunnel proxy (fix X-Forwarded-For validation error)
+app.set('trust proxy', true);
+
 // Routes
 import authRoutes from './routes/auth.route';
 import shopRoutes from './routes/shop.route';

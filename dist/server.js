@@ -18,6 +18,8 @@ const path_1 = __importDefault(require("path"));
 (0, cloudinary_config_1.verifyCloudinaryConnection)();
 const app = (0, express_1.default)();
 const PORT = process.env.PORT || 1000;
+// Trust Cloudflare Tunnel proxy (fix X-Forwarded-For validation error)
+app.set('trust proxy', true);
 // Routes
 const auth_route_1 = __importDefault(require("./routes/auth.route"));
 const shop_route_1 = __importDefault(require("./routes/shop.route"));
