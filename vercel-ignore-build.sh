@@ -1,22 +1,22 @@
 #!/bin/bash
 
-# Skip deployment for production branch (artifacts only)
+# Skip Android artifact branch
 if [ "$VERCEL_GIT_COMMIT_REF" = "production" ]; then
-  echo "🚫 Skipping build for production branch (artifacts only)"
+  echo "Skipping Vercel build for production branch"
   exit 0
 fi
 
-# Skip main branch (no longer used for deployment)
-if [ "$VERCEL_GIT_COMMIT_REF" = "main" ]; then
-  echo "🚫 Skipping build for main branch (use fullstack branch)"
+# Skip fullstack branch
+if [ "$VERCEL_GIT_COMMIT_REF" = "fullstack" ]; then
+  echo "Skipping Vercel build for fullstack branch"
   exit 0
 fi
 
-# Only build on fullstack branch
-if [ "$VERCEL_GIT_COMMIT_REF" != "fullstack" ]; then
-  echo "🚫 Skipping build for non-fullstack branch"
+# Only build Vercel from main
+if [ "$VERCEL_GIT_COMMIT_REF" != "main" ]; then
+  echo "Skipping Vercel build for non-main branch"
   exit 0
 fi
 
-echo "✅ Building fullstack branch"
+echo "Building Vercel from main branch"
 exit 1
