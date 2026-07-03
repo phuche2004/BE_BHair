@@ -17,4 +17,6 @@ export const loginRateLimiter = rateLimit({
     },
     standardHeaders: true, // Gửi header RateLimit-*
     legacyHeaders: false, // Tắt header X-RateLimit-* cũ
+    // Trust Cloudflare proxy - chỉ trust 1 hop (Cloudflare Tunnel)
+    validate: { trustProxy: false },
 });

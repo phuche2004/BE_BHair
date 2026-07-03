@@ -22,4 +22,6 @@ exports.loginRateLimiter = (0, express_rate_limit_1.default)({
     },
     standardHeaders: true, // Gửi header RateLimit-*
     legacyHeaders: false, // Tắt header X-RateLimit-* cũ
+    // Trust Cloudflare proxy - chỉ trust 1 hop (Cloudflare Tunnel)
+    validate: { trustProxy: false },
 });
