@@ -2,7 +2,7 @@ import dotenv from 'dotenv';
 dotenv.config({ quiet: true } as any);
 
 import express, { Application, Request, Response } from 'express';
-import connectDB from './config/database';
+import connectDatabase from './config/database';
 import { verifyCloudinaryConnection } from './config/cloudinary.config';
 import morgan from 'morgan';
 import cors from 'cors';
@@ -10,7 +10,7 @@ import cookieParser from 'cookie-parser';
 import path from 'path';
 
 // Connect to database
-connectDB();
+connectDatabase();
 // Verify Cloudinary
 verifyCloudinaryConnection();
 

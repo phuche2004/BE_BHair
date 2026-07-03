@@ -22,17 +22,19 @@ Tài liệu này ghi chú lại toàn bộ cấu trúc hạ tầng hiện tại 
 Hệ thống sử dụng cơ chế **"Build Artifacts & Trigger Webhook"** phân tách rõ ràng giữa môi trường Web và Mobile Server:
 
 1. **Vercel (Môi trường Web Production):**
-   - Vercel được cấu hình `Ignored Build Step: Only build production` để nó chỉ tự động deploy khi có code mới ở nhánh `main`. Bỏ qua hoàn toàn các nhánh phụ.
+   - Vercel dùng nhánh `main` cho web production.
+   - Vercel ignore build hiện bỏ qua nhánh `production` và `fullstack`; chỉ cho `main` build.
 
 2. **GitHub Actions (Build & Push Artifacts):**
    - File cấu hình: `.github/workflows/deploy.yml`
-   - Khi có code mới đẩy lên `main`, GitHub sẽ compile mã TypeScript thành JavaScript trong thư mục `dist/`.
+   - Hiện workflow chỉ trigger khi có code mới đẩy lên nhánh `fullstack`; nhánh `main` không kích hoạt CI/CD.
    - Action sẽ dọn dẹp sạch sẽ rác (dùng `git rm -rf --ignore-unmatch src/ mobile/ web/...`) nhưng vẫn giữ lại `src/views/` cho EJS.
    - Toàn bộ cục code (Artifact) sạch sẽ này được ép push (Force Push) sang nhánh `production`.
 
 3. **Trigger Android Server (Gọi điện thoại dậy):**
    - Sau khi đẩy code sang nhánh `production`, GitHub Actions bắn một tín hiệu Webhook xuống địa chỉ IP/Domain của con điện thoại.
-   - Điện thoại nhận lệnh, gõ `git pull origin production` để lấy mã máy về và `pm2 restart BE_BHair` để cập nhật lập tức mà không cần build lại trên phần cứng yếu của điện thoại.
+   - Điện thoại từng nhận lệnh, gõ `git pull origin production` để lấy mã máy về và restart PM2.
+   - Trạng thái sau cutover SQLite: webhook trên backend SQLite đang được bỏ qua để tránh CI/CD cũ ghi đè runtime SQLite local.
 
 ---
 
@@ -213,6 +215,8 @@ cd /root/BE_BHair
 ### Quản lý PM2 (Phải ở bên trong Ubuntu)
 - `pm2 ls`: Xem danh sách các app đang chạy (`BE_BHair` và `tunnel`).
 - `pm2 logs`: Xem nhật ký (Console log) của Server.
+- pm2 start dist/server.js --name "BE_BHair_SQLite" -i 8
+
 - `pm2 restart BE_BHair`: Khởi động lại Server Node.js.
 - `pm2 delete all`: Xoá sạch danh sách (Dùng khi bị lỗi ma nhập EADDRINUSE).
 - `pm2 save`: **Quan trọng!** Lưu lại cấu hình để lần sau tự bật.

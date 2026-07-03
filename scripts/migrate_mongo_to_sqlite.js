@@ -38,8 +38,11 @@ async function migrate() {
     // Connect to MongoDB
     console.log('📡 Connecting to MongoDB Atlas...');
     client = await MongoClient.connect(MONGO_URI);
-    const mongodb = client.db('Bhair');
+    const mongodb = client.db('BHair'); // Capital H
     console.log('✅ Connected to MongoDB\n');
+    
+    // Disable foreign key checks during migration
+    db.pragma('foreign_keys = OFF');
     
     // Start transaction for SQLite
     db.exec('BEGIN TRANSACTION');
@@ -183,7 +186,7 @@ async function migrate() {
         dateStr(apt.endTime),
         apt.totalPrice,
         apt.status || 'PENDING',
-        apt.bookingCode,
+        apt.bookingCode || `BH${Date.now()}${Math.random().toString(36).substr(2, 4).toUpperCase()}`, // Generate if missing
         apt.note || '',
         apt.serviceChanges ? JSON.stringify(apt.serviceChanges.map(sc => ({
           action: sc.action,
@@ -280,6 +283,9 @@ async function migrate() {
     
     // Commit transaction
     db.exec('COMMIT');
+    
+    // Re-enable foreign key checks
+    db.pragma('foreign_keys = ON');
     
     // ========================================
     // Summary

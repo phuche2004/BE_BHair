@@ -3,6 +3,7 @@ name: CI/CD Pipeline
 on:
   push:
     branches:
+      # Main CI/CD is temporarily disabled while Android runs the SQLite backend.
       - fullstack  # Only trigger on fullstack branch
 
 jobs:

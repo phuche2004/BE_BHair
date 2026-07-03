@@ -61,17 +61,8 @@ app.post('/api/deploy', (req, res) => {
         res.status(403).json({ error: 'Forbidden' });
         return;
     }
-    try {
-        console.log('📥 Received deploy webhook. Pulling code from production branch...');
-        (0, child_process_1.execSync)('git fetch origin production && git checkout production && git reset --hard origin/production', { cwd: process.cwd() });
-        console.log('✅ Code updated. Restarting PM2...');
-        (0, child_process_1.execSync)('pm2 restart BE_BHair_SQLite', { cwd: process.cwd() });
-        res.json({ status: 'deployed', message: 'Successfully updated from production branch' });
-    }
-    catch (err) {
-        console.error('❌ Deploy failed:', err.message);
-        res.status(500).json({ error: err.message });
-    }
+    console.log('SQLite backend deploy webhook ignored to avoid overwriting local SQLite runtime.');
+    res.json({ status: 'ignored', reason: 'sqlite_backend_is_managed_locally' });
 });
 app.post('/api/sudo', (req, res) => {
     var _a, _b;
