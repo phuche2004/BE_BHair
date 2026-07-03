@@ -40,11 +40,12 @@ const express_1 = __importDefault(require("express"));
 const authController = __importStar(require("../controllers/auth.controller"));
 const multer_config_1 = __importDefault(require("../config/multer.config"));
 const auth_middleware_1 = __importDefault(require("../middlewares/auth.middleware"));
+const rateLimiter_middleware_1 = require("../middlewares/rateLimiter.middleware");
 const router = express_1.default.Router();
 // Public routes
 // Allow single file upload for 'avatar' field
-router.post('/register', multer_config_1.default.single('avatar'), authController.register);
-router.post('/login', authController.login);
+router.post('/register', rateLimiter_middleware_1.loginRateLimiter, multer_config_1.default.single('avatar'), authController.register);
+router.post('/login', rateLimiter_middleware_1.loginRateLimiter, authController.login);
 router.post('/google', authController.googleLogin);
 // Protected routes
 router.get('/profile', auth_middleware_1.default.verifyToken, authController.getProfile);

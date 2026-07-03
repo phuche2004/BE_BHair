@@ -216,8 +216,8 @@ cd /root/BE_BHair
 - `pm2 ls`: Xem danh sách các app đang chạy (`BE_BHair` và `tunnel`).
 - `pm2 logs`: Xem nhật ký (Console log) của Server.
 - pm2 start dist/server.js --name "BE_BHair_SQLite" -i 8
-
-- `pm2 restart BE_BHair`: Khởi động lại Server Node.js.
+- pm2 delete  BE_BHair_SQLite
+- `pm2 restart BE_BHair_SQLite`: Khởi động lại Server Node.js.
 - `pm2 delete all`: Xoá sạch danh sách (Dùng khi bị lỗi ma nhập EADDRINUSE).
 - `pm2 save`: **Quan trọng!** Lưu lại cấu hình để lần sau tự bật.
 

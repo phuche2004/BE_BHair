@@ -287,7 +287,7 @@ function scenarioWeights(name) {
   }
   if (name === 'login-bcrypt') {
     return normalize([
-      ['login', 90], ['search', 10],
+      ['login', 100]
     ]);
   }
   if (name === 'spike') {
