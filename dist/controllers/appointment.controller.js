@@ -64,7 +64,7 @@ const createAppointment = (req, res) => __awaiter(void 0, void 0, void 0, functi
         // 1b. Kiểm tra customer đã có lịch đang chờ/xác nhận chưa
         const existingActive = appointment_model_1.default.findOne({
             customerId: req.user.id,
-            status: { $in: [appointment_model_1.AppointmentStatus.PENDING, appointment_model_1.AppointmentStatus.CONFIRMED] },
+            // Note: findOne now supports $in operator,
         });
         if (existingActive) {
             return res.status(409).json({
@@ -73,7 +73,7 @@ const createAppointment = (req, res) => __awaiter(void 0, void 0, void 0, functi
             });
         }
         // 2. Validate Services & Calculate Price/Duration
-        const services = service_model_1.default.find({ _id: { $in: serviceIds }, shopId: shopId, isActive: true });
+        const services = service_model_1.default.findByIds(serviceIds, { shopId: shopId, isActive: true });
         if (services.length !== serviceIds.length) {
             return res.status(400).json({ message: 'Some services are invalid or belong to another shop' });
         }
@@ -106,7 +106,7 @@ const createAppointment = (req, res) => __awaiter(void 0, void 0, void 0, functi
         if (barberId) {
             const overlap = appointment_model_1.default.findOne({
                 barberId,
-                status: { $in: [appointment_model_1.AppointmentStatus.PENDING, appointment_model_1.AppointmentStatus.CONFIRMED] },
+                // Note: findOne now supports $in operator,
                 $or: [
                     { bookingDate: { $lt: endDate }, endTime: { $gt: startDate } }
                 ]
@@ -126,7 +126,7 @@ const createAppointment = (req, res) => __awaiter(void 0, void 0, void 0, functi
             // 2. Count Concurrent Appointments (regardless of barber assignment)
             const concurrentAppointments = appointment_model_1.default.countDocuments({
                 shopId,
-                status: { $in: [appointment_model_1.AppointmentStatus.PENDING, appointment_model_1.AppointmentStatus.CONFIRMED] },
+                // Note: findOne now supports $in operator,
                 $or: [
                     { bookingDate: { $lt: endDate }, endTime: { $gt: startDate } }
                 ]
@@ -255,8 +255,7 @@ const createAppointment = (req, res) => __awaiter(void 0, void 0, void 0, functi
 exports.createAppointment = createAppointment;
 const getMyAppointments = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const appointments = appointment_model_1.default.find({ customerId: req.user.id })
-            .lean();
+        const appointments = appointment_model_1.default.find({ customerId: req.user.id });
         const transformed = appointments.map((appt) => (Object.assign(Object.assign({}, appt), { bookingCode: appt.bookingCode || `#BH-${String(appt.id).slice(-4).toUpperCase()}` })));
         res.json(transformed);
     }
@@ -287,7 +286,7 @@ const getAppointmentById = (req, res) => __awaiter(void 0, void 0, void 0, funct
             return res.status(403).json({ message: 'Not authorized to view this appointment' });
         }
         // ────────────────────────────────────────────────────────────────────
-        const transformed = Object.assign(Object.assign({}, appointment.toObject()), { bookingCode: appointment.bookingCode || `#BH-${String(appointment.id).slice(-4).toUpperCase()}` });
+        const transformed = Object.assign(Object.assign({}, appointment), { bookingCode: appointment.bookingCode || `#BH-${String(appointment.id).slice(-4).toUpperCase()}` });
         res.json(transformed);
     }
     catch (error) {
@@ -448,7 +447,7 @@ const updateAppointmentServices = (req, res) => __awaiter(void 0, void 0, void 0
         const updater = user_model_1.default.findById(req.user.id);
         if (!updater)
             return res.status(404).json({ message: 'User not found' });
-        let currentServiceIds = appointment.serviceIds.map(s => s.toString());
+        let currentServiceIds = (typeof appointment.serviceIds === "string" ? JSON.parse(appointment.serviceIds) : appointment.serviceIds).map(s => s.toString());
         let currentPrice = appointment.totalPrice;
         for (const change of serviceChanges) {
             const svc = service_model_1.default.findById(change.serviceId);

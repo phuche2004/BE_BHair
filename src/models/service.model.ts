@@ -41,6 +41,28 @@ class Service {
         return rows.map(row => this.mapRow(row));
     }
 
+    // Find by multiple IDs (for $in queries)
+    static findByIds(ids: string[], filters: { shopId?: string; isActive?: boolean } = {}): IService[] {
+        if (ids.length === 0) return [];
+        
+        let query = 'SELECT * FROM services WHERE id IN (' + ids.map(() => '?').join(',') + ')';
+        const params: any[] = [...ids];
+        
+        if (filters.shopId) {
+            query += ' AND shop_id = ?';
+            params.push(filters.shopId);
+        }
+        
+        if (filters.isActive !== undefined) {
+            query += ' AND is_active = ?';
+            params.push(filters.isActive ? 1 : 0);
+        }
+        
+        const stmt = db.prepare(query);
+        const rows = stmt.all(...params) as any[];
+        return rows.map(row => this.mapRow(row));
+    }
+
     static create(serviceData: {
         shopId: string;
         name: string;

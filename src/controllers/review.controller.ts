@@ -12,7 +12,7 @@ export const createReview = async (req: Request, res: Response) => {
         if (!appointment) return res.status(404).json({ message: 'Appointment not found' });
 
         // 2. Verify Ownership & Status
-        if (appointment.customerId.toString() !== req.user.id) {
+        if (appointment.customerId?.toString() !== req.user.id) {
             return res.status(403).json({ message: 'You can only review your own appointments' });
         }
 
@@ -68,7 +68,7 @@ export const createReview = async (req: Request, res: Response) => {
 export const getShopReviews = async (req: Request, res: Response) => {
     try {
         const { shopId } = req.params;
-        const reviews = Review.find({ shopId })
+        const reviews = Review.find({ shopId: shopId as string })
             
             ;
 

@@ -50,6 +50,7 @@ const reviews_model_1 = __importDefault(require("../models/reviews.model"));
 const appointment_model_1 = __importStar(require("../models/appointment.model"));
 const shop_model_1 = __importDefault(require("../models/shop.model"));
 const createReview = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     try {
         const { appointmentId, rating, comment } = req.body;
         // 1. Check Appointment
@@ -57,7 +58,7 @@ const createReview = (req, res) => __awaiter(void 0, void 0, void 0, function* (
         if (!appointment)
             return res.status(404).json({ message: 'Appointment not found' });
         // 2. Verify Ownership & Status
-        if (appointment.customerId.toString() !== req.user.id) {
+        if (((_a = appointment.customerId) === null || _a === void 0 ? void 0 : _a.toString()) !== req.user.id) {
             return res.status(403).json({ message: 'You can only review your own appointments' });
         }
         if (appointment.status !== appointment_model_1.AppointmentStatus.COMPLETED) {
@@ -106,7 +107,7 @@ exports.createReview = createReview;
 const getShopReviews = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { shopId } = req.params;
-        const reviews = reviews_model_1.default.find({ shopId });
+        const reviews = reviews_model_1.default.find({ shopId: shopId });
         res.json(reviews);
     }
     catch (error) {

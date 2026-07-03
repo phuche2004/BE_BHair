@@ -12,7 +12,7 @@ export const getAvailableSlots = async (req: Request, res: Response) => {
             return res.status(400).json({ message: 'Date is required (YYYY-MM-DD)' });
         }
 
-        const shop = Shop.findById(shopId);
+        const shop = Shop.findById(shopId as string);
         if (!shop) return res.status(404).json({ message: 'Shop not found' });
 
         // 1. Get Total Barbers Capacity

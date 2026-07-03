@@ -8,10 +8,10 @@ export const createService = async (req: Request, res: Response) => {
         const { shopId, name, price, managerExtraFee, duration, description } = req.body;
 
         // Validate Shop ownership
-        const shop = Shop.findById(shopId);
+        const shop = Shop.findById(shopId as string);
         if (!shop) return res.status(404).json({ message: 'Shop not found' });
 
-        if (shop.managerId.toString() !== req.user.id && req.user.role !== UserRole.ADMIN) {
+        if (shop.managerId?.toString() !== req.user.id && req.user.role !== UserRole.ADMIN) {
             return res.status(403).json({ message: 'Not authorized to add service to this shop' });
         }
 
@@ -51,13 +51,13 @@ export const getServicesByShop = async (req: Request, res: Response) => {
 export const updateService = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const service = Service.findById(id);
+        const service = Service.findById(id as string);
 
         if (!service) return res.status(404).json({ message: 'Service not found' });
 
         // Check shop ownership via service.shopId
         const shop = Shop.findById(service.shopId);
-        if (!shop || (shop.managerId.toString() !== req.user.id && req.user.role !== UserRole.ADMIN)) {
+        if (!shop || (shop.managerId?.toString() !== req.user.id && req.user.role !== UserRole.ADMIN)) {
             return res.status(403).json({ message: 'Not authorized' });
         }
 
@@ -85,11 +85,11 @@ export const deleteService = async (req: Request, res: Response) => {
     // Soft delete
     try {
         const { id } = req.params;
-        const service = Service.findById(id);
+        const service = Service.findById(id as string);
         if (!service) return res.status(404).json({ message: 'Service not found' });
 
         const shop = Shop.findById(service.shopId);
-        if (!shop || (shop.managerId.toString() !== req.user.id && req.user.role !== UserRole.ADMIN)) {
+        if (!shop || (shop.managerId?.toString() !== req.user.id && req.user.role !== UserRole.ADMIN)) {
             return res.status(403).json({ message: 'Not authorized' });
         }
 

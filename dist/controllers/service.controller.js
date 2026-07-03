@@ -17,13 +17,14 @@ const service_model_1 = __importDefault(require("../models/service.model"));
 const shop_model_1 = __importDefault(require("../models/shop.model"));
 const user_model_1 = require("../models/user.model");
 const createService = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     try {
         const { shopId, name, price, managerExtraFee, duration, description } = req.body;
         // Validate Shop ownership
         const shop = shop_model_1.default.findById(shopId);
         if (!shop)
             return res.status(404).json({ message: 'Shop not found' });
-        if (shop.managerId.toString() !== req.user.id && req.user.role !== user_model_1.UserRole.ADMIN) {
+        if (((_a = shop.managerId) === null || _a === void 0 ? void 0 : _a.toString()) !== req.user.id && req.user.role !== user_model_1.UserRole.ADMIN) {
             return res.status(403).json({ message: 'Not authorized to add service to this shop' });
         }
         let image = '';
@@ -59,6 +60,7 @@ const getServicesByShop = (req, res) => __awaiter(void 0, void 0, void 0, functi
 });
 exports.getServicesByShop = getServicesByShop;
 const updateService = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     try {
         const { id } = req.params;
         const service = service_model_1.default.findById(id);
@@ -66,7 +68,7 @@ const updateService = (req, res) => __awaiter(void 0, void 0, void 0, function* 
             return res.status(404).json({ message: 'Service not found' });
         // Check shop ownership via service.shopId
         const shop = shop_model_1.default.findById(service.shopId);
-        if (!shop || (shop.managerId.toString() !== req.user.id && req.user.role !== user_model_1.UserRole.ADMIN)) {
+        if (!shop || (((_a = shop.managerId) === null || _a === void 0 ? void 0 : _a.toString()) !== req.user.id && req.user.role !== user_model_1.UserRole.ADMIN)) {
             return res.status(403).json({ message: 'Not authorized' });
         }
         const { name, price, managerExtraFee, duration, description, isActive } = req.body;
@@ -94,6 +96,7 @@ const updateService = (req, res) => __awaiter(void 0, void 0, void 0, function* 
 });
 exports.updateService = updateService;
 const deleteService = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     // Soft delete
     try {
         const { id } = req.params;
@@ -101,7 +104,7 @@ const deleteService = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         if (!service)
             return res.status(404).json({ message: 'Service not found' });
         const shop = shop_model_1.default.findById(service.shopId);
-        if (!shop || (shop.managerId.toString() !== req.user.id && req.user.role !== user_model_1.UserRole.ADMIN)) {
+        if (!shop || (((_a = shop.managerId) === null || _a === void 0 ? void 0 : _a.toString()) !== req.user.id && req.user.role !== user_model_1.UserRole.ADMIN)) {
             return res.status(403).json({ message: 'Not authorized' });
         }
         service.isActive = false;

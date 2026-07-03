@@ -138,13 +138,14 @@ const getShopById = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
 });
 exports.getShopById = getShopById;
 const updateShop = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     try {
         const shopId = req.params.id;
         const shop = shop_model_1.default.findById(shopId);
         if (!shop)
             return res.status(404).json({ message: 'Shop not found' });
         // Check ownership
-        if (shop.managerId.toString() !== req.user.id && req.user.role !== user_model_1.UserRole.ADMIN) {
+        if (((_a = shop.managerId) === null || _a === void 0 ? void 0 : _a.toString()) !== req.user.id && req.user.role !== user_model_1.UserRole.ADMIN) {
             return res.status(403).json({ message: 'Not authorized to update this shop' });
         }
         // Update basic info
@@ -175,10 +176,8 @@ const updateShop = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             try {
                 const parsedCoordinates = typeof coordinates === 'string' ? JSON.parse(coordinates) : coordinates;
                 if (Array.isArray(parsedCoordinates) && parsedCoordinates.length === 2) {
-                    shop.location = {
-                        type: 'Point',
-                        coordinates: parsedCoordinates
-                    };
+                    shop.latitude = latitude;
+                    shop.longitude = longitude;
                 }
             }
             catch (e) {
@@ -196,10 +195,16 @@ const updateShop = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
                     urlsToDelete = deleteUrls;
             }
             if (urlsToDelete.length > 0) {
-                shop.images1 = (shop.images1 || []).filter((u) => !urlsToDelete.includes(u));
-                shop.images2 = (shop.images2 || []).filter((u) => !urlsToDelete.includes(u));
-                shop.images3 = (shop.images3 || []).filter((u) => !urlsToDelete.includes(u));
-                shop.videos = (shop.videos || []).filter((u) => !urlsToDelete.includes(u));
+                const images1Array = Array.isArray(shop.images1) ? shop.images1 : (shop.images1 ? JSON.parse(shop.images1) : []);
+                const images2Array = Array.isArray(shop.images2) ? shop.images2 : (shop.images2 ? JSON.parse(shop.images2) : []);
+                const images3Array = Array.isArray(shop.images3) ? shop.images3 : (shop.images3 ? JSON.parse(shop.images3) : []);
+                const videosArray = Array.isArray(shop.videos) ? shop.videos : (shop.videos ? JSON.parse(shop.videos) : []);
+                shop_model_1.default.findByIdAndUpdate(shopId, {
+                    images1: images1Array.filter((u) => !urlsToDelete.includes(u)),
+                    images2: images2Array.filter((u) => !urlsToDelete.includes(u)),
+                    images3: images3Array.filter((u) => !urlsToDelete.includes(u)),
+                    videos: videosArray.filter((u) => !urlsToDelete.includes(u))
+                });
                 // Delete from Cloudinary to free storage quota
                 for (const url of urlsToDelete) {
                     const mediaInfo = getCloudinaryPublicIdAndType(url);
@@ -242,13 +247,20 @@ const updateShop = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             }
             shop.images1 = newImages1;
         }
-        if (newImages2.length > 0)
-            shop.images2 = [...(shop.images2 || []), ...newImages2];
-        if (newImages3.length > 0)
-            shop.images3 = [...(shop.images3 || []), ...newImages3];
-        if (newVideos.length > 0)
-            shop.videos = [...(shop.videos || []), ...newVideos];
-        // Removed: await shop.save() - SQLite models are immutable
+        if (newImages2.length > 0) {
+            const currentImages2 = Array.isArray(shop.images2) ? shop.images2 : (shop.images2 ? JSON.parse(shop.images2) : []);
+            shop_model_1.default.findByIdAndUpdate(shopId, { images2: [...currentImages2, ...newImages2] });
+        }
+        if (newImages3.length > 0) {
+            const currentImages3 = Array.isArray(shop.images3) ? shop.images3 : (shop.images3 ? JSON.parse(shop.images3) : []);
+            shop_model_1.default.findByIdAndUpdate(shopId, { images3: [...currentImages3, ...newImages3] });
+        }
+        if (newVideos.length > 0) {
+            const currentVideos = Array.isArray(shop.videos) ? shop.videos : (shop.videos ? JSON.parse(shop.videos) : []);
+            shop_model_1.default.findByIdAndUpdate(shopId, { videos: [...currentVideos, ...newVideos] });
+        }
+        // Refresh shop data after updates
+        shop = shop_model_1.default.findById(shopId);
         res.json({ message: 'Shop updated', shop });
     }
     catch (error) {

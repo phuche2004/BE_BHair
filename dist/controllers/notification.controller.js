@@ -27,7 +27,7 @@ exports.getMyNotifications = getMyNotifications;
 const markAsRead = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { id } = req.params;
-        const notification = notification_model_1.default.findByIdAndUpdate(id, { isRead: true }, { new: true });
+        const notification = notification_model_1.default.findByIdAndUpdate(id, { isRead: true });
         if (!notification)
             return res.status(404).json({ message: 'Notification not found' });
         // Ensure ownership

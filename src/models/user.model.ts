@@ -173,13 +173,19 @@ class User {
     }
 
     // Find all with filters
-    static find(filters: { role?: UserRole; shopId?: string; isActive?: boolean } = {}): IUser[] {
+    static find(filters: { role?: UserRole | { $in: UserRole[] }; shopId?: string; isActive?: boolean } = {}): IUser[] {
         let query = 'SELECT * FROM users WHERE 1=1';
         const params: any[] = [];
         
         if (filters.role) {
-            query += ' AND role = ?';
-            params.push(filters.role);
+            if (typeof filters.role === 'object' && '$in' in filters.role) {
+                const roles = filters.role.$in;
+                query += ' AND role IN (' + roles.map(() => '?').join(',') + ')';
+                params.push(...roles);
+            } else {
+                query += ' AND role = ?';
+                params.push(filters.role);
+            }
         }
         
         if (filters.shopId) {

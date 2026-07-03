@@ -41,6 +41,49 @@ class Appointment {
         return row ? this.mapRow(row) : undefined;
     }
 
+    // FindOne with flexible filters (for overlap checking)
+    static findOne(filters: { 
+        barberId?: string; 
+        bookingDate?: string;
+        status?: AppointmentStatus | { $in: AppointmentStatus[] };
+        endTime?: string;
+    } = {}): IAppointment | undefined {
+        let query = 'SELECT * FROM appointments WHERE 1=1';
+        const params: any[] = [];
+        
+        if (filters.barberId) {
+            query += ' AND barber_id = ?';
+            params.push(filters.barberId);
+        }
+        
+        if (filters.bookingDate) {
+            query += ' AND booking_date = ?';
+            params.push(filters.bookingDate);
+        }
+        
+        if (filters.status) {
+            if (typeof filters.status === 'object' && '$in' in filters.status) {
+                const statuses = filters.status.$in;
+                query += ' AND status IN (' + statuses.map(() => '?').join(',') + ')';
+                params.push(...statuses);
+            } else {
+                query += ' AND status = ?';
+                params.push(filters.status);
+            }
+        }
+        
+        if (filters.endTime) {
+            query += ' AND end_time > ?';
+            params.push(filters.endTime);
+        }
+        
+        query += ' LIMIT 1';
+        
+        const stmt = db.prepare(query);
+        const row = stmt.get(...params) as any;
+        return row ? this.mapRow(row) : undefined;
+    }
+
     static find(filters: { 
         shopId?: string; 
         customerId?: string; 

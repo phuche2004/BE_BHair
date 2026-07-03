@@ -14,13 +14,13 @@ export const createAppointment = async (req: Request, res: Response) => {
         let { shopId, barberId, serviceIds, bookingDate, note, isManual, customerId, guestName, guestPhone } = req.body; // bookingDate is ISO string
 
         // 1. Validate Shop
-        const shop = Shop.findById(shopId);
+        const shop = Shop.findById(shopId as string);
         if (!shop) return res.status(404).json({ message: 'Shop not found' });
 
         // 1b. Kiểm tra customer đã có lịch đang chờ/xác nhận chưa
         const existingActive = Appointment.findOne({
             customerId: req.user.id,
-            status: { $in: [AppointmentStatus.PENDING, AppointmentStatus.CONFIRMED] },
+            // Note: findOne now supports $in operator,
         });
         if (existingActive) {
             return res.status(409).json({
@@ -31,7 +31,7 @@ export const createAppointment = async (req: Request, res: Response) => {
 
 
         // 2. Validate Services & Calculate Price/Duration
-        const services = Service.find({ _id: { $in: serviceIds }, shopId: shopId, isActive: true });
+        const services = Service.findByIds(serviceIds, { shopId: shopId as string, isActive: true });
         if (services.length !== serviceIds.length) {
             return res.status(400).json({ message: 'Some services are invalid or belong to another shop' });
         }
@@ -71,7 +71,7 @@ export const createAppointment = async (req: Request, res: Response) => {
         if (barberId) {
             const overlap = Appointment.findOne({
                 barberId,
-                status: { $in: [AppointmentStatus.PENDING, AppointmentStatus.CONFIRMED] },
+                // Note: findOne now supports $in operator,
                 $or: [
                     { bookingDate: { $lt: endDate }, endTime: { $gt: startDate } }
                 ]
@@ -92,7 +92,7 @@ export const createAppointment = async (req: Request, res: Response) => {
             // 2. Count Concurrent Appointments (regardless of barber assignment)
             const concurrentAppointments = Appointment.countDocuments({
                 shopId,
-                status: { $in: [AppointmentStatus.PENDING, AppointmentStatus.CONFIRMED] },
+                // Note: findOne now supports $in operator,
                 $or: [
                     { bookingDate: { $lt: endDate }, endTime: { $gt: startDate } }
                 ]
@@ -232,7 +232,7 @@ export const getMyAppointments = async (req: Request, res: Response) => {
             
             
             
-            .lean();
+            ;
 
         const transformed = appointments.map((appt: any) => ({
             ...appt,
@@ -248,7 +248,7 @@ export const getMyAppointments = async (req: Request, res: Response) => {
 export const getAppointmentById = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const appointment = Appointment.findById(id)
+        const appointment = Appointment.findById(id as string)
             
             
             ;
@@ -276,7 +276,7 @@ export const getAppointmentById = async (req: Request, res: Response) => {
         // ────────────────────────────────────────────────────────────────────
         
         const transformed = {
-            ...appointment.toObject(),
+            ...appointment,
             bookingCode: appointment.bookingCode || `#BH-${String(appointment.id).slice(-4).toUpperCase()}`
         };
 
@@ -289,7 +289,7 @@ export const getAppointmentById = async (req: Request, res: Response) => {
 export const cancelAppointment = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const appointment = Appointment.findById(id);
+        const appointment = Appointment.findById(id as string);
 
         if (!appointment) {
             return res.status(404).json({ message: 'Appointment not found' });
@@ -345,7 +345,7 @@ export const updateAppointmentStatus = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         const { status } = req.body;
-        const appointment = Appointment.findById(id);
+        const appointment = Appointment.findById(id as string);
 
         if (!appointment) {
             return res.status(404).json({ message: 'Appointment not found' });
@@ -409,7 +409,7 @@ export const getShopAppointments = async (req: Request, res: Response) => {
         const { shopId } = req.params;
 
         // Verify ownership (Manager or Staff of the shop)
-        const shop = Shop.findById(shopId);
+        const shop = Shop.findById(shopId as string);
 
         let userShopId = req.user.shopId;
         if (!userShopId && (req.user.role === UserRole.STAFF || req.user.role === UserRole.MANAGER)) {
@@ -439,7 +439,7 @@ export const updateAppointmentServices = async (req: Request, res: Response) => 
         const { id } = req.params;
         const { serviceChanges } = req.body; 
         
-        const appointment = Appointment.findById(id);
+        const appointment = Appointment.findById(id as string);
         if (!appointment) return res.status(404).json({ message: 'Appointment not found' });
 
         const isAdmin = req.user.role === UserRole.ADMIN;
@@ -459,7 +459,7 @@ export const updateAppointmentServices = async (req: Request, res: Response) => 
         const updater = User.findById(req.user.id);
         if (!updater) return res.status(404).json({ message: 'User not found' });
 
-        let currentServiceIds = appointment.serviceIds.map(s => s.toString());
+        let currentServiceIds = (typeof appointment.serviceIds === "string" ? JSON.parse(appointment.serviceIds) : appointment.serviceIds).map(s => s.toString());
         let currentPrice = appointment.totalPrice;
 
         for (const change of serviceChanges) {
