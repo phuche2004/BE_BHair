@@ -6,11 +6,17 @@ if [ "$VERCEL_GIT_COMMIT_REF" = "production" ]; then
   exit 0
 fi
 
-# Only build on main branch
-if [ "$VERCEL_GIT_COMMIT_REF" != "main" ]; then
-  echo "🚫 Skipping build for non-main branch"
+# Skip main branch (no longer used for deployment)
+if [ "$VERCEL_GIT_COMMIT_REF" = "main" ]; then
+  echo "🚫 Skipping build for main branch (use fullstack branch)"
   exit 0
 fi
 
-echo "✅ Building main branch"
+# Only build on fullstack branch
+if [ "$VERCEL_GIT_COMMIT_REF" != "fullstack" ]; then
+  echo "🚫 Skipping build for non-fullstack branch"
+  exit 0
+fi
+
+echo "✅ Building fullstack branch"
 exit 1
