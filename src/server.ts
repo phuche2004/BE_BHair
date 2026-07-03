@@ -55,16 +55,28 @@ app.use('/api/v1', slotRoutes); // Mount at root /api/v1 because route already h
 app.use('/explorer', explorerRoutes);
 
 // Phục vụ Frontend (React) từ thư mục web/dist
-app.use(express.static(path.join(process.cwd(), 'web/dist')));
+const webDistPath = path.join(process.cwd(), 'web/dist');
+const indexPath = path.join(webDistPath, 'index.html');
 
-// Bất kỳ route GET nào không phải API sẽ được đẩy về React xử lý (Client-side Routing)
-app.get('*', (req: Request, res: Response, next: express.NextFunction) => {
-    // Không chặn các request bắt đầu bằng /api
-    if (req.path.startsWith('/api')) {
-        return next();
-    }
-    res.sendFile(path.join(process.cwd(), 'web/dist/index.html'));
-});
+// Kiểm tra xem web/dist có tồn tại không
+import fs from 'fs';
+const webDistExists = fs.existsSync(webDistPath) && fs.existsSync(indexPath);
+
+if (webDistExists) {
+    console.log('✅ Serving Frontend from web/dist');
+    app.use(express.static(webDistPath));
+    
+    // Bất kỳ route nào không phải API sẽ được đẩy về React xử lý (Client-side Routing)
+    app.use((req: Request, res: Response, next: express.NextFunction) => {
+        // Không chặn các request bắt đầu bằng /api hoặc /explorer
+        if (req.path.startsWith('/api') || req.path.startsWith('/explorer')) {
+            return next();
+        }
+        res.sendFile(indexPath);
+    });
+} else {
+    console.log('⚠️ Frontend not found at web/dist - API-only mode');
+}
 // CI/CD Webhook cho Termux Android
 import { execSync } from 'child_process';
 app.post('/api/deploy', (req: Request, res: Response): void => {

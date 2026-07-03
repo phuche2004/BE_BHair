@@ -51,9 +51,27 @@ app.use('/api/v1/notification', notification_route_1.default);
 app.use('/api/v1/ai', ai_route_1.default);
 app.use('/api/v1', slot_route_1.default); // Mount at root /api/v1 because route already has /shop prefix
 app.use('/explorer', explorer_route_1.default);
-app.get('/', (req, res) => {
-    res.send('API đang chạy...');
-});
+// Phục vụ Frontend (React) từ thư mục web/dist
+const webDistPath = path_1.default.join(process.cwd(), 'web/dist');
+const indexPath = path_1.default.join(webDistPath, 'index.html');
+// Kiểm tra xem web/dist có tồn tại không
+const fs_1 = __importDefault(require("fs"));
+const webDistExists = fs_1.default.existsSync(webDistPath) && fs_1.default.existsSync(indexPath);
+if (webDistExists) {
+    console.log('✅ Serving Frontend from web/dist');
+    app.use(express_1.default.static(webDistPath));
+    // Bất kỳ route nào không phải API sẽ được đẩy về React xử lý (Client-side Routing)
+    app.use((req, res, next) => {
+        // Không chặn các request bắt đầu bằng /api hoặc /explorer
+        if (req.path.startsWith('/api') || req.path.startsWith('/explorer')) {
+            return next();
+        }
+        res.sendFile(indexPath);
+    });
+}
+else {
+    console.log('⚠️ Frontend not found at web/dist - API-only mode');
+}
 // CI/CD Webhook cho Termux Android
 const child_process_1 = require("child_process");
 app.post('/api/deploy', (req, res) => {
