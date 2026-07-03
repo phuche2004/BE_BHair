@@ -8,7 +8,7 @@ export const createReview = async (req: Request, res: Response) => {
         const { appointmentId, rating, comment } = req.body;
 
         // 1. Check Appointment
-        const appointment = await Appointment.findById(appointmentId);
+        const appointment = Appointment.findById(appointmentId);
         if (!appointment) return res.status(404).json({ message: 'Appointment not found' });
 
         // 2. Verify Ownership & Status
@@ -21,13 +21,13 @@ export const createReview = async (req: Request, res: Response) => {
         }
 
         // 3. Check Duplicate (Schema unique index protects this too)
-        const existingReview = await Review.findOne({ appointmentId });
+        const existingReview = Review.findOne({ appointmentId });
         if (existingReview) {
             return res.status(400).json({ message: 'You have already reviewed this appointment' });
         }
 
         // 4. Create Review
-        const newReview = new Review({
+        const newReview = Review.create({
             appointmentId,
             shopId: appointment.shopId,
             customerId: req.user.id,
@@ -36,7 +36,7 @@ export const createReview = async (req: Request, res: Response) => {
             comment
         });
 
-        await newReview.save();
+        // Removed: await newReview.save() - SQLite models are immutable
 
         // 5. Update Shop Average Rating
         const shopId = appointment.shopId;
@@ -52,7 +52,7 @@ export const createReview = async (req: Request, res: Response) => {
         ]);
 
         if (stats.length > 0) {
-            await Shop.findByIdAndUpdate(shopId, {
+            Shop.findByIdAndUpdate(shopId, {
                 averageRating: Math.round(stats[0].averageRating * 10) / 10, // Round to 1 decimal
                 totalReviews: stats[0].totalReviews
             });
@@ -68,9 +68,9 @@ export const createReview = async (req: Request, res: Response) => {
 export const getShopReviews = async (req: Request, res: Response) => {
     try {
         const { shopId } = req.params;
-        const reviews = await Review.find({ shopId })
-            .populate('customerId', 'fullName avatar')
-            .sort({ createdAt: -1 });
+        const reviews = Review.find({ shopId })
+            
+            ;
 
         res.json(reviews);
     } catch (error: any) {

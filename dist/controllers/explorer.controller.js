@@ -64,8 +64,8 @@ class ExplorerController {
             var _a;
             try {
                 const { phoneNumber, password } = req.body;
-                const user = yield user_model_1.default.findOne({ phoneNumber });
-                if (!user || user.password === undefined) {
+                const user = user_model_1.default.findByPhoneNumber(phoneNumber);
+                if (!user || !user.password) {
                     return res.render('login', { error: 'Số điện thoại hoặc mật khẩu không đúng' });
                 }
                 const isMatch = yield bcrypt_1.default.compare(password, user.password);
@@ -75,7 +75,7 @@ class ExplorerController {
                 if (user.role !== user_model_1.UserRole.ADMIN && user.role !== user_model_1.UserRole.MANAGER) {
                     return res.render('login', { error: 'Bạn không có quyền quản trị.' });
                 }
-                const token = jsonwebtoken_1.default.sign({ id: user._id, role: user.role, fullName: user.fullName, shopId: (_a = user.shopId) !== null && _a !== void 0 ? _a : null }, process.env.JWT_SECRET, { expiresIn: '30d' });
+                const token = jsonwebtoken_1.default.sign({ id: user.id, role: user.role, fullName: user.fullName, shopId: (_a = user.shopId) !== null && _a !== void 0 ? _a : null }, process.env.JWT_SECRET, { expiresIn: '30d' });
                 // Set HttpOnly cookie
                 res.cookie('token', token, {
                     httpOnly: true,

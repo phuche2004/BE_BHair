@@ -8,27 +8,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-const mongoose_1 = __importDefault(require("mongoose"));
-const env_config_1 = __importDefault(require("./env.config"));
 const connectDatabase = () => __awaiter(void 0, void 0, void 0, function* () {
-    const dbType = process.env.DATABASE_TYPE || 'mongodb';
-    if (dbType === 'sqlite') {
-        // SQLite is already connected via sqlite.config.ts
-        console.log('✅ Using SQLite database');
-        return;
-    }
-    // Default: MongoDB
-    try {
-        yield mongoose_1.default.connect(env_config_1.default.mongoUri || '');
-        console.log('✅ Successfully connected to MongoDB');
-    }
-    catch (error) {
-        console.error('❌ Error connecting to MongoDB:', error);
-        process.exit(1);
-    }
+    // SQLite is already connected synchronously via sqlite.config.ts
+    console.log('✅ Using SQLite database');
 });
 exports.default = connectDatabase;

@@ -14,24 +14,24 @@ export const createAppointment = async (req: Request, res: Response) => {
         let { shopId, barberId, serviceIds, bookingDate, note, isManual, customerId, guestName, guestPhone } = req.body; // bookingDate is ISO string
 
         // 1. Validate Shop
-        const shop = await Shop.findById(shopId);
+        const shop = Shop.findById(shopId);
         if (!shop) return res.status(404).json({ message: 'Shop not found' });
 
         // 1b. Kiểm tra customer đã có lịch đang chờ/xác nhận chưa
-        const existingActive = await Appointment.findOne({
+        const existingActive = Appointment.findOne({
             customerId: req.user.id,
             status: { $in: [AppointmentStatus.PENDING, AppointmentStatus.CONFIRMED] },
         });
         if (existingActive) {
             return res.status(409).json({
                 message: 'Bạn đã có một lịch hẹn đang chờ. Vui lòng hoàn tất hoặc hủy lịch hẹn hiện tại trước khi đặt lịch mới.',
-                existingAppointmentId: existingActive._id,
+                existingAppointmentId: existingActive.id,
             });
         }
 
 
         // 2. Validate Services & Calculate Price/Duration
-        const services = await Service.find({ _id: { $in: serviceIds }, shopId: shopId, isActive: true });
+        const services = Service.find({ _id: { $in: serviceIds }, shopId: shopId, isActive: true });
         if (services.length !== serviceIds.length) {
             return res.status(400).json({ message: 'Some services are invalid or belong to another shop' });
         }
@@ -42,7 +42,7 @@ export const createAppointment = async (req: Request, res: Response) => {
         // 3. Check Barber Role & Apply Fees
         let barber: any = null;
         if (barberId) {
-            barber = await User.findById(barberId);
+            barber = User.findById(barberId);
             if (!barber) return res.status(404).json({ message: 'Barber not found' });
 
             // Ensure barber belongs to shop (simple check via shopId if implemented in User, 
@@ -69,7 +69,7 @@ export const createAppointment = async (req: Request, res: Response) => {
         // If no barber selected, we might assign one or just check shop capacity (simplified: require barber for now)
 
         if (barberId) {
-            const overlap = await Appointment.findOne({
+            const overlap = Appointment.findOne({
                 barberId,
                 status: { $in: [AppointmentStatus.PENDING, AppointmentStatus.CONFIRMED] },
                 $or: [
@@ -83,14 +83,14 @@ export const createAppointment = async (req: Request, res: Response) => {
         } else {
             // Logic: Check Shop Capacity (Don't assign specific barber yet)
             // 1. Count Total Active Barbers
-            const totalBarbers = await User.countDocuments({
+            const totalBarbers = User.countDocuments({
                 shopId,
                 role: { $in: [UserRole.MANAGER, UserRole.STAFF] },
                 isActive: true
             });
 
             // 2. Count Concurrent Appointments (regardless of barber assignment)
-            const concurrentAppointments = await Appointment.countDocuments({
+            const concurrentAppointments = Appointment.countDocuments({
                 shopId,
                 status: { $in: [AppointmentStatus.PENDING, AppointmentStatus.CONFIRMED] },
                 $or: [
@@ -112,9 +112,9 @@ export const createAppointment = async (req: Request, res: Response) => {
 
         if ((req.user.role === UserRole.STAFF || req.user.role === UserRole.MANAGER || req.user.role === UserRole.ADMIN) && isManual) {
              if (customerId) {
-                 const target = await User.findById(customerId);
+                 const target = User.findById(customerId);
                  if (target) {
-                     customerIdObj = target._id;
+                     customerIdObj = target.id;
                      cName = target.fullName;
                      cPhone = target.phoneNumber || target.email || 'N/A';
                  } else {
@@ -126,13 +126,13 @@ export const createAppointment = async (req: Request, res: Response) => {
                  cPhone = guestPhone || 'N/A';
              }
         } else {
-             const customer = await User.findById(req.user.id);
+             const customer = User.findById(req.user.id);
              if (!customer) return res.status(404).json({ message: 'Customer not found' });
              cName = customer.fullName;
              cPhone = customer.phoneNumber || customer.email || 'N/A';
         }
 
-        const appointment = new Appointment({
+        const appointment = Appointment.create({
             shopId,
             customerId: customerIdObj,
             customerName: cName,
@@ -147,7 +147,7 @@ export const createAppointment = async (req: Request, res: Response) => {
             note
         });
 
-        await appointment.save();
+        // Removed: await appointment.save() - SQLite models are immutable
 
         // --- HISTORY LOG ---
         try {
@@ -155,10 +155,10 @@ export const createAppointment = async (req: Request, res: Response) => {
             const { HistoryAction } = require('../models/history.model');
             let actorName = req.user.role === 'CUSTOMER' ? appointment.customerName : 'Nhân viên';
             if (isManual) {
-                const creator = await User.findById(req.user.id);
+                const creator = User.findById(req.user.id);
                 actorName = creator ? creator.fullName : 'Nhân viên';
             }
-            await HistoryLog.create({
+            HistoryLog.create({
                 shopId: appointment.shopId,
                 actorId: req.user.id,
                 actorName: actorName,
@@ -178,15 +178,15 @@ export const createAppointment = async (req: Request, res: Response) => {
                 const managerIdStr = shop.managerId.toString();
 
                 // Create DB Notification
-                const noti = new Notification({
+                const noti = Notification.create({
                     recipientId: shop.managerId,
                     senderId: req.user.id,
                     type: NotificationType.BOOKING_CREATED,
                     title: 'New Appointment',
                     message: `Customer has booked an appointment for ${startDate.toLocaleString()}`,
-                    data: { appointmentId: appointment._id }
+                    data: { appointmentId: appointment.id }
                 });
-                await noti.save();
+                // Removed: await noti.save() - SQLite models are immutable
 
                 // Emit Socket Event
                 // Client (Manager) must join room: socket.emit('join_room', managerId)
@@ -194,7 +194,7 @@ export const createAppointment = async (req: Request, res: Response) => {
 
                 // --- CHANGE START: Push Notification (FCM) ---
                 const { sendPushNotification } = require('../services/notification.service');
-                const manager = await User.findById(shop.managerId);
+                const manager = User.findById(shop.managerId);
                 if (manager && manager.fcmToken) {
                     await sendPushNotification({
                         token: manager.fcmToken,
@@ -202,7 +202,7 @@ export const createAppointment = async (req: Request, res: Response) => {
                         body: `New booking at ${startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
                         data: {
                             type: 'BOOKING_CREATED',
-                            appointmentId: appointment._id.toString()
+                            appointmentId: appointment.id.toString()
                         }
                     });
                 }
@@ -227,16 +227,16 @@ export const createAppointment = async (req: Request, res: Response) => {
 
 export const getMyAppointments = async (req: Request, res: Response) => {
     try {
-        const appointments = await Appointment.find({ customerId: req.user.id })
-            .populate('shopId', 'name address images1')
-            .populate('barberId', 'fullName avatar')
-            .populate('serviceIds', 'name price duration image')
-            .sort({ bookingDate: -1 })
+        const appointments = Appointment.find({ customerId: req.user.id })
+            
+            
+            
+            
             .lean();
 
         const transformed = appointments.map((appt: any) => ({
             ...appt,
-            bookingCode: appt.bookingCode || `#BH-${String(appt._id).slice(-4).toUpperCase()}`
+            bookingCode: appt.bookingCode || `#BH-${String(appt.id).slice(-4).toUpperCase()}`
         }));
 
         res.json(transformed);
@@ -248,10 +248,10 @@ export const getMyAppointments = async (req: Request, res: Response) => {
 export const getAppointmentById = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const appointment = await Appointment.findById(id)
-            .populate('shopId', 'name address images1 phone')
-            .populate('barberId', 'fullName avatar')
-            .populate('serviceIds', 'name price duration image');
+        const appointment = Appointment.findById(id)
+            
+            
+            ;
 
         if (!appointment) {
             return res.status(404).json({ message: 'Appointment not found' });
@@ -262,13 +262,13 @@ export const getAppointmentById = async (req: Request, res: Response) => {
 
         let userShopId = req.user.shopId;
         if (!userShopId && (req.user.role === UserRole.STAFF || req.user.role === UserRole.MANAGER)) {
-            const dbUser = await User.findById(req.user.id).select('shopId');
+            const dbUser = User.findById(req.user.id);
             userShopId = dbUser?.shopId?.toString();
         }
 
         const isShopStaff =
             (req.user.role === UserRole.STAFF || req.user.role === UserRole.MANAGER) &&
-            userShopId?.toString() === appointment.shopId._id.toString();
+            userShopId?.toString() === appointment.shopId.id.toString();
 
         if (!isOwner && !isAdmin && !isShopStaff) {
             return res.status(403).json({ message: 'Not authorized to view this appointment' });
@@ -277,7 +277,7 @@ export const getAppointmentById = async (req: Request, res: Response) => {
         
         const transformed = {
             ...appointment.toObject(),
-            bookingCode: appointment.bookingCode || `#BH-${String(appointment._id).slice(-4).toUpperCase()}`
+            bookingCode: appointment.bookingCode || `#BH-${String(appointment.id).slice(-4).toUpperCase()}`
         };
 
         res.json(transformed);
@@ -289,7 +289,7 @@ export const getAppointmentById = async (req: Request, res: Response) => {
 export const cancelAppointment = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const appointment = await Appointment.findById(id);
+        const appointment = Appointment.findById(id);
 
         if (!appointment) {
             return res.status(404).json({ message: 'Appointment not found' });
@@ -302,7 +302,7 @@ export const cancelAppointment = async (req: Request, res: Response) => {
         // shopId từ JWT (sau khi fix) hoặc DB lookup cho token cũ
         let userShopId = req.user.shopId;
         if (!userShopId && (req.user.role === UserRole.STAFF || req.user.role === UserRole.MANAGER)) {
-            const dbUser = await User.findById(req.user.id).select('shopId');
+            const dbUser = User.findById(req.user.id);
             userShopId = dbUser?.shopId?.toString();
         }
 
@@ -320,14 +320,14 @@ export const cancelAppointment = async (req: Request, res: Response) => {
         }
 
         appointment.status = AppointmentStatus.CANCELLED;
-        await appointment.save();
+        // Removed: await appointment.save() - SQLite models are immutable
 
         // --- HISTORY LOG ---
         try {
             const HistoryLog = require('../models/history.model').default;
             const { HistoryAction } = require('../models/history.model');
-            const actor = await User.findById(req.user.id);
-            await HistoryLog.create({
+            const actor = User.findById(req.user.id);
+            HistoryLog.create({
                 shopId: appointment.shopId,
                 actorId: req.user.id,
                 actorName: actor ? actor.fullName : 'Hệ thống',
@@ -345,7 +345,7 @@ export const updateAppointmentStatus = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         const { status } = req.body;
-        const appointment = await Appointment.findById(id);
+        const appointment = Appointment.findById(id);
 
         if (!appointment) {
             return res.status(404).json({ message: 'Appointment not found' });
@@ -357,7 +357,7 @@ export const updateAppointmentStatus = async (req: Request, res: Response) => {
 
         let userShopId = req.user.shopId;
         if (!userShopId && (req.user.role === UserRole.STAFF || req.user.role === UserRole.MANAGER)) {
-            const dbUser = await User.findById(req.user.id).select('shopId');
+            const dbUser = User.findById(req.user.id);
             userShopId = dbUser?.shopId?.toString();
         }
 
@@ -381,14 +381,14 @@ export const updateAppointmentStatus = async (req: Request, res: Response) => {
         }
 
         appointment.status = status;
-        await appointment.save();
+        // Removed: await appointment.save() - SQLite models are immutable
 
         // --- HISTORY LOG ---
         try {
             const HistoryLog = require('../models/history.model').default;
             const { HistoryAction } = require('../models/history.model');
-            const actor = await User.findById(req.user.id);
-            await HistoryLog.create({
+            const actor = User.findById(req.user.id);
+            HistoryLog.create({
                 shopId: appointment.shopId,
                 actorId: req.user.id,
                 actorName: actor ? actor.fullName : 'Hệ thống',
@@ -409,11 +409,11 @@ export const getShopAppointments = async (req: Request, res: Response) => {
         const { shopId } = req.params;
 
         // Verify ownership (Manager or Staff of the shop)
-        const shop = await Shop.findById(shopId);
+        const shop = Shop.findById(shopId);
 
         let userShopId = req.user.shopId;
         if (!userShopId && (req.user.role === UserRole.STAFF || req.user.role === UserRole.MANAGER)) {
-            const dbUser = await User.findById(req.user.id).select('shopId');
+            const dbUser = User.findById(req.user.id);
             userShopId = dbUser?.shopId?.toString();
         }
 
@@ -423,10 +423,10 @@ export const getShopAppointments = async (req: Request, res: Response) => {
             return res.status(403).json({ message: 'Not authorized to view appointments for this shop' });
         }
 
-        const appointments = await Appointment.find({ shopId })
-            .populate('barberId', 'fullName')
-            .populate('serviceIds', 'name duration')
-            .sort({ bookingDate: 1 });
+        const appointments = Appointment.find({ shopId })
+            
+            
+            ;
 
         res.json(appointments);
     } catch (error: any) {
@@ -439,13 +439,13 @@ export const updateAppointmentServices = async (req: Request, res: Response) => 
         const { id } = req.params;
         const { serviceChanges } = req.body; 
         
-        const appointment = await Appointment.findById(id);
+        const appointment = Appointment.findById(id);
         if (!appointment) return res.status(404).json({ message: 'Appointment not found' });
 
         const isAdmin = req.user.role === UserRole.ADMIN;
         let userShopId = req.user.shopId;
         if (!userShopId && (req.user.role === UserRole.STAFF || req.user.role === UserRole.MANAGER)) {
-            const dbUser = await User.findById(req.user.id).select('shopId');
+            const dbUser = User.findById(req.user.id);
             userShopId = dbUser?.shopId?.toString();
         }
         const isShopStaff = (req.user.role === UserRole.STAFF || req.user.role === UserRole.MANAGER) && userShopId?.toString() === appointment.shopId.toString();
@@ -456,14 +456,14 @@ export const updateAppointmentServices = async (req: Request, res: Response) => 
             return res.status(400).json({ message: 'Cannot edit services for completed or cancelled appointments' });
         }
 
-        const updater = await User.findById(req.user.id);
+        const updater = User.findById(req.user.id);
         if (!updater) return res.status(404).json({ message: 'User not found' });
 
         let currentServiceIds = appointment.serviceIds.map(s => s.toString());
         let currentPrice = appointment.totalPrice;
 
         for (const change of serviceChanges) {
-            const svc = await Service.findById(change.serviceId);
+            const svc = Service.findById(change.serviceId);
             if (!svc) continue;
 
             if (change.action === 'ADDED' && !currentServiceIds.includes(change.serviceId)) {
@@ -477,16 +477,16 @@ export const updateAppointmentServices = async (req: Request, res: Response) => 
             if (!appointment.serviceChanges) appointment.serviceChanges = [];
             appointment.serviceChanges.push({
                 action: change.action,
-                serviceId: svc._id as Types.ObjectId,
+                serviceId: svc.id as Types.ObjectId,
                 byName: updater.fullName,
-                byId: updater._id as Types.ObjectId,
+                byId: updater.id as Types.ObjectId,
                 date: new Date()
             });
         }
 
         appointment.serviceIds = currentServiceIds as any;
         appointment.totalPrice = currentPrice;
-        await appointment.save();
+        // Removed: await appointment.save() - SQLite models are immutable
 
         // --- HISTORY LOG ---
         try {
@@ -494,7 +494,7 @@ export const updateAppointmentServices = async (req: Request, res: Response) => 
             const { HistoryAction } = require('../models/history.model');
             let added = serviceChanges.filter((c:any) => c.action === 'ADDED').length;
             let removed = serviceChanges.filter((c:any) => c.action === 'REMOVED').length;
-            await HistoryLog.create({
+            HistoryLog.create({
                 shopId: appointment.shopId,
                 actorId: req.user.id,
                 actorName: updater.fullName,

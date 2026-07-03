@@ -90,7 +90,7 @@ const createShop = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
                     parsedCoordinates = coordinates;
             }
         }
-        const newShop = new shop_model_1.default({
+        const newShop = shop_model_1.default.create({
             name,
             address,
             phone,
@@ -105,9 +105,9 @@ const createShop = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             videos,
             managerId: req.user.id
         });
-        yield newShop.save();
+        // Removed: await newShop.save() - SQLite models are immutable
         // 4. Update User with shopId
-        yield user_model_1.default.findByIdAndUpdate(req.user.id, { shopId: newShop._id });
+        user_model_1.default.findByIdAndUpdate(req.user.id, { shopId: newShop.id });
         res.status(201).json({ message: 'Shop created successfully', shop: newShop });
     }
     catch (error) {
@@ -117,7 +117,7 @@ const createShop = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
 exports.createShop = createShop;
 const getMyShops = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const shops = yield shop_model_1.default.find({ managerId: req.user.id });
+        const shops = shop_model_1.default.find({ managerId: req.user.id });
         res.json(shops);
     }
     catch (error) {
@@ -127,7 +127,7 @@ const getMyShops = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
 exports.getMyShops = getMyShops;
 const getShopById = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const shop = yield shop_model_1.default.findById(req.params.id).populate('managerId', 'fullName avatar phoneNumber');
+        const shop = shop_model_1.default.findById(req.params.id);
         if (!shop)
             return res.status(404).json({ message: 'Shop not found' });
         res.json(shop);
@@ -140,7 +140,7 @@ exports.getShopById = getShopById;
 const updateShop = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const shopId = req.params.id;
-        const shop = yield shop_model_1.default.findById(shopId);
+        const shop = shop_model_1.default.findById(shopId);
         if (!shop)
             return res.status(404).json({ message: 'Shop not found' });
         // Check ownership
@@ -248,7 +248,7 @@ const updateShop = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             shop.images3 = [...(shop.images3 || []), ...newImages3];
         if (newVideos.length > 0)
             shop.videos = [...(shop.videos || []), ...newVideos];
-        yield shop.save();
+        // Removed: await shop.save() - SQLite models are immutable
         res.json({ message: 'Shop updated', shop });
     }
     catch (error) {
@@ -276,8 +276,7 @@ const getShopHistory = (req, res) => __awaiter(void 0, void 0, void 0, function*
                 $lte: endDate
             };
         }
-        const logs = yield HistoryLog.find(query)
-            .sort({ createdAt: -1 })
+        const logs = HistoryLog.find(query)
             .skip(skip)
             .limit(limit);
         res.json(logs);

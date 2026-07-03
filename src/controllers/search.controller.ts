@@ -37,7 +37,7 @@ export const searchShops = async (req: Request, res: Response) => {
             };
         }
 
-        const shops = await Shop.find(query).limit(20);
+        const shops = Shop.find(query);
         res.json(shops);
 
     } catch (error: any) {

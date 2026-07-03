@@ -56,7 +56,7 @@ const getAvailableSlots = (req, res) => __awaiter(void 0, void 0, void 0, functi
         if (!date) {
             return res.status(400).json({ message: 'Date is required (YYYY-MM-DD)' });
         }
-        const shop = yield shop_model_1.default.findById(shopId);
+        const shop = shop_model_1.default.findById(shopId);
         if (!shop)
             return res.status(404).json({ message: 'Shop not found' });
         // 1. Get Total Barbers Capacity
@@ -67,7 +67,7 @@ const getAvailableSlots = (req, res) => __awaiter(void 0, void 0, void 0, functi
         }
         else {
             // Determine shop capacity by counting active staff/managers
-            const staffCount = yield user_model_1.default.countDocuments({
+            const staffCount = user_model_1.default.countDocuments({
                 shopId,
                 role: { $in: [user_model_1.UserRole.MANAGER, user_model_1.UserRole.STAFF] },
                 isActive: true
@@ -126,7 +126,7 @@ const getAvailableSlots = (req, res) => __awaiter(void 0, void 0, void 0, functi
         if (barberId) {
             query.barberId = barberId;
         }
-        const appointments = yield appointment_model_1.default.find(query);
+        const appointments = appointment_model_1.default.find(query);
         // 4. Calculate Availability Per Slot
         slots.forEach(slot => {
             if (!slot.available)

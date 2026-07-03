@@ -54,7 +54,7 @@ const client = new google_auth_library_1.OAuth2Client();
 // Helper to generate Token
 const generateToken = (user) => {
     var _a;
-    return jsonwebtoken_1.default.sign({ id: user._id, role: user.role, fullName: user.fullName, shopId: (_a = user.shopId) !== null && _a !== void 0 ? _a : null }, process.env.JWT_SECRET, { expiresIn: '30d' });
+    return jsonwebtoken_1.default.sign({ id: user.id, role: user.role, fullName: user.fullName, shopId: (_a = user.shopId) !== null && _a !== void 0 ? _a : null }, process.env.JWT_SECRET, { expiresIn: '30d' });
 };
 const register = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -65,7 +65,7 @@ const register = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             return res.status(400).json({ message: 'Invalid phone number format. Must be 10-11 digits.' });
         }
         // Check user exists
-        const existingUser = yield user_model_1.default.findOne({ phoneNumber });
+        const existingUser = user_model_1.default.findByPhoneNumber(phoneNumber);
         if (existingUser) {
             return res.status(400).json({ message: 'User already exists with this phone number.' });
         }
@@ -85,20 +85,19 @@ const register = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         else if (role === 'STAFF' || role === 'BARBER') {
             userRole = user_model_1.UserRole.STAFF;
         }
-        const newUser = new user_model_1.default({
+        const newUser = user_model_1.default.create({
             fullName,
             phoneNumber,
             password: hashedPassword,
             role: userRole,
             avatar: avatarUrl
         });
-        yield newUser.save();
         const token = generateToken(newUser);
         res.status(201).json({
             message: 'User registered successfully',
             token,
             user: {
-                id: newUser._id,
+                id: newUser.id,
                 fullName: newUser.fullName,
                 phoneNumber: newUser.phoneNumber,
                 role: newUser.role,
@@ -114,8 +113,8 @@ exports.register = register;
 const login = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { phoneNumber, password } = req.body;
-        const user = yield user_model_1.default.findOne({ phoneNumber });
-        if (!user || user.password === undefined) {
+        const user = user_model_1.default.findByPhoneNumber(phoneNumber);
+        if (!user || !user.password) {
             // Handle case where password might be missing (e.g. social login but we don't have that yet)
             return res.status(400).json({ message: 'Invalid phone number or password' });
         }
@@ -128,7 +127,7 @@ const login = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             message: 'Login successful',
             token,
             user: {
-                id: user._id,
+                id: user.id,
                 fullName: user.fullName,
                 phoneNumber: user.phoneNumber,
                 role: user.role,
@@ -145,7 +144,7 @@ exports.login = login;
 const getProfile = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         // req.user is set by authMiddleware
-        const user = yield user_model_1.default.findById(req.user.id).select('-password'); // Exclude password
+        const user = user_model_1.default.findByIdWithoutPassword(req.user.id);
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
@@ -161,7 +160,7 @@ const updateFcmToken = (req, res) => __awaiter(void 0, void 0, void 0, function*
         const { fcmToken } = req.body;
         if (!fcmToken)
             return res.status(400).json({ message: 'fcmToken is required' });
-        yield user_model_1.default.findByIdAndUpdate(req.user.id, { fcmToken });
+        user_model_1.default.findByIdAndUpdate(req.user.id, { fcmToken });
         res.json({ message: 'FCM Token updated successfully' });
     }
     catch (error) {
@@ -196,29 +195,25 @@ const googleLogin = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
         }
         const { sub, email, name, picture } = payload;
         // Find user by googleId or email
-        let user = yield user_model_1.default.findOne({
-            $or: [
-                { googleId: sub },
-                { email: email }
-            ]
+        let user = user_model_1.default.findOne({
+            googleId: sub
+        }) || user_model_1.default.findOne({
+            email: email
         });
         if (user) {
             // Update existing user if googleId is missing or if info changed
-            let updated = false;
-            if (!user.googleId) {
-                user.googleId = sub;
-                updated = true;
+            const updates = {};
+            if (!user.googleId)
+                updates.googleId = sub;
+            if (!user.email && email)
+                updates.email = email;
+            if (Object.keys(updates).length > 0) {
+                user = user_model_1.default.findByIdAndUpdate(user.id, updates);
             }
-            if (!user.email && email) {
-                user.email = email;
-                updated = true;
-            }
-            if (updated)
-                yield user.save();
         }
         else {
             // Create new user
-            user = new user_model_1.default({
+            user = user_model_1.default.create({
                 fullName: name || 'Google User',
                 email: email || '',
                 googleId: sub,
@@ -226,14 +221,13 @@ const googleLogin = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
                 role: user_model_1.UserRole.CUSTOMER,
                 isActive: true
             });
-            yield user.save();
         }
         const token = generateToken(user);
         res.status(200).json({
             message: 'Google login successful',
             token,
             user: {
-                id: user._id,
+                id: user.id,
                 fullName: user.fullName,
                 email: user.email,
                 role: user.role,

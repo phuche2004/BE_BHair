@@ -12,7 +12,7 @@ export const getAvailableSlots = async (req: Request, res: Response) => {
             return res.status(400).json({ message: 'Date is required (YYYY-MM-DD)' });
         }
 
-        const shop = await Shop.findById(shopId);
+        const shop = Shop.findById(shopId);
         if (!shop) return res.status(404).json({ message: 'Shop not found' });
 
         // 1. Get Total Barbers Capacity
@@ -22,7 +22,7 @@ export const getAvailableSlots = async (req: Request, res: Response) => {
             totalBarbers = 1;
         } else {
             // Determine shop capacity by counting active staff/managers
-            const staffCount = await User.countDocuments({
+            const staffCount = User.countDocuments({
                 shopId,
                 role: { $in: [UserRole.MANAGER, UserRole.STAFF] },
                 isActive: true
@@ -92,7 +92,7 @@ export const getAvailableSlots = async (req: Request, res: Response) => {
             query.barberId = barberId;
         }
 
-        const appointments = await Appointment.find(query);
+        const appointments = Appointment.find(query);
 
         // 4. Calculate Availability Per Slot
         slots.forEach(slot => {

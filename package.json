@@ -7,6 +7,8 @@
     "start": "node dist/server.js",
     "dev": "nodemon src/server.ts",
     "seed": "ts-node src/scripts/seed.ts",
+    "stress:worst": "node scripts/worst-case-load-test.js",
+    "stress:login": "node scripts/worst-case-load-test.js --scenario login-bcrypt",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",

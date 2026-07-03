@@ -48,7 +48,7 @@ export const createShop = async (req: Request, res: Response) => {
             }
         }
 
-        const newShop = new Shop({
+        const newShop = Shop.create({
             name,
             address,
             phone,
@@ -64,10 +64,10 @@ export const createShop = async (req: Request, res: Response) => {
             managerId: req.user.id
         });
 
-        await newShop.save();
+        // Removed: await newShop.save() - SQLite models are immutable
 
         // 4. Update User with shopId
-        await User.findByIdAndUpdate(req.user.id, { shopId: newShop._id });
+        User.findByIdAndUpdate(req.user.id, { shopId: newShop.id });
 
         res.status(201).json({ message: 'Shop created successfully', shop: newShop });
 
@@ -78,7 +78,7 @@ export const createShop = async (req: Request, res: Response) => {
 
 export const getMyShops = async (req: Request, res: Response) => {
     try {
-        const shops = await Shop.find({ managerId: req.user.id });
+        const shops = Shop.find({ managerId: req.user.id });
         res.json(shops);
     } catch (error: any) {
         res.status(500).json({ message: 'Server error', error: error.message });
@@ -87,7 +87,7 @@ export const getMyShops = async (req: Request, res: Response) => {
 
 export const getShopById = async (req: Request, res: Response) => {
     try {
-        const shop = await Shop.findById(req.params.id).populate('managerId', 'fullName avatar phoneNumber');
+        const shop = Shop.findById(req.params.id);
         if (!shop) return res.status(404).json({ message: 'Shop not found' });
         res.json(shop);
     } catch (error: any) {
@@ -98,7 +98,7 @@ export const getShopById = async (req: Request, res: Response) => {
 export const updateShop = async (req: Request, res: Response) => {
     try {
         const shopId = req.params.id;
-        const shop = await Shop.findById(shopId);
+        const shop = Shop.findById(shopId);
 
         if (!shop) return res.status(404).json({ message: 'Shop not found' });
 
@@ -198,7 +198,7 @@ export const updateShop = async (req: Request, res: Response) => {
         if (newImages3.length > 0) shop.images3 = [...(shop.images3 || []), ...newImages3];
         if (newVideos.length > 0) shop.videos = [...(shop.videos || []), ...newVideos];
 
-        await shop.save();
+        // Removed: await shop.save() - SQLite models are immutable
         res.json({ message: 'Shop updated', shop });
 
     } catch (error: any) {
@@ -231,8 +231,8 @@ export const getShopHistory = async (req: Request, res: Response) => {
             };
         }
 
-        const logs = await HistoryLog.find(query)
-            .sort({ createdAt: -1 })
+        const logs = HistoryLog.find(query)
+            
             .skip(skip)
             .limit(limit);
 

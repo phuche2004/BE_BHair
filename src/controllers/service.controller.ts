@@ -8,7 +8,7 @@ export const createService = async (req: Request, res: Response) => {
         const { shopId, name, price, managerExtraFee, duration, description } = req.body;
 
         // Validate Shop ownership
-        const shop = await Shop.findById(shopId);
+        const shop = Shop.findById(shopId);
         if (!shop) return res.status(404).json({ message: 'Shop not found' });
 
         if (shop.managerId.toString() !== req.user.id && req.user.role !== UserRole.ADMIN) {
@@ -20,7 +20,7 @@ export const createService = async (req: Request, res: Response) => {
             image = req.file.path;
         }
 
-        const newService = new Service({
+        const newService = Service.create({
             shopId,
             name,
             description, // New field check
@@ -30,7 +30,7 @@ export const createService = async (req: Request, res: Response) => {
             image
         });
 
-        await newService.save();
+        // Removed: await newService.save() - SQLite models are immutable
         res.status(201).json({ message: 'Service created', service: newService });
 
     } catch (error: any) {
@@ -41,7 +41,7 @@ export const createService = async (req: Request, res: Response) => {
 export const getServicesByShop = async (req: Request, res: Response) => {
     try {
         const { shopId } = req.params;
-        const services = await Service.find({ shopId, isActive: true });
+        const services = Service.find({ shopId, isActive: true });
         res.json(services);
     } catch (error: any) {
         res.status(500).json({ message: 'Server error', error: error.message });
@@ -51,12 +51,12 @@ export const getServicesByShop = async (req: Request, res: Response) => {
 export const updateService = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const service = await Service.findById(id);
+        const service = Service.findById(id);
 
         if (!service) return res.status(404).json({ message: 'Service not found' });
 
         // Check shop ownership via service.shopId
-        const shop = await Shop.findById(service.shopId);
+        const shop = Shop.findById(service.shopId);
         if (!shop || (shop.managerId.toString() !== req.user.id && req.user.role !== UserRole.ADMIN)) {
             return res.status(403).json({ message: 'Not authorized' });
         }
@@ -73,7 +73,7 @@ export const updateService = async (req: Request, res: Response) => {
             service.image = req.file.path;
         }
 
-        await service.save();
+        // Removed: await service.save() - SQLite models are immutable
         res.json({ message: 'Service updated', service });
 
     } catch (error: any) {
@@ -85,16 +85,16 @@ export const deleteService = async (req: Request, res: Response) => {
     // Soft delete
     try {
         const { id } = req.params;
-        const service = await Service.findById(id);
+        const service = Service.findById(id);
         if (!service) return res.status(404).json({ message: 'Service not found' });
 
-        const shop = await Shop.findById(service.shopId);
+        const shop = Shop.findById(service.shopId);
         if (!shop || (shop.managerId.toString() !== req.user.id && req.user.role !== UserRole.ADMIN)) {
             return res.status(403).json({ message: 'Not authorized' });
         }
 
         service.isActive = false;
-        await service.save();
+        // Removed: await service.save() - SQLite models are immutable
         res.json({ message: 'Service deleted (soft)' });
 
     } catch (error: any) {

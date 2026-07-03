@@ -3,9 +3,9 @@ import Notification from '../models/notification.model';
 
 export const getMyNotifications = async (req: Request, res: Response) => {
     try {
-        const notifications = await Notification.find({ recipientId: req.user.id })
-            .sort({ createdAt: -1 })
-            .limit(50);
+        const notifications = Notification.find({ recipientId: req.user.id })
+            
+            ;
         res.json(notifications);
     } catch (error: any) {
         res.status(500).json({ message: 'Server error', error: error.message });
@@ -15,7 +15,7 @@ export const getMyNotifications = async (req: Request, res: Response) => {
 export const markAsRead = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const notification = await Notification.findByIdAndUpdate(
+        const notification = Notification.findByIdAndUpdate(
             id,
             { isRead: true },
             { new: true }

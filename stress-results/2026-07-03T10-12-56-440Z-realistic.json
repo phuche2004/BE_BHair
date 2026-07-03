@@ -1,0 +1,345 @@
+{
+  "target": "https://api.bhair.site",
+  "scenario": "realistic",
+  "allowWrites": false,
+  "durationSeconds": 130.05,
+  "concurrency": 100,
+  "maxRpsLimit": null,
+  "total": 1075,
+  "ok": 0,
+  "errorRate": 1,
+  "rps": 8.27,
+  "okRps": 0,
+  "latencyMs": {
+    "min": 10124,
+    "p50": 10189,
+    "p90": 10327,
+    "p95": 10450,
+    "p99": 10841,
+    "max": 13511
+  },
+  "errors": {
+    "http": 1075,
+    "network": 0,
+    "timeout": 0
+  },
+  "statuses": {
+    "500": 1075
+  },
+  "maxInflight": 100,
+  "routes": {
+    "search": {
+      "total": 1075,
+      "ok": 0,
+      "errors": 1075,
+      "errorRate": 1,
+      "p95": 10450,
+      "p99": 10841,
+      "statuses": {
+        "500": 1075
+      }
+    }
+  },
+  "sampleFailures": [
+    {
+      "name": "search",
+      "status": 500,
+      "ok": false,
+      "latency": 10154
+    },
+    {
+      "name": "search",
+      "status": 500,
+      "ok": false,
+      "latency": 10295
+    },
+    {
+      "name": "search",
+      "status": 500,
+      "ok": false,
+      "latency": 10787
+    },
+    {
+      "name": "search",
+      "status": 500,
+      "ok": false,
+      "latency": 10305
+    },
+    {
+      "name": "search",
+      "status": 500,
+      "ok": false,
+      "latency": 10147
+    },
+    {
+      "name": "search",
+      "status": 500,
+      "ok": false,
+      "latency": 10510
+    },
+    {
+      "name": "search",
+      "status": 500,
+      "ok": false,
+      "latency": 10189
+    },
+    {
+      "name": "search",
+      "status": 500,
+      "ok": false,
+      "latency": 10208
+    },
+    {
+      "name": "search",
+      "status": 500,
+      "ok": false,
+      "latency": 10190
+    },
+    {
+      "name": "search",
+      "status": 500,
+      "ok": false,
+      "latency": 10142
+    },
+    {
+      "name": "search",
+      "status": 500,
+      "ok": false,
+      "latency": 10350
+    },
+    {
+      "name": "search",
+      "status": 500,
+      "ok": false,
+      "latency": 10441
+    },
+    {
+      "name": "search",
+      "status": 500,
+      "ok": false,
+      "latency": 10393
+    },
+    {
+      "name": "search",
+      "status": 500,
+      "ok": false,
+      "latency": 10462
+    },
+    {
+      "name": "search",
+      "status": 500,
+      "ok": false,
+      "latency": 10349
+    },
+    {
+      "name": "search",
+      "status": 500,
+      "ok": false,
+      "latency": 10234
+    },
+    {
+      "name": "search",
+      "status": 500,
+      "ok": false,
+      "latency": 10315
+    },
+    {
+      "name": "search",
+      "status": 500,
+      "ok": false,
+      "latency": 10472
+    },
+    {
+      "name": "search",
+      "status": 500,
+      "ok": false,
+      "latency": 10293
+    },
+    {
+      "name": "search",
+      "status": 500,
+      "ok": false,
+      "latency": 10487
+    },
+    {
+      "name": "search",
+      "status": 500,
+      "ok": false,
+      "latency": 10327
+    },
+    {
+      "name": "search",
+      "status": 500,
+      "ok": false,
+      "latency": 10316
+    },
+    {
+      "name": "search",
+      "status": 500,
+      "ok": false,
+      "latency": 13260
+    },
+    {
+      "name": "search",
+      "status": 500,
+      "ok": false,
+      "latency": 12291
+    },
+    {
+      "name": "search",
+      "status": 500,
+      "ok": false,
+      "latency": 13511
+    },
+    {
+      "name": "search",
+      "status": 500,
+      "ok": false,
+      "latency": 12976
+    },
+    {
+      "name": "search",
+      "status": 500,
+      "ok": false,
+      "latency": 11452
+    },
+    {
+      "name": "search",
+      "status": 500,
+      "ok": false,
+      "latency": 11778
+    },
+    {
+      "name": "search",
+      "status": 500,
+      "ok": false,
+      "latency": 12658
+    },
+    {
+      "name": "search",
+      "status": 500,
+      "ok": false,
+      "latency": 10609
+    },
+    {
+      "name": "search",
+      "status": 500,
+      "ok": false,
+      "latency": 10288
+    },
+    {
+      "name": "search",
+      "status": 500,
+      "ok": false,
+      "latency": 10983
+    },
+    {
+      "name": "search",
+      "status": 500,
+      "ok": false,
+      "latency": 11204
+    },
+    {
+      "name": "search",
+      "status": 500,
+      "ok": false,
+      "latency": 12184
+    },
+    {
+      "name": "search",
+      "status": 500,
+      "ok": false,
+      "latency": 10137
+    },
+    {
+      "name": "search",
+      "status": 500,
+      "ok": false,
+      "latency": 10290
+    },
+    {
+      "name": "search",
+      "status": 500,
+      "ok": false,
+      "latency": 10675
+    },
+    {
+      "name": "search",
+      "status": 500,
+      "ok": false,
+      "latency": 10413
+    },
+    {
+      "name": "search",
+      "status": 500,
+      "ok": false,
+      "latency": 10197
+    },
+    {
+      "name": "search",
+      "status": 500,
+      "ok": false,
+      "latency": 10397
+    },
+    {
+      "name": "search",
+      "status": 500,
+      "ok": false,
+      "latency": 10201
+    },
+    {
+      "name": "search",
+      "status": 500,
+      "ok": false,
+      "latency": 10163
+    },
+    {
+      "name": "search",
+      "status": 500,
+      "ok": false,
+      "latency": 10267
+    },
+    {
+      "name": "search",
+      "status": 500,
+      "ok": false,
+      "latency": 10135
+    },
+    {
+      "name": "search",
+      "status": 500,
+      "ok": false,
+      "latency": 10142
+    },
+    {
+      "name": "search",
+      "status": 500,
+      "ok": false,
+      "latency": 10526
+    },
+    {
+      "name": "search",
+      "status": 500,
+      "ok": false,
+      "latency": 10274
+    },
+    {
+      "name": "search",
+      "status": 500,
+      "ok": false,
+      "latency": 10358
+    },
+    {
+      "name": "search",
+      "status": 500,
+      "ok": false,
+      "latency": 10144
+    },
+    {
+      "name": "search",
+      "status": 500,
+      "ok": false,
+      "latency": 10221
+    }
+  ]
+}

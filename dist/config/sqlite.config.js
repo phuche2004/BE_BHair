@@ -5,7 +5,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const better_sqlite3_1 = __importDefault(require("better-sqlite3"));
 const path_1 = __importDefault(require("path"));
-const dbPath = process.env.DATABASE_PATH || path_1.default.join(__dirname, '../../bhair.db');
+// Determine database path from environment or use default
+const dbPath = process.env.DATABASE_PATH || path_1.default.join(process.cwd(), 'bhair.db');
+// Create SQLite connection
 const db = new better_sqlite3_1.default(dbPath, {
     verbose: process.env.NODE_ENV === 'development' ? console.log : undefined,
     fileMustExist: true
@@ -13,5 +15,5 @@ const db = new better_sqlite3_1.default(dbPath, {
 // Enable WAL mode for better concurrent access
 db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');
-console.log('✅ Connected to SQLite:', dbPath);
+console.log('✅ SQLite connected:', dbPath);
 exports.default = db;

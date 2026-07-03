@@ -9,7 +9,7 @@ const client = new OAuth2Client();
 // Helper to generate Token
 const generateToken = (user: any) => {
     return jwt.sign(
-        { id: user._id, role: user.role, fullName: user.fullName, shopId: user.shopId ?? null },
+        { id: user.id, role: user.role, fullName: user.fullName, shopId: user.shopId ?? null },
         process.env.JWT_SECRET as string,
         { expiresIn: '30d' }
     );
@@ -26,7 +26,7 @@ export const register = async (req: Request, res: Response) => {
         }
 
         // Check user exists
-        const existingUser = await User.findOne({ phoneNumber });
+        const existingUser = User.findByPhoneNumber(phoneNumber);
         if (existingUser) {
             return res.status(400).json({ message: 'User already exists with this phone number.' });
         }
@@ -49,7 +49,7 @@ export const register = async (req: Request, res: Response) => {
             userRole = UserRole.STAFF;
         }
 
-        const newUser = new User({
+        const newUser = User.create({
             fullName,
             phoneNumber,
             password: hashedPassword,
@@ -57,15 +57,13 @@ export const register = async (req: Request, res: Response) => {
             avatar: avatarUrl
         });
 
-        await newUser.save();
-
         const token = generateToken(newUser);
 
         res.status(201).json({
             message: 'User registered successfully',
             token,
             user: {
-                id: newUser._id,
+                id: newUser.id,
                 fullName: newUser.fullName,
                 phoneNumber: newUser.phoneNumber,
                 role: newUser.role,
@@ -81,8 +79,8 @@ export const login = async (req: Request, res: Response) => {
     try {
         const { phoneNumber, password } = req.body;
 
-        const user = await User.findOne({ phoneNumber });
-        if (!user || user.password === undefined) {
+        const user = User.findByPhoneNumber(phoneNumber);
+        if (!user || !user.password) {
             // Handle case where password might be missing (e.g. social login but we don't have that yet)
             return res.status(400).json({ message: 'Invalid phone number or password' });
         }
@@ -98,7 +96,7 @@ export const login = async (req: Request, res: Response) => {
             message: 'Login successful',
             token,
             user: {
-                id: user._id,
+                id: user.id,
                 fullName: user.fullName,
                 phoneNumber: user.phoneNumber,
                 role: user.role,
@@ -114,7 +112,7 @@ export const login = async (req: Request, res: Response) => {
 export const getProfile = async (req: Request, res: Response) => {
     try {
         // req.user is set by authMiddleware
-        const user = await User.findById(req.user.id).select('-password'); // Exclude password
+        const user = User.findByIdWithoutPassword(req.user.id);
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
@@ -129,7 +127,7 @@ export const updateFcmToken = async (req: Request, res: Response) => {
         const { fcmToken } = req.body;
         if (!fcmToken) return res.status(400).json({ message: 'fcmToken is required' });
 
-        await User.findByIdAndUpdate(req.user.id, { fcmToken });
+        User.findByIdAndUpdate(req.user.id, { fcmToken });
 
         res.json({ message: 'FCM Token updated successfully' });
     } catch (error: any) {
@@ -170,28 +168,24 @@ export const googleLogin = async (req: Request, res: Response) => {
         const { sub, email, name, picture } = payload;
 
         // Find user by googleId or email
-        let user = await User.findOne({ 
-            $or: [
-                { googleId: sub },
-                { email: email }
-            ]
+        let user = User.findOne({ 
+            googleId: sub 
+        }) || User.findOne({ 
+            email: email 
         });
 
         if (user) {
             // Update existing user if googleId is missing or if info changed
-            let updated = false;
-            if (!user.googleId) {
-                user.googleId = sub;
-                updated = true;
+            const updates: any = {};
+            if (!user.googleId) updates.googleId = sub;
+            if (!user.email && email) updates.email = email;
+            
+            if (Object.keys(updates).length > 0) {
+                user = User.findByIdAndUpdate(user.id, updates)!;
             }
-            if (!user.email && email) {
-                user.email = email;
-                updated = true;
-            }
-            if (updated) await user.save();
         } else {
             // Create new user
-            user = new User({
+            user = User.create({
                 fullName: name || 'Google User',
                 email: email || '',
                 googleId: sub,
@@ -199,7 +193,6 @@ export const googleLogin = async (req: Request, res: Response) => {
                 role: UserRole.CUSTOMER,
                 isActive: true
             });
-            await user.save();
         }
 
         const token = generateToken(user);
@@ -208,7 +201,7 @@ export const googleLogin = async (req: Request, res: Response) => {
             message: 'Google login successful',
             token,
             user: {
-                id: user._id,
+                id: user.id,
                 fullName: user.fullName,
                 email: user.email,
                 role: user.role,

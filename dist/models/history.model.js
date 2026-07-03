@@ -1,56 +1,63 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.HistoryAction = void 0;
-const mongoose_1 = __importStar(require("mongoose"));
+const sqlite_config_1 = __importDefault(require("../config/sqlite.config"));
+const uuid_1 = require("uuid");
 var HistoryAction;
 (function (HistoryAction) {
     HistoryAction["CREATED_APPOINTMENT"] = "CREATED_APPOINTMENT";
     HistoryAction["UPDATED_STATUS"] = "UPDATED_STATUS";
     HistoryAction["EDITED_SERVICES"] = "EDITED_SERVICES";
 })(HistoryAction || (exports.HistoryAction = HistoryAction = {}));
-const HistoryLogSchema = new mongoose_1.Schema({
-    shopId: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Shop', required: true, index: true },
-    actorId: { type: mongoose_1.Schema.Types.ObjectId, ref: 'User', required: true },
-    actorName: { type: String, required: true },
-    action: {
-        type: String,
-        enum: Object.values(HistoryAction),
-        required: true,
-        index: true
-    },
-    details: { type: String, required: true },
-}, { timestamps: { createdAt: true, updatedAt: false } });
-exports.default = mongoose_1.default.model('HistoryLog', HistoryLogSchema);
+class HistoryLog {
+    static findById(id) {
+        const stmt = sqlite_config_1.default.prepare('SELECT * FROM history_logs WHERE id = ?');
+        const row = stmt.get(id);
+        return row ? this.mapRow(row) : undefined;
+    }
+    static find(filters = {}) {
+        let query = 'SELECT * FROM history_logs WHERE 1=1';
+        const params = [];
+        if (filters.shopId) {
+            query += ' AND shop_id = ?';
+            params.push(filters.shopId);
+        }
+        if (filters.actorId) {
+            query += ' AND actor_id = ?';
+            params.push(filters.actorId);
+        }
+        if (filters.action) {
+            query += ' AND action = ?';
+            params.push(filters.action);
+        }
+        query += ' ORDER BY created_at DESC';
+        const stmt = sqlite_config_1.default.prepare(query);
+        const rows = stmt.all(...params);
+        return rows.map(row => this.mapRow(row));
+    }
+    static create(logData) {
+        const id = (0, uuid_1.v4)();
+        const stmt = sqlite_config_1.default.prepare(`
+            INSERT INTO history_logs (
+                id, shop_id, actor_id, actor_name, action, details
+            ) VALUES (?, ?, ?, ?, ?, ?)
+        `);
+        stmt.run(id, logData.shopId, logData.actorId, logData.actorName, logData.action, logData.details);
+        return this.findById(id);
+    }
+    static mapRow(row) {
+        return {
+            id: row.id,
+            shopId: row.shop_id,
+            actorId: row.actor_id,
+            actorName: row.actor_name,
+            action: row.action,
+            details: row.details,
+            createdAt: row.created_at
+        };
+    }
+}
+exports.default = HistoryLog;

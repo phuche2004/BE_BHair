@@ -20,7 +20,7 @@ const createService = (req, res) => __awaiter(void 0, void 0, void 0, function* 
     try {
         const { shopId, name, price, managerExtraFee, duration, description } = req.body;
         // Validate Shop ownership
-        const shop = yield shop_model_1.default.findById(shopId);
+        const shop = shop_model_1.default.findById(shopId);
         if (!shop)
             return res.status(404).json({ message: 'Shop not found' });
         if (shop.managerId.toString() !== req.user.id && req.user.role !== user_model_1.UserRole.ADMIN) {
@@ -30,7 +30,7 @@ const createService = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         if (req.file && req.file.path) {
             image = req.file.path;
         }
-        const newService = new service_model_1.default({
+        const newService = service_model_1.default.create({
             shopId,
             name,
             description, // New field check
@@ -39,7 +39,7 @@ const createService = (req, res) => __awaiter(void 0, void 0, void 0, function* 
             duration,
             image
         });
-        yield newService.save();
+        // Removed: await newService.save() - SQLite models are immutable
         res.status(201).json({ message: 'Service created', service: newService });
     }
     catch (error) {
@@ -50,7 +50,7 @@ exports.createService = createService;
 const getServicesByShop = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { shopId } = req.params;
-        const services = yield service_model_1.default.find({ shopId, isActive: true });
+        const services = service_model_1.default.find({ shopId, isActive: true });
         res.json(services);
     }
     catch (error) {
@@ -61,11 +61,11 @@ exports.getServicesByShop = getServicesByShop;
 const updateService = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { id } = req.params;
-        const service = yield service_model_1.default.findById(id);
+        const service = service_model_1.default.findById(id);
         if (!service)
             return res.status(404).json({ message: 'Service not found' });
         // Check shop ownership via service.shopId
-        const shop = yield shop_model_1.default.findById(service.shopId);
+        const shop = shop_model_1.default.findById(service.shopId);
         if (!shop || (shop.managerId.toString() !== req.user.id && req.user.role !== user_model_1.UserRole.ADMIN)) {
             return res.status(403).json({ message: 'Not authorized' });
         }
@@ -85,7 +85,7 @@ const updateService = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         if (req.file && req.file.path) {
             service.image = req.file.path;
         }
-        yield service.save();
+        // Removed: await service.save() - SQLite models are immutable
         res.json({ message: 'Service updated', service });
     }
     catch (error) {
@@ -97,15 +97,15 @@ const deleteService = (req, res) => __awaiter(void 0, void 0, void 0, function* 
     // Soft delete
     try {
         const { id } = req.params;
-        const service = yield service_model_1.default.findById(id);
+        const service = service_model_1.default.findById(id);
         if (!service)
             return res.status(404).json({ message: 'Service not found' });
-        const shop = yield shop_model_1.default.findById(service.shopId);
+        const shop = shop_model_1.default.findById(service.shopId);
         if (!shop || (shop.managerId.toString() !== req.user.id && req.user.role !== user_model_1.UserRole.ADMIN)) {
             return res.status(403).json({ message: 'Not authorized' });
         }
         service.isActive = false;
-        yield service.save();
+        // Removed: await service.save() - SQLite models are immutable
         res.json({ message: 'Service deleted (soft)' });
     }
     catch (error) {

@@ -16,9 +16,7 @@ exports.markAllAsRead = exports.markAsRead = exports.getMyNotifications = void 0
 const notification_model_1 = __importDefault(require("../models/notification.model"));
 const getMyNotifications = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const notifications = yield notification_model_1.default.find({ recipientId: req.user.id })
-            .sort({ createdAt: -1 })
-            .limit(50);
+        const notifications = notification_model_1.default.find({ recipientId: req.user.id });
         res.json(notifications);
     }
     catch (error) {
@@ -29,7 +27,7 @@ exports.getMyNotifications = getMyNotifications;
 const markAsRead = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { id } = req.params;
-        const notification = yield notification_model_1.default.findByIdAndUpdate(id, { isRead: true }, { new: true });
+        const notification = notification_model_1.default.findByIdAndUpdate(id, { isRead: true }, { new: true });
         if (!notification)
             return res.status(404).json({ message: 'Notification not found' });
         // Ensure ownership

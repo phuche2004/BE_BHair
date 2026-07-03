@@ -44,7 +44,7 @@ const searchShops = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
                 }
             };
         }
-        const shops = yield shop_model_1.default.find(query).limit(20);
+        const shops = shop_model_1.default.find(query);
         res.json(shops);
     }
     catch (error) {

@@ -1,47 +1,100 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-const mongoose_1 = __importStar(require("mongoose"));
-const ServiceSchema = new mongoose_1.Schema({
-    shopId: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Shop', required: true, index: true },
-    name: { type: String, required: true },
-    description: { type: String },
-    price: { type: Number, required: true, min: 0 },
-    managerExtraFee: { type: Number, default: 0, min: 0 },
-    duration: { type: Number, required: true, min: 1 }, // Ít nhất 1 phút
-    image: { type: String },
-    isActive: { type: Boolean, default: true },
-}, { timestamps: true });
-exports.default = mongoose_1.default.model('Service', ServiceSchema);
+const sqlite_config_1 = __importDefault(require("../config/sqlite.config"));
+const uuid_1 = require("uuid");
+class Service {
+    static findById(id) {
+        const stmt = sqlite_config_1.default.prepare('SELECT * FROM services WHERE id = ?');
+        const row = stmt.get(id);
+        return row ? this.mapRow(row) : undefined;
+    }
+    static find(filters = {}) {
+        let query = 'SELECT * FROM services WHERE 1=1';
+        const params = [];
+        if (filters.shopId) {
+            query += ' AND shop_id = ?';
+            params.push(filters.shopId);
+        }
+        if (filters.isActive !== undefined) {
+            query += ' AND is_active = ?';
+            params.push(filters.isActive ? 1 : 0);
+        }
+        const stmt = sqlite_config_1.default.prepare(query);
+        const rows = stmt.all(...params);
+        return rows.map(row => this.mapRow(row));
+    }
+    static create(serviceData) {
+        const id = (0, uuid_1.v4)();
+        const stmt = sqlite_config_1.default.prepare(`
+            INSERT INTO services (
+                id, shop_id, name, description, price, 
+                manager_extra_fee, duration, image, is_active
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `);
+        stmt.run(id, serviceData.shopId, serviceData.name, serviceData.description || null, serviceData.price, serviceData.managerExtraFee || 0, serviceData.duration, serviceData.image || null, serviceData.isActive !== false ? 1 : 0);
+        return this.findById(id);
+    }
+    static findByIdAndUpdate(id, updates) {
+        const fields = [];
+        const values = [];
+        const fieldMap = {
+            shopId: 'shop_id',
+            name: 'name',
+            description: 'description',
+            price: 'price',
+            managerExtraFee: 'manager_extra_fee',
+            duration: 'duration',
+            image: 'image',
+            isActive: 'is_active'
+        };
+        Object.keys(updates).forEach(key => {
+            const dbField = fieldMap[key];
+            if (!dbField || key === 'id' || key === 'createdAt' || key === 'updatedAt')
+                return;
+            fields.push(`${dbField} = ?`);
+            if (key === 'isActive') {
+                values.push(updates[key] ? 1 : 0);
+            }
+            else {
+                values.push(updates[key]);
+            }
+        });
+        if (fields.length === 0)
+            return this.findById(id);
+        values.push(id);
+        const stmt = sqlite_config_1.default.prepare(`
+            UPDATE services 
+            SET ${fields.join(', ')}
+            WHERE id = ?
+        `);
+        stmt.run(...values);
+        return this.findById(id);
+    }
+    static findByIdAndDelete(id) {
+        const stmt = sqlite_config_1.default.prepare('DELETE FROM services WHERE id = ?');
+        stmt.run(id);
+    }
+    // Delete many (for seeding/testing)
+    static deleteMany(filters = {}) {
+        sqlite_config_1.default.prepare('DELETE FROM services').run();
+    }
+    static mapRow(row) {
+        return {
+            id: row.id,
+            shopId: row.shop_id,
+            name: row.name,
+            description: row.description,
+            price: row.price,
+            managerExtraFee: row.manager_extra_fee,
+            duration: row.duration,
+            image: row.image,
+            isActive: row.is_active === 1,
+            createdAt: row.created_at,
+            updatedAt: row.updated_at
+        };
+    }
+}
+exports.default = Service;

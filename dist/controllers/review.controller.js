@@ -53,7 +53,7 @@ const createReview = (req, res) => __awaiter(void 0, void 0, void 0, function* (
     try {
         const { appointmentId, rating, comment } = req.body;
         // 1. Check Appointment
-        const appointment = yield appointment_model_1.default.findById(appointmentId);
+        const appointment = appointment_model_1.default.findById(appointmentId);
         if (!appointment)
             return res.status(404).json({ message: 'Appointment not found' });
         // 2. Verify Ownership & Status
@@ -64,12 +64,12 @@ const createReview = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             return res.status(400).json({ message: 'You can only review completed appointments' });
         }
         // 3. Check Duplicate (Schema unique index protects this too)
-        const existingReview = yield reviews_model_1.default.findOne({ appointmentId });
+        const existingReview = reviews_model_1.default.findOne({ appointmentId });
         if (existingReview) {
             return res.status(400).json({ message: 'You have already reviewed this appointment' });
         }
         // 4. Create Review
-        const newReview = new reviews_model_1.default({
+        const newReview = reviews_model_1.default.create({
             appointmentId,
             shopId: appointment.shopId,
             customerId: req.user.id,
@@ -77,7 +77,7 @@ const createReview = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             rating,
             comment
         });
-        yield newReview.save();
+        // Removed: await newReview.save() - SQLite models are immutable
         // 5. Update Shop Average Rating
         const shopId = appointment.shopId;
         const stats = yield reviews_model_1.default.aggregate([
@@ -91,7 +91,7 @@ const createReview = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             }
         ]);
         if (stats.length > 0) {
-            yield shop_model_1.default.findByIdAndUpdate(shopId, {
+            shop_model_1.default.findByIdAndUpdate(shopId, {
                 averageRating: Math.round(stats[0].averageRating * 10) / 10, // Round to 1 decimal
                 totalReviews: stats[0].totalReviews
             });
@@ -106,9 +106,7 @@ exports.createReview = createReview;
 const getShopReviews = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { shopId } = req.params;
-        const reviews = yield reviews_model_1.default.find({ shopId })
-            .populate('customerId', 'fullName avatar')
-            .sort({ createdAt: -1 });
+        const reviews = reviews_model_1.default.find({ shopId });
         res.json(reviews);
     }
     catch (error) {

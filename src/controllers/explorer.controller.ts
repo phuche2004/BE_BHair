@@ -29,8 +29,8 @@ export class ExplorerController {
         try {
             const { phoneNumber, password } = req.body;
             
-            const user = await User.findOne({ phoneNumber });
-            if (!user || user.password === undefined) {
+            const user = User.findByPhoneNumber(phoneNumber);
+            if (!user || !user.password) {
                 return res.render('login', { error: 'Số điện thoại hoặc mật khẩu không đúng' });
             }
 
@@ -44,7 +44,7 @@ export class ExplorerController {
             }
 
             const token = jwt.sign(
-                { id: user._id, role: user.role, fullName: user.fullName, shopId: user.shopId ?? null },
+                { id: user.id, role: user.role, fullName: user.fullName, shopId: user.shopId ?? null },
                 process.env.JWT_SECRET as string,
                 { expiresIn: '30d' }
             );

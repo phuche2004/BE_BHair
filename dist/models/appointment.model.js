@@ -1,40 +1,11 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AppointmentStatus = void 0;
-const mongoose_1 = __importStar(require("mongoose"));
+const sqlite_config_1 = __importDefault(require("../config/sqlite.config"));
+const uuid_1 = require("uuid");
 var AppointmentStatus;
 (function (AppointmentStatus) {
     AppointmentStatus["PENDING"] = "PENDING";
@@ -43,31 +14,142 @@ var AppointmentStatus;
     AppointmentStatus["CANCELLED"] = "CANCELLED";
     AppointmentStatus["NO_SHOW"] = "NO_SHOW";
 })(AppointmentStatus || (exports.AppointmentStatus = AppointmentStatus = {}));
-const AppointmentSchema = new mongoose_1.Schema({
-    // Thêm index shopId để Admin dễ dàng lọc đơn hàng theo chi nhánh
-    shopId: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Shop', required: true, index: true },
-    customerId: { type: mongoose_1.Schema.Types.ObjectId, ref: 'User', required: false, index: true },
-    customerName: { type: String, required: false },
-    customerPhone: { type: String, required: false },
-    barberId: { type: mongoose_1.Schema.Types.ObjectId, ref: 'User', required: false, index: true },
-    serviceIds: [{ type: mongoose_1.Schema.Types.ObjectId, ref: 'Service', required: true }],
-    bookingDate: { type: Date, required: true },
-    endTime: { type: Date, required: true },
-    totalPrice: { type: Number, required: true },
-    status: {
-        type: String,
-        enum: Object.values(AppointmentStatus),
-        default: AppointmentStatus.PENDING,
-        index: true
-    },
-    bookingCode: { type: String, unique: true, index: true },
-    note: { type: String },
-    serviceChanges: [{
-            action: { type: String, enum: ['ADDED', 'REMOVED'], required: true },
-            serviceId: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Service', required: true },
-            byName: { type: String, required: true },
-            byId: { type: mongoose_1.Schema.Types.ObjectId, ref: 'User', required: true },
-            date: { type: Date, default: Date.now }
-        }],
-}, { timestamps: true });
-exports.default = mongoose_1.default.model('Appointment', AppointmentSchema);
+class Appointment {
+    static findById(id) {
+        const stmt = sqlite_config_1.default.prepare('SELECT * FROM appointments WHERE id = ?');
+        const row = stmt.get(id);
+        return row ? this.mapRow(row) : undefined;
+    }
+    static findByBookingCode(code) {
+        const stmt = sqlite_config_1.default.prepare('SELECT * FROM appointments WHERE booking_code = ?');
+        const row = stmt.get(code);
+        return row ? this.mapRow(row) : undefined;
+    }
+    static find(filters = {}) {
+        let query = 'SELECT * FROM appointments WHERE 1=1';
+        const params = [];
+        if (filters.shopId) {
+            query += ' AND shop_id = ?';
+            params.push(filters.shopId);
+        }
+        if (filters.customerId) {
+            query += ' AND customer_id = ?';
+            params.push(filters.customerId);
+        }
+        if (filters.barberId) {
+            query += ' AND barber_id = ?';
+            params.push(filters.barberId);
+        }
+        if (filters.status) {
+            query += ' AND status = ?';
+            params.push(filters.status);
+        }
+        if (filters.bookingDate) {
+            query += ' AND DATE(booking_date) = DATE(?)';
+            params.push(filters.bookingDate);
+        }
+        query += ' ORDER BY booking_date DESC';
+        const stmt = sqlite_config_1.default.prepare(query);
+        const rows = stmt.all(...params);
+        return rows.map(row => this.mapRow(row));
+    }
+    static create(appointmentData) {
+        const id = (0, uuid_1.v4)();
+        const stmt = sqlite_config_1.default.prepare(`
+            INSERT INTO appointments (
+                id, shop_id, customer_id, customer_name, customer_phone,
+                barber_id, service_ids, booking_date, end_time, total_price,
+                status, booking_code, note, service_changes
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `);
+        const bookingDate = appointmentData.bookingDate instanceof Date
+            ? appointmentData.bookingDate.toISOString()
+            : appointmentData.bookingDate;
+        const endTime = appointmentData.endTime instanceof Date
+            ? appointmentData.endTime.toISOString()
+            : appointmentData.endTime;
+        stmt.run(id, appointmentData.shopId, appointmentData.customerId || null, appointmentData.customerName || null, appointmentData.customerPhone || null, appointmentData.barberId || null, JSON.stringify(appointmentData.serviceIds), bookingDate, endTime, appointmentData.totalPrice, appointmentData.status || AppointmentStatus.PENDING, appointmentData.bookingCode, appointmentData.note || null, appointmentData.serviceChanges ? JSON.stringify(appointmentData.serviceChanges) : null);
+        return this.findById(id);
+    }
+    static findByIdAndUpdate(id, updates) {
+        const fields = [];
+        const values = [];
+        const fieldMap = {
+            shopId: 'shop_id',
+            customerId: 'customer_id',
+            customerName: 'customer_name',
+            customerPhone: 'customer_phone',
+            barberId: 'barber_id',
+            serviceIds: 'service_ids',
+            bookingDate: 'booking_date',
+            endTime: 'end_time',
+            totalPrice: 'total_price',
+            status: 'status',
+            bookingCode: 'booking_code',
+            note: 'note',
+            serviceChanges: 'service_changes'
+        };
+        Object.keys(updates).forEach(key => {
+            const dbField = fieldMap[key];
+            if (!dbField || key === 'id' || key === 'createdAt' || key === 'updatedAt')
+                return;
+            fields.push(`${dbField} = ?`);
+            if (['serviceIds', 'serviceChanges'].includes(key)) {
+                values.push(JSON.stringify(updates[key]));
+            }
+            else {
+                values.push(updates[key]);
+            }
+        });
+        if (fields.length === 0)
+            return this.findById(id);
+        values.push(id);
+        const stmt = sqlite_config_1.default.prepare(`
+            UPDATE appointments 
+            SET ${fields.join(', ')}
+            WHERE id = ?
+        `);
+        stmt.run(...values);
+        return this.findById(id);
+    }
+    static countDocuments(filters = {}) {
+        let query = 'SELECT COUNT(*) as count FROM appointments WHERE 1=1';
+        const params = [];
+        if (filters.status) {
+            query += ' AND status = ?';
+            params.push(filters.status);
+        }
+        if (filters.shopId) {
+            query += ' AND shop_id = ?';
+            params.push(filters.shopId);
+        }
+        const stmt = sqlite_config_1.default.prepare(query);
+        const result = stmt.get(...params);
+        return result.count;
+    }
+    // Delete many (for seeding/testing)
+    static deleteMany(filters = {}) {
+        sqlite_config_1.default.prepare('DELETE FROM appointments').run();
+    }
+    static mapRow(row) {
+        return {
+            id: row.id,
+            shopId: row.shop_id,
+            customerId: row.customer_id,
+            customerName: row.customer_name,
+            customerPhone: row.customer_phone,
+            barberId: row.barber_id,
+            serviceIds: row.service_ids ? JSON.parse(row.service_ids) : [],
+            bookingDate: row.booking_date,
+            endTime: row.end_time,
+            totalPrice: row.total_price,
+            status: row.status,
+            bookingCode: row.booking_code,
+            note: row.note,
+            serviceChanges: row.service_changes ? JSON.parse(row.service_changes) : [],
+            createdAt: row.created_at,
+            updatedAt: row.updated_at
+        };
+    }
+}
+exports.default = Appointment;
