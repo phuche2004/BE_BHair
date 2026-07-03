@@ -83,7 +83,7 @@ app.post('/api/deploy', (req, res) => {
     }
     try {
         console.log('📥 Received deploy webhook. Pulling code from production branch...');
-        (0, child_process_1.execSync)('git fetch origin production && git checkout production && git reset --hard origin/production', { cwd: process.cwd() });
+        (0, child_process_1.execSync)('git fetch origin production && git reset --hard origin/production', { cwd: process.cwd() });
         console.log('✅ Code updated. Restarting PM2...');
         (0, child_process_1.execSync)('pm2 restart BE_BHair_SQLite', { cwd: process.cwd() });
         res.json({ status: 'deployed', message: 'Successfully updated from production branch' });
