@@ -442,35 +442,65 @@ curl http://localhost:3000/api/health
 ## Checklist
 
 ### Trước khi bắt đầu
-- [ ] Backup MongoDB data (đã có)
-- [ ] SQLite database đã migrate (✅ done)
-- [ ] SSH access ổn định
+- [x] Backup MongoDB data (đã có)
+- [x] SQLite database đã migrate (✅ done - 33 users, 3 shops, 5 services, 57 appointments)
+- [x] SSH access ổn định
 
 ### Phase 1
-- [ ] Copy project sang BE_BHair_SQLite
-- [ ] Copy bhair.db
-- [ ] Update .env
+- [x] Copy project sang BE_BHair_SQLite
+- [x] Copy bhair.db
+- [x] Update .env (DATABASE_TYPE=sqlite, DATABASE_PATH=/root/BE_BHair_SQLite/bhair.db)
 
 ### Phase 2
-- [ ] Tạo sqlite.config.js
-- [ ] Update database.js
-- [ ] Update tất cả models
-- [ ] Update controllers nếu cần
+- [x] Tạo sqlite.config.js
+- [x] Update database.js
+- [x] Update tất cả models
+- [x] Update controllers nếu cần
 
 ### Phase 3
-- [ ] Test chạy server
-- [ ] Test API endpoints
-- [ ] Fix lỗi (nếu có)
+- [x] Test chạy server
+- [x] Test API endpoints (http://127.0.0.1:3000/ OK)
+- [x] Fix lỗi (nếu có)
 
 ### Phase 4
-- [ ] Stop BE cũ
-- [ ] Start BE mới
-- [ ] Test qua Cloudflare
-- [ ] Monitor 24h
+- [x] Stop BE cũ (pm2 delete BE_BHair)
+- [x] Start BE mới (pm2 start BE_BHair_SQLite)
+- [x] Test qua Cloudflare (https://api.bhair.site/ OK - shops & slots endpoints verified)
+- [ ] Monitor 24h (đang chạy)
 
 ### Phase 5
-- [ ] Backup BE cũ
+- [x] Backup BE cũ (/root/BE_BHair retained)
 - [ ] Xóa folder cũ (sau 1-2 ngày)
+
+---
+
+## ✅ CUTOVER COMPLETED (2026-07-03)
+
+**Status:** Production running on SQLite
+
+**Current Setup:**
+- Backend: `/root/BE_BHair_SQLite`
+- Database: SQLite (`bhair.db` - 178 total records)
+- PM2 Process: `BE_BHair_SQLite`
+- Port: 3000
+- Domain: https://api.bhair.site ✅ LIVE
+- Backup: `/root/BE_BHair` (MongoDB version - inactive)
+
+**Verified Endpoints:**
+- ✅ Health check: https://api.bhair.site/
+- ✅ Shops API: Returning 3 shops
+- ✅ Slots API: Working correctly
+
+**Security Fix:**
+- Removed `git reset origin/production` from webhook `/api/deploy` to prevent CI/CD overwriting SQLite runtime with MongoDB code
+
+**Rollback Command (if needed):**
+```bash
+pm2 delete BE_BHair_SQLite
+cd /root/BE_BHair
+pm2 start dist/server.js --name BE_BHair
+pm2 save
+```
 
 ---
 
