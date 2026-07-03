@@ -93,7 +93,7 @@ export default function HomePage() {
               const rating = shop.rating ?? shop.averageRating;
 
               return (
-                <div key={shop._id} className="card" onClick={() => navigate(`/shop/${shop._id}`)} style={{ cursor: 'pointer' }}>
+                <div key={shop.id} className="card" onClick={() => navigate(`/shop/${shop.id}`)} style={{ cursor: 'pointer' }}>
                   <div className="shop-card-img-wrap">
                     <img src={image} alt={shop.name} className="shop-card-img" />
                     {rating && (

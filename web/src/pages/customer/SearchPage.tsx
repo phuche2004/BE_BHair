@@ -364,9 +364,9 @@ export default function SearchPage() {
               </p>
               {visibleShops.map((shop) => (
                 <ShopListCard
-                  key={shop._id}
+                  key={shop.id}
                   shop={shop}
-                  onClick={() => navigate(`/shop/${shop._id}`)}
+                  onClick={() => navigate(`/shop/${shop.id}`)}
                 />
               ))}
               <div style={{ height: 24 }} />

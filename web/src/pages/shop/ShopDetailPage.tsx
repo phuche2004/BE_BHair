@@ -229,7 +229,7 @@ export default function ShopDetailPage() {
 
       {/* Floating Book Button */}
       <div style={{ position: 'sticky', bottom: 0, padding: '16px 20px', background: 'rgba(15, 15, 15, 0.85)', backdropFilter: 'blur(16px)', borderTop: '1px solid rgba(255,255,255,0.05)', zIndex: 100 }}>
-        <button className="btn btn-primary btn-full btn-lg" onClick={() => navigate(`/booking/${shop._id}`)}>
+        <button className="btn btn-primary btn-full btn-lg" onClick={() => navigate(`/booking/${shop.id}`)}>
           {t('shop.bookNow')}
         </button>
       </div>

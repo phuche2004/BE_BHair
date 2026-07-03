@@ -12,7 +12,8 @@ export interface User {
 }
 
 export interface Shop {
-  _id: string;
+  id: string; // API returns 'id'
+  _id?: string; // Backward compatibility
   name: string;
   address: string;
   phone: string;

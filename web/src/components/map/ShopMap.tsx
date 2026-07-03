@@ -122,9 +122,9 @@ function ShopMapInner({ shops, userLat, userLong, highlightedId, onRequestLocati
 
         return (
           <Marker
-            key={shop._id}
+            key={shop.id}
             position={{ lat, lng: lon }}
-            icon={createMarkerIcon(shop._id === highlightedId)}
+            icon={createMarkerIcon(shop.id === highlightedId)}
             onClick={() => setSelectedShop(shop)}
           />
         );
@@ -150,7 +150,7 @@ function ShopMapInner({ shops, userLat, userLong, highlightedId, onRequestLocati
             <div className="map-popup-actions" style={{ display: 'flex', gap: 8, marginTop: 8 }}>
               <button
                 className="btn btn-primary btn-sm"
-                onClick={() => navigate(`/shop/${selectedShop._id}`)}
+                onClick={() => navigate(`/shop/${selectedShop.id}`)}
                 style={{ padding: '4px 8px', fontSize: 12 }}
               >
                 Chi tiết
