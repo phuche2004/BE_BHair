@@ -8,12 +8,19 @@ Tài liệu này ghi chú lại toàn bộ cấu trúc hạ tầng hiện tại 
 - **Thiết bị:** Điện thoại Redmi Note 11 4G (Đã Root bằng Magisk).
 - **Môi trường Server:** Ubuntu 22.04 LTS (Chạy qua cơ chế Chroot bên trong Termux).
 - **Backend:** Node.js (TypeScript) + Express. Cài đặt Node.js v20 qua NodeSource chuẩn Linux.
+- **Frontend:** React + TypeScript + Vite. Build tĩnh (SPA) được serve trực tiếp từ BE tại `/web/dist`.
 - **Database:** MongoDB Atlas (Cloud).
 - **Lưu trữ Media:** Local Storage (Trỏ trực tiếp ra bộ nhớ trong của điện thoại `/sdcard/Download/Phuc_Data`).
 - **Lưu trữ Mạng (NAS):** Samba Server (SMB) cấu hình qua Ubuntu, chia sẻ không cần pass trên mạng nội bộ LAN.(root,1)
 - **Quản lý tiến trình (Process Manager):** PM2 (giữ server chạy ngầm 24/7).
 - **Điều khiển từ xa (Remote):** SSH Server (OpenSSH) chạy trên cổng `2222`. Kết nối không cần mật khẩu (SSH Key).
-- **Mạng & Domain:** Cloudflare Tunnel (Cloudflared). Chạy ở chế độ **Locally Managed** qua HTTP/2. Expose cổng localhost (3000) ra tên miền quốc tế `https://api.bhair.site`.
+- **Mạng & Domain:** 
+  - **Cloudflare Tunnel (Cloudflared):** Chạy ở chế độ **Locally Managed** qua HTTP/2. Expose cổng localhost (3000) ra internet.
+  - **Domains (đã config qua Cloudflare Dashboard):** 
+    - **`https://bhair.site`** → FE (React SPA - **URL chính cho người dùng**)
+    - **`https://www.bhair.site`** → FE (React SPA - có www)
+    - `https://api.bhair.site` → FE hoặc API (legacy URL, vẫn hoạt động)
+  - Vì BE serve cả FE và API tại cùng cổng 3000, tất cả domains đều trỏ về cùng server qua **CNAME Flattening**.
 - **Tối ưu Hệ điều hành:** Sử dụng **Hail** (Root) để đóng băng (Freeze) toàn bộ các app chạy ngầm không cần thiết (Facebook, Google, Bloatware Xiaomi) để giải phóng RAM tối đa.
 
 ---
@@ -28,12 +35,17 @@ Hệ thống sử dụng cơ chế **"Build Artifacts & Trigger Webhook"** phân
 2. **GitHub Actions (Build & Push Artifacts):**
    - File cấu hình: `.github/workflows/deploy.yml`
    - Hiện workflow chỉ trigger khi có code mới đẩy lên nhánh `fullstack`; nhánh `main` không kích hoạt CI/CD.
-   - Action sẽ dọn dẹp sạch sẽ rác (dùng `git rm -rf --ignore-unmatch src/ mobile/ web/...`) nhưng vẫn giữ lại `src/views/` cho EJS.
+   - Action sẽ:
+     - Build BE (TypeScript → JavaScript tại `dist/`)
+     - Build FE (React + Vite → Static files tại `web/dist/`)
+     - Dọn dẹp sạch sẽ rác (dùng `git rm -rf --ignore-unmatch src/ mobile/ web/...`) nhưng vẫn giữ lại `src/views/` cho EJS và `web/dist/` cho FE.
    - Toàn bộ cục code (Artifact) sạch sẽ này được ép push (Force Push) sang nhánh `production`.
+   - **Quan trọng:** FE config dùng relative path `/api/v1` thay vì `api.bhair.site` để giảm latency (không qua Cloudflare).
 
 3. **Trigger Android Server (Gọi điện thoại dậy):**
    - Sau khi đẩy code sang nhánh `production`, GitHub Actions bắn một tín hiệu Webhook xuống địa chỉ IP/Domain của con điện thoại.
-   - Điện thoại từng nhận lệnh, gõ `git pull origin production` để lấy mã máy về và restart PM2.
+   - Điện thoại nhận lệnh, gõ `git pull origin production` để lấy mã máy về và restart PM2.
+   - BE sẽ serve FE tĩnh từ `web/dist/` và xử lý client-side routing (React Router).
    - Trạng thái sau cutover SQLite: webhook trên backend SQLite đang được bỏ qua để tránh CI/CD cũ ghi đè runtime SQLite local.
 
 ---
@@ -213,19 +225,37 @@ cd /root/BE_BHair
 ```
 
 ### Quản lý PM2 (Phải ở bên trong Ubuntu)
-- `pm2 ls`: Xem danh sách các app đang chạy (`BE_BHair` và `tunnel`).
+- `pm2 ls`: Xem danh sách các app đang chạy (`BE_BHair_SQLite` và `tunnel`).
 - `pm2 logs`: Xem nhật ký (Console log) của Server.
-- pm2 start dist/server.js --name "BE_BHair_SQLite" -i 8
-- pm2 delete  BE_BHair_SQLite
-- `pm2 restart BE_BHair_SQLite`: Khởi động lại Server Node.js.
+- `pm2 start dist/server.js --name "BE_BHair_SQLite" -i 8`: Chạy BE Cluster mode (8 workers).
+- `pm2 delete BE_BHair_SQLite`: Xoá process khỏi danh sách.
+- `pm2 restart BE_BHair_SQLite`: Khởi động lại Server (tự động phục vụ cả BE API và FE static).
 - `pm2 delete all`: Xoá sạch danh sách (Dùng khi bị lỗi ma nhập EADDRINUSE).
 - `pm2 save`: **Quan trọng!** Lưu lại cấu hình để lần sau tự bật.
 
+**Lưu ý:** BE đã được config để:
+- Serve API tại `/api/v1/*` (JSON responses)
+- Serve FE tại `/` (React SPA từ `web/dist/`)
+- Handle client-side routing (mọi route không phải `/api` đều trả về `index.html`)
+
 ### Cloudflare Tunnel (Locally Managed)
 - Login: `cloudflared tunnel login`
-- Trỏ DNS: `cloudflared tunnel route dns -f bhair-ubuntu api.bhair.site`
+- Tạo tunnel: `cloudflared tunnel create bhair-ubuntu`
+- Trỏ DNS: DNS được cấu hình trực tiếp trên Cloudflare Dashboard (không dùng CLI vì có thể conflict với records hiện tại):
+  ```
+  bhair.site     → CNAME → bhair-ubuntu.cfargotunnel.com (Proxied)
+  www.bhair.site → CNAME → bhair-ubuntu.cfargotunnel.com (Proxied)
+  api.bhair.site → Tunnel → bhair-ubuntu (Proxied)
+  ssh.bhair.site → CNAME → bhair-ubuntu.cfargotunnel.com (Proxied)
+  ```
 - Chạy Tunnel bằng PM2: 
   `pm2 start cloudflared --name "tunnel" -- tunnel --protocol http2 --url http://localhost:3000 run bhair-ubuntu`
+
+**Lưu ý:** Vì BE serve cả FE và API tại cùng cổng 3000, nên:
+- `https://bhair.site` → FE (React SPA - **URL chính cho người dùng**)
+- `https://www.bhair.site` → FE (React SPA - có www)
+- `https://api.bhair.site` → FE hoặc API (legacy URL, vẫn hoạt động)
+- `https://bhair.site/api/v1/...` → API endpoints (FE gọi qua relative path)
 
 ### Tự động khởi động (Termux:Boot)
 Điện thoại sẽ tự động kích hoạt Server khi sập nguồn mở lại thông qua App **Termux:Boot**.

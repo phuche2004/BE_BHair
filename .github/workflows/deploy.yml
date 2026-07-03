@@ -32,6 +32,7 @@ jobs:
         run: |
           cd web
           npm install
+          # Đảm bảo FE dùng relative path /api/v1 thay vì api.bhair.site
           npm run build
           cd ..
 
