@@ -16,35 +16,15 @@ exports.searchShops = void 0;
 const shop_model_1 = __importDefault(require("../models/shop.model"));
 const searchShops = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { keyword, lat, long, radius = 5 } = req.query; // radius in km
-        const query = { isActive: true };
-        // 1. Text Search (Name or Address)
+        const { keyword, lat, long, radius = 5 } = req.query;
+        let shops = lat && long
+            ? shop_model_1.default.findNearby(parseFloat(lat), parseFloat(long), parseFloat(radius))
+            : shop_model_1.default.findAll({ isActive: true });
         if (keyword) {
-            // Using MongoDB Text Search (requires text index)
-            // query.$text = { $search: keyword as string };
-            // OR regex for partial match (simpler but slower on large data)
-            // Let's use Regex for better UX with partial words (e.g. "Shi" finds "Shine")
-            query.$or = [
-                { name: { $regex: keyword, $options: 'i' } },
-                { address: { $regex: keyword, $options: 'i' } }
-            ];
+            const kw = keyword.toLowerCase();
+            shops = shops.filter((shop) => shop.name.toLowerCase().includes(kw) ||
+                shop.address.toLowerCase().includes(kw));
         }
-        // 2. Geospatial Search (Near Me)
-        if (lat && long) {
-            const latitude = parseFloat(lat);
-            const longitude = parseFloat(long);
-            const distanceInMeters = parseFloat(radius) * 1000;
-            query.location = {
-                $near: {
-                    $geometry: {
-                        type: 'Point',
-                        coordinates: [longitude, latitude]
-                    },
-                    $maxDistance: distanceInMeters
-                }
-            };
-        }
-        const shops = shop_model_1.default.find(query);
         res.json(shops);
     }
     catch (error) {

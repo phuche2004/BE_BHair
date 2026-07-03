@@ -53,10 +53,8 @@ export const createShop = async (req: Request, res: Response) => {
             address,
             phone,
             gender, // MALE/FEMALE/BOTH
-            location: {
-                type: 'Point',
-                coordinates: parsedCoordinates
-            },
+            latitude: parsedCoordinates[1],
+            longitude: parsedCoordinates[0],
             images1,
             images2,
             images3,
@@ -64,9 +62,7 @@ export const createShop = async (req: Request, res: Response) => {
             managerId: req.user.id
         });
 
-        // Removed: await newShop.save() - SQLite models are immutable
-
-        // 4. Update User with shopId
+        // Update User with shopId
         User.findByIdAndUpdate(req.user.id, { shopId: newShop.id });
 
         res.status(201).json({ message: 'Shop created successfully', shop: newShop });
@@ -127,7 +123,10 @@ export const updateShop = async (req: Request, res: Response) => {
             try {
                 const parsedCoordinates = typeof coordinates === 'string' ? JSON.parse(coordinates) : coordinates;
                 if (Array.isArray(parsedCoordinates) && parsedCoordinates.length === 2) {
-                    shop.latitude = latitude; shop.longitude = longitude;
+                    Shop.findByIdAndUpdate(shopId as string, { 
+                        latitude: parsedCoordinates[1], 
+                        longitude: parsedCoordinates[0] 
+                    });
                 }
             } catch (e) {
                 // Ignore parsing errors
@@ -184,7 +183,8 @@ export const updateShop = async (req: Request, res: Response) => {
 
         if (newImages1.length > 0) {
             if (shop.images1 && shop.images1.length > 0) {
-                for (const url of shop.images1) {
+                const images1Array = Array.isArray(shop.images1) ? shop.images1 : JSON.parse(shop.images1);
+                for (const url of images1Array) {
                     const mediaInfo = getCloudinaryPublicIdAndType(url);
                     if (mediaInfo) {
                         try {
@@ -196,7 +196,7 @@ export const updateShop = async (req: Request, res: Response) => {
                     }
                 }
             }
-            shop.images1 = newImages1;
+            Shop.findByIdAndUpdate(shopId as string, { images1: newImages1 as any });
         }
         if (newImages2.length > 0) {
             const currentImages2 = Array.isArray(shop.images2) ? shop.images2 : (shop.images2 ? JSON.parse(shop.images2) : []);
@@ -211,9 +211,22 @@ export const updateShop = async (req: Request, res: Response) => {
             Shop.findByIdAndUpdate(shopId as string, { videos: [...currentVideos, ...newVideos] as any });
         }
 
+        Shop.findByIdAndUpdate(shopId as string, {
+            name: shop.name,
+            address: shop.address,
+            phone: shop.phone,
+            gender: shop.gender,
+            isActive: shop.isActive,
+            openTime: shop.openTime,
+            closeTime: shop.closeTime,
+            breakStart: shop.breakStart,
+            breakEnd: shop.breakEnd,
+            slotDuration: shop.slotDuration
+        });
+
         // Refresh shop data after updates
-        shop = Shop.findById(shopId as string)!;
-        res.json({ message: 'Shop updated', shop });
+        const updatedShop = Shop.findById(shopId as string)!;
+        res.json({ message: 'Shop updated', shop: updatedShop });
 
     } catch (error: any) {
         res.status(500).json({ message: 'Server error', error: error.message });
@@ -245,10 +258,7 @@ export const getShopHistory = async (req: Request, res: Response) => {
             };
         }
 
-        const logs = HistoryLog.find(query)
-            
-            .skip(skip)
-            .limit(limit);
+        const logs = HistoryLog.find(query, { skip, limit });
 
         res.json(logs);
     } catch (error: any) {

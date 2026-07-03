@@ -29,6 +29,10 @@ class Shop {
             query += ' AND is_paid = ?';
             params.push(filters.isPaid ? 1 : 0);
         }
+        if (filters.managerId) {
+            query += ' AND manager_id = ?';
+            params.push(filters.managerId);
+        }
         const stmt = sqlite_config_1.default.prepare(query);
         const rows = stmt.all(...params);
         return rows.map(row => this.mapRow(row));

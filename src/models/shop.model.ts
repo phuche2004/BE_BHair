@@ -42,7 +42,7 @@ class Shop {
         return row ? this.mapRow(row) : undefined;
     }
 
-    static findAll(filters: { isActive?: boolean; isPaid?: boolean } = {}): IShop[] {
+    static findAll(filters: { isActive?: boolean; isPaid?: boolean; managerId?: string } = {}): IShop[] {
         let query = 'SELECT * FROM shops WHERE 1=1';
         const params: any[] = [];
         
@@ -54,6 +54,11 @@ class Shop {
         if (filters.isPaid !== undefined) {
             query += ' AND is_paid = ?';
             params.push(filters.isPaid ? 1 : 0);
+        }
+
+        if (filters.managerId) {
+            query += ' AND manager_id = ?';
+            params.push(filters.managerId);
         }
         
         const stmt = db.prepare(query);

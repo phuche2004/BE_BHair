@@ -16,14 +16,14 @@ export interface IAppointment {
     customerName?: string | null;
     customerPhone?: string | null;
     barberId?: string | null;
-    serviceIds: string; // JSON string
+    serviceIds: string[];
     bookingDate: string;
     endTime: string;
     totalPrice: number;
     status: AppointmentStatus;
     bookingCode: string;
     note?: string | null;
-    serviceChanges?: string | null; // JSON string
+    serviceChanges?: any[];
     createdAt?: string;
     updatedAt?: string;
 }
@@ -43,13 +43,50 @@ class Appointment {
 
     // FindOne with flexible filters (for overlap checking)
     static findOne(filters: { 
+        customerId?: string;
         barberId?: string; 
         bookingDate?: string;
         status?: AppointmentStatus | { $in: AppointmentStatus[] };
         endTime?: string;
+        $or?: Array<{ barberId?: string; bookingDate?: string; status?: { $in: AppointmentStatus[] } }>;
     } = {}): IAppointment | undefined {
         let query = 'SELECT * FROM appointments WHERE 1=1';
         const params: any[] = [];
+        
+        // Handle $or operator
+        if (filters.$or) {
+            const orConditions: string[] = [];
+            for (const orFilter of filters.$or) {
+                const orParts: string[] = [];
+                const orParams: any[] = [];
+                
+                if (orFilter.barberId) {
+                    orParts.push('barber_id = ?');
+                    orParams.push(orFilter.barberId);
+                }
+                if (orFilter.bookingDate) {
+                    orParts.push('booking_date = ?');
+                    orParams.push(orFilter.bookingDate);
+                }
+                if (orFilter.status && typeof orFilter.status === 'object' && '$in' in orFilter.status) {
+                    orParts.push('status IN (' + orFilter.status.$in.map(() => '?').join(',') + ')');
+                    orParams.push(...orFilter.status.$in);
+                }
+                
+                if (orParts.length > 0) {
+                    orConditions.push('(' + orParts.join(' AND ') + ')');
+                    params.push(...orParams);
+                }
+            }
+            if (orConditions.length > 0) {
+                query += ' AND (' + orConditions.join(' OR ') + ')';
+            }
+        }
+        
+        if (filters.customerId) {
+            query += ' AND customer_id = ?';
+            params.push(filters.customerId);
+        }
         
         if (filters.barberId) {
             query += ' AND barber_id = ?';
@@ -88,8 +125,8 @@ class Appointment {
         shopId?: string; 
         customerId?: string; 
         barberId?: string; 
-        status?: AppointmentStatus;
-        bookingDate?: string;
+        status?: AppointmentStatus | { $in: AppointmentStatus[] };
+        bookingDate?: string | { $gte?: Date | string; $lte?: Date | string };
     } = {}): IAppointment[] {
         let query = 'SELECT * FROM appointments WHERE 1=1';
         const params: any[] = [];
@@ -110,13 +147,38 @@ class Appointment {
         }
         
         if (filters.status) {
-            query += ' AND status = ?';
-            params.push(filters.status);
+            if (typeof filters.status === 'object' && '$in' in filters.status) {
+                const statuses = filters.status.$in;
+                query += ' AND status IN (' + statuses.map(() => '?').join(',') + ')';
+                params.push(...statuses);
+            } else {
+                query += ' AND status = ?';
+                params.push(filters.status);
+            }
         }
         
         if (filters.bookingDate) {
-            query += ' AND DATE(booking_date) = DATE(?)';
-            params.push(filters.bookingDate);
+            if (typeof filters.bookingDate === 'object') {
+                if (filters.bookingDate.$gte) {
+                    query += ' AND booking_date >= ?';
+                    params.push(
+                        filters.bookingDate.$gte instanceof Date
+                            ? filters.bookingDate.$gte.toISOString()
+                            : filters.bookingDate.$gte
+                    );
+                }
+                if (filters.bookingDate.$lte) {
+                    query += ' AND booking_date <= ?';
+                    params.push(
+                        filters.bookingDate.$lte instanceof Date
+                            ? filters.bookingDate.$lte.toISOString()
+                            : filters.bookingDate.$lte
+                    );
+                }
+            } else {
+                query += ' AND DATE(booking_date) = DATE(?)';
+                params.push(filters.bookingDate);
+            }
         }
         
         query += ' ORDER BY booking_date DESC';
@@ -225,13 +287,19 @@ class Appointment {
         return this.findById(id);
     }
 
-    static countDocuments(filters: { status?: AppointmentStatus; shopId?: string } = {}): number {
+    static countDocuments(filters: { status?: AppointmentStatus | { $in: AppointmentStatus[] }; shopId?: string } = {}): number {
         let query = 'SELECT COUNT(*) as count FROM appointments WHERE 1=1';
         const params: any[] = [];
         
         if (filters.status) {
-            query += ' AND status = ?';
-            params.push(filters.status);
+            if (typeof filters.status === 'object' && '$in' in filters.status) {
+                const statuses = filters.status.$in;
+                query += ' AND status IN (' + statuses.map(() => '?').join(',') + ')';
+                params.push(...statuses);
+            } else {
+                query += ' AND status = ?';
+                params.push(filters.status);
+            }
         }
         
         if (filters.shopId) {

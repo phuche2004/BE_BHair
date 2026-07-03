@@ -68,7 +68,7 @@ const getAvailableSlots = (req, res) => __awaiter(void 0, void 0, void 0, functi
         else {
             // Determine shop capacity by counting active staff/managers
             const staffCount = user_model_1.default.countDocuments({
-                shopId,
+                shopId: shopId,
                 role: { $in: [user_model_1.UserRole.MANAGER, user_model_1.UserRole.STAFF] },
                 isActive: true
             });

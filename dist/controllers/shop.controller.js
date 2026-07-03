@@ -95,18 +95,15 @@ const createShop = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             address,
             phone,
             gender, // MALE/FEMALE/BOTH
-            location: {
-                type: 'Point',
-                coordinates: parsedCoordinates
-            },
+            latitude: parsedCoordinates[1],
+            longitude: parsedCoordinates[0],
             images1,
             images2,
             images3,
             videos,
             managerId: req.user.id
         });
-        // Removed: await newShop.save() - SQLite models are immutable
-        // 4. Update User with shopId
+        // Update User with shopId
         user_model_1.default.findByIdAndUpdate(req.user.id, { shopId: newShop.id });
         res.status(201).json({ message: 'Shop created successfully', shop: newShop });
     }
@@ -176,8 +173,10 @@ const updateShop = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             try {
                 const parsedCoordinates = typeof coordinates === 'string' ? JSON.parse(coordinates) : coordinates;
                 if (Array.isArray(parsedCoordinates) && parsedCoordinates.length === 2) {
-                    shop.latitude = latitude;
-                    shop.longitude = longitude;
+                    shop_model_1.default.findByIdAndUpdate(shopId, {
+                        latitude: parsedCoordinates[1],
+                        longitude: parsedCoordinates[0]
+                    });
                 }
             }
             catch (e) {
@@ -232,7 +231,8 @@ const updateShop = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
         const newVideos = getPaths('videos');
         if (newImages1.length > 0) {
             if (shop.images1 && shop.images1.length > 0) {
-                for (const url of shop.images1) {
+                const images1Array = Array.isArray(shop.images1) ? shop.images1 : JSON.parse(shop.images1);
+                for (const url of images1Array) {
                     const mediaInfo = getCloudinaryPublicIdAndType(url);
                     if (mediaInfo) {
                         try {
@@ -245,7 +245,7 @@ const updateShop = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
                     }
                 }
             }
-            shop.images1 = newImages1;
+            shop_model_1.default.findByIdAndUpdate(shopId, { images1: newImages1 });
         }
         if (newImages2.length > 0) {
             const currentImages2 = Array.isArray(shop.images2) ? shop.images2 : (shop.images2 ? JSON.parse(shop.images2) : []);
@@ -259,9 +259,21 @@ const updateShop = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             const currentVideos = Array.isArray(shop.videos) ? shop.videos : (shop.videos ? JSON.parse(shop.videos) : []);
             shop_model_1.default.findByIdAndUpdate(shopId, { videos: [...currentVideos, ...newVideos] });
         }
+        shop_model_1.default.findByIdAndUpdate(shopId, {
+            name: shop.name,
+            address: shop.address,
+            phone: shop.phone,
+            gender: shop.gender,
+            isActive: shop.isActive,
+            openTime: shop.openTime,
+            closeTime: shop.closeTime,
+            breakStart: shop.breakStart,
+            breakEnd: shop.breakEnd,
+            slotDuration: shop.slotDuration
+        });
         // Refresh shop data after updates
-        shop = shop_model_1.default.findById(shopId);
-        res.json({ message: 'Shop updated', shop });
+        const updatedShop = shop_model_1.default.findById(shopId);
+        res.json({ message: 'Shop updated', shop: updatedShop });
     }
     catch (error) {
         res.status(500).json({ message: 'Server error', error: error.message });
@@ -288,9 +300,7 @@ const getShopHistory = (req, res) => __awaiter(void 0, void 0, void 0, function*
                 $lte: endDate
             };
         }
-        const logs = HistoryLog.find(query)
-            .skip(skip)
-            .limit(limit);
+        const logs = HistoryLog.find(query, { skip, limit });
         res.json(logs);
     }
     catch (error) {

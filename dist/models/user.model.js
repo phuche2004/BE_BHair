@@ -176,8 +176,15 @@ class User {
         let query = 'SELECT COUNT(*) as count FROM users WHERE 1=1';
         const params = [];
         if (filters.role) {
-            query += ' AND role = ?';
-            params.push(filters.role);
+            if (typeof filters.role === 'object' && '$in' in filters.role) {
+                const roles = filters.role.$in;
+                query += ' AND role IN (' + roles.map(() => '?').join(',') + ')';
+                params.push(...roles);
+            }
+            else {
+                query += ' AND role = ?';
+                params.push(filters.role);
+            }
         }
         if (filters.shopId) {
             query += ' AND shop_id = ?';

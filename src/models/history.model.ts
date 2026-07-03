@@ -24,7 +24,15 @@ class HistoryLog {
         return row ? this.mapRow(row) : undefined;
     }
 
-    static find(filters: { shopId?: string; actorId?: string; action?: HistoryAction } = {}): IHistoryLog[] {
+    static find(
+        filters: {
+            shopId?: string;
+            actorId?: string;
+            action?: HistoryAction;
+            createdAt?: { $gte?: Date | string; $lte?: Date | string };
+        } = {},
+        options: { skip?: number; limit?: number } = {}
+    ): IHistoryLog[] {
         let query = 'SELECT * FROM history_logs WHERE 1=1';
         const params: any[] = [];
         
@@ -42,8 +50,36 @@ class HistoryLog {
             query += ' AND action = ?';
             params.push(filters.action);
         }
+
+        if (filters.createdAt?.$gte) {
+            query += ' AND created_at >= ?';
+            params.push(
+                filters.createdAt.$gte instanceof Date
+                    ? filters.createdAt.$gte.toISOString()
+                    : filters.createdAt.$gte
+            );
+        }
+
+        if (filters.createdAt?.$lte) {
+            query += ' AND created_at <= ?';
+            params.push(
+                filters.createdAt.$lte instanceof Date
+                    ? filters.createdAt.$lte.toISOString()
+                    : filters.createdAt.$lte
+            );
+        }
         
         query += ' ORDER BY created_at DESC';
+
+        if (options.limit !== undefined) {
+            query += ' LIMIT ?';
+            params.push(options.limit);
+        }
+
+        if (options.skip !== undefined) {
+            query += ' OFFSET ?';
+            params.push(options.skip);
+        }
         
         const stmt = db.prepare(query);
         const rows = stmt.all(...params) as any[];

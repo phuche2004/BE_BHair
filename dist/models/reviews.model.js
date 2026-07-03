@@ -61,7 +61,10 @@ class Review {
                 WHERE shop_id = ?
             `);
             const result = stmt.get(shopId);
-            return [{ avgRating: result.avgRating || 0, totalReviews: result.totalReviews || 0 }];
+            return [{
+                    averageRating: result.avgRating || 0,
+                    totalReviews: result.totalReviews || 0
+                }];
         }
         return [];
     }

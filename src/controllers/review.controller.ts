@@ -31,16 +31,16 @@ export const createReview = async (req: Request, res: Response) => {
             appointmentId,
             shopId: appointment.shopId,
             customerId: req.user.id,
-            barberId: appointment.barberId,
+            barberId: appointment.barberId || undefined,
             rating,
             comment
         });
 
-        // Removed: await newReview.save() - SQLite models are immutable
+        // Update appointment status to completed after review
 
         // 5. Update Shop Average Rating
         const shopId = appointment.shopId;
-        const stats = await Review.aggregate([
+        const stats = Review.aggregate([
             { $match: { shopId: shopId } },
             {
                 $group: {

@@ -29,6 +29,37 @@ class Appointment {
     static findOne(filters = {}) {
         let query = 'SELECT * FROM appointments WHERE 1=1';
         const params = [];
+        // Handle $or operator
+        if (filters.$or) {
+            const orConditions = [];
+            for (const orFilter of filters.$or) {
+                const orParts = [];
+                const orParams = [];
+                if (orFilter.barberId) {
+                    orParts.push('barber_id = ?');
+                    orParams.push(orFilter.barberId);
+                }
+                if (orFilter.bookingDate) {
+                    orParts.push('booking_date = ?');
+                    orParams.push(orFilter.bookingDate);
+                }
+                if (orFilter.status && typeof orFilter.status === 'object' && '$in' in orFilter.status) {
+                    orParts.push('status IN (' + orFilter.status.$in.map(() => '?').join(',') + ')');
+                    orParams.push(...orFilter.status.$in);
+                }
+                if (orParts.length > 0) {
+                    orConditions.push('(' + orParts.join(' AND ') + ')');
+                    params.push(...orParams);
+                }
+            }
+            if (orConditions.length > 0) {
+                query += ' AND (' + orConditions.join(' OR ') + ')';
+            }
+        }
+        if (filters.customerId) {
+            query += ' AND customer_id = ?';
+            params.push(filters.customerId);
+        }
         if (filters.barberId) {
             query += ' AND barber_id = ?';
             params.push(filters.barberId);
@@ -73,12 +104,35 @@ class Appointment {
             params.push(filters.barberId);
         }
         if (filters.status) {
-            query += ' AND status = ?';
-            params.push(filters.status);
+            if (typeof filters.status === 'object' && '$in' in filters.status) {
+                const statuses = filters.status.$in;
+                query += ' AND status IN (' + statuses.map(() => '?').join(',') + ')';
+                params.push(...statuses);
+            }
+            else {
+                query += ' AND status = ?';
+                params.push(filters.status);
+            }
         }
         if (filters.bookingDate) {
-            query += ' AND DATE(booking_date) = DATE(?)';
-            params.push(filters.bookingDate);
+            if (typeof filters.bookingDate === 'object') {
+                if (filters.bookingDate.$gte) {
+                    query += ' AND booking_date >= ?';
+                    params.push(filters.bookingDate.$gte instanceof Date
+                        ? filters.bookingDate.$gte.toISOString()
+                        : filters.bookingDate.$gte);
+                }
+                if (filters.bookingDate.$lte) {
+                    query += ' AND booking_date <= ?';
+                    params.push(filters.bookingDate.$lte instanceof Date
+                        ? filters.bookingDate.$lte.toISOString()
+                        : filters.bookingDate.$lte);
+                }
+            }
+            else {
+                query += ' AND DATE(booking_date) = DATE(?)';
+                params.push(filters.bookingDate);
+            }
         }
         query += ' ORDER BY booking_date DESC';
         const stmt = sqlite_config_1.default.prepare(query);
@@ -148,8 +202,15 @@ class Appointment {
         let query = 'SELECT COUNT(*) as count FROM appointments WHERE 1=1';
         const params = [];
         if (filters.status) {
-            query += ' AND status = ?';
-            params.push(filters.status);
+            if (typeof filters.status === 'object' && '$in' in filters.status) {
+                const statuses = filters.status.$in;
+                query += ' AND status IN (' + statuses.map(() => '?').join(',') + ')';
+                params.push(...statuses);
+            }
+            else {
+                query += ' AND status = ?';
+                params.push(filters.status);
+            }
         }
         if (filters.shopId) {
             query += ' AND shop_id = ?';

@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import Service from '../models/service.model';
+import Service, { IService } from '../models/service.model';
 import Shop from '../models/shop.model';
 import { UserRole } from '../models/user.model';
 
@@ -41,7 +41,7 @@ export const createService = async (req: Request, res: Response) => {
 export const getServicesByShop = async (req: Request, res: Response) => {
     try {
         const { shopId } = req.params;
-        const services = Service.find({ shopId, isActive: true });
+        const services = Service.find({ shopId: shopId as string, isActive: true });
         res.json(services);
     } catch (error: any) {
         res.status(500).json({ message: 'Server error', error: error.message });
@@ -62,19 +62,17 @@ export const updateService = async (req: Request, res: Response) => {
         }
 
         const { name, price, managerExtraFee, duration, description, isActive } = req.body;
-        if (name) service.name = name;
-        if (price) service.price = price;
-        if (managerExtraFee !== undefined) service.managerExtraFee = managerExtraFee;
-        if (duration) service.duration = duration;
-        if (description) service.description = description;
-        if (isActive !== undefined) service.isActive = isActive;
+        const updates: Partial<IService> = {};
+        if (name) updates.name = name;
+        if (price) updates.price = price;
+        if (managerExtraFee !== undefined) updates.managerExtraFee = managerExtraFee;
+        if (duration) updates.duration = duration;
+        if (description) updates.description = description;
+        if (isActive !== undefined) updates.isActive = isActive;
+        if (req.file && req.file.path) updates.image = req.file.path;
 
-        if (req.file && req.file.path) {
-            service.image = req.file.path;
-        }
-
-        // Removed: await service.save() - SQLite models are immutable
-        res.json({ message: 'Service updated', service });
+        const updatedService = Service.findByIdAndUpdate(id as string, updates)!;
+        res.json({ message: 'Service updated', service: updatedService });
 
     } catch (error: any) {
         res.status(500).json({ message: 'Server error', error: error.message });
@@ -93,8 +91,7 @@ export const deleteService = async (req: Request, res: Response) => {
             return res.status(403).json({ message: 'Not authorized' });
         }
 
-        service.isActive = false;
-        // Removed: await service.save() - SQLite models are immutable
+        Service.findByIdAndUpdate(id as string, { isActive: false });
         res.json({ message: 'Service deleted (soft)' });
 
     } catch (error: any) {

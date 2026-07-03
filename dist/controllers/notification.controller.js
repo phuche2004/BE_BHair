@@ -27,13 +27,13 @@ exports.getMyNotifications = getMyNotifications;
 const markAsRead = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { id } = req.params;
-        const notification = notification_model_1.default.findByIdAndUpdate(id, { isRead: true });
-        if (!notification)
+        const existing = notification_model_1.default.findById(id);
+        if (!existing)
             return res.status(404).json({ message: 'Notification not found' });
-        // Ensure ownership
-        if (notification.recipientId.toString() !== req.user.id) {
+        if (existing.recipientId.toString() !== req.user.id) {
             return res.status(403).json({ message: 'Not authorized' });
         }
+        const notification = notification_model_1.default.findByIdAndUpdate(id, { isRead: true });
         res.json(notification);
     }
     catch (error) {
@@ -43,7 +43,7 @@ const markAsRead = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
 exports.markAsRead = markAsRead;
 const markAllAsRead = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        yield notification_model_1.default.updateMany({ recipientId: req.user.id, isRead: false }, { isRead: true });
+        notification_model_1.default.updateMany({ recipientId: req.user.id }, { isRead: true });
         res.json({ message: 'All notifications marked as read' });
     }
     catch (error) {

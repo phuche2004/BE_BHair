@@ -46,13 +46,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.updateAppointmentServices = exports.getShopAppointments = exports.updateAppointmentStatus = exports.cancelAppointment = exports.getAppointmentById = exports.getMyAppointments = exports.createAppointment = void 0;
+const crypto_1 = require("crypto");
 const appointment_model_1 = __importStar(require("../models/appointment.model"));
 const service_model_1 = __importDefault(require("../models/service.model"));
 const user_model_1 = __importStar(require("../models/user.model"));
 const shop_model_1 = __importDefault(require("../models/shop.model"));
-const mongoose_1 = require("mongoose");
 const generateBookingCode = () => {
-    return `#BH-${new mongoose_1.Types.ObjectId().toString().slice(-4).toUpperCase()}`;
+    return `#BH-${(0, crypto_1.randomBytes)(2).toString('hex').toUpperCase()}`;
 };
 const createAppointment = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -64,7 +64,7 @@ const createAppointment = (req, res) => __awaiter(void 0, void 0, void 0, functi
         // 1b. Kiểm tra customer đã có lịch đang chờ/xác nhận chưa
         const existingActive = appointment_model_1.default.findOne({
             customerId: req.user.id,
-            // Note: findOne now supports $in operator,
+            status: { $in: [appointment_model_1.AppointmentStatus.PENDING, appointment_model_1.AppointmentStatus.CONFIRMED] }
         });
         if (existingActive) {
             return res.status(409).json({
@@ -104,12 +104,11 @@ const createAppointment = (req, res) => __awaiter(void 0, void 0, void 0, functi
         // If barber is selected, check their schedule
         // If no barber selected, we might assign one or just check shop capacity (simplified: require barber for now)
         if (barberId) {
+            // Simple overlap check: booking_date between start and end
             const overlap = appointment_model_1.default.findOne({
                 barberId,
-                // Note: findOne now supports $in operator,
-                $or: [
-                    { bookingDate: { $lt: endDate }, endTime: { $gt: startDate } }
-                ]
+                status: { $in: [appointment_model_1.AppointmentStatus.PENDING, appointment_model_1.AppointmentStatus.CONFIRMED] },
+                bookingDate: startDate.toISOString()
             });
             if (overlap) {
                 return res.status(400).json({ message: 'Barber is busy at this time' });
@@ -119,17 +118,14 @@ const createAppointment = (req, res) => __awaiter(void 0, void 0, void 0, functi
             // Logic: Check Shop Capacity (Don't assign specific barber yet)
             // 1. Count Total Active Barbers
             const totalBarbers = user_model_1.default.countDocuments({
-                shopId,
+                shopId: shopId,
                 role: { $in: [user_model_1.UserRole.MANAGER, user_model_1.UserRole.STAFF] },
                 isActive: true
             });
             // 2. Count Concurrent Appointments (regardless of barber assignment)
             const concurrentAppointments = appointment_model_1.default.countDocuments({
-                shopId,
-                // Note: findOne now supports $in operator,
-                $or: [
-                    { bookingDate: { $lt: endDate }, endTime: { $gt: startDate } }
-                ]
+                shopId: shopId,
+                status: { $in: [appointment_model_1.AppointmentStatus.PENDING, appointment_model_1.AppointmentStatus.CONFIRMED] }
             });
             if (concurrentAppointments >= totalBarbers) {
                 return res.status(400).json({ message: 'Shop is fully booked at this time. Please select another slot.' });
@@ -265,7 +261,7 @@ const getMyAppointments = (req, res) => __awaiter(void 0, void 0, void 0, functi
 });
 exports.getMyAppointments = getMyAppointments;
 const getAppointmentById = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
+    var _a, _b;
     try {
         const { id } = req.params;
         const appointment = appointment_model_1.default.findById(id);
@@ -281,7 +277,7 @@ const getAppointmentById = (req, res) => __awaiter(void 0, void 0, void 0, funct
             userShopId = (_a = dbUser === null || dbUser === void 0 ? void 0 : dbUser.shopId) === null || _a === void 0 ? void 0 : _a.toString();
         }
         const isShopStaff = (req.user.role === user_model_1.UserRole.STAFF || req.user.role === user_model_1.UserRole.MANAGER) &&
-            (userShopId === null || userShopId === void 0 ? void 0 : userShopId.toString()) === appointment.shopId.id.toString();
+            (userShopId === null || userShopId === void 0 ? void 0 : userShopId.toString()) === ((_b = appointment.shopId) === null || _b === void 0 ? void 0 : _b.toString());
         if (!isOwner && !isAdmin && !isShopStaff) {
             return res.status(403).json({ message: 'Not authorized to view this appointment' });
         }
@@ -320,25 +316,26 @@ const cancelAppointment = (req, res) => __awaiter(void 0, void 0, void 0, functi
         if (appointment.status !== appointment_model_1.AppointmentStatus.PENDING && appointment.status !== appointment_model_1.AppointmentStatus.CONFIRMED) {
             return res.status(400).json({ message: `Cannot cancel appointment with status: ${appointment.status}` });
         }
-        appointment.status = appointment_model_1.AppointmentStatus.CANCELLED;
-        // Removed: await appointment.save() - SQLite models are immutable
+        const updatedAppointment = appointment_model_1.default.findByIdAndUpdate(id, {
+            status: appointment_model_1.AppointmentStatus.CANCELLED
+        });
         // --- HISTORY LOG ---
         try {
             const HistoryLog = require('../models/history.model').default;
             const { HistoryAction } = require('../models/history.model');
             const actor = user_model_1.default.findById(req.user.id);
             HistoryLog.create({
-                shopId: appointment.shopId,
+                shopId: updatedAppointment.shopId,
                 actorId: req.user.id,
                 actorName: actor ? actor.fullName : 'Hệ thống',
                 action: HistoryAction.UPDATED_STATUS,
-                details: `Đã hủy lịch hẹn (Mã: ${appointment.bookingCode})`
+                details: `Đã hủy lịch hẹn (Mã: ${updatedAppointment.bookingCode})`
             });
         }
         catch (e) {
             console.log('History Log Error:', e);
         }
-        res.json({ message: 'Appointment cancelled successfully', appointment });
+        res.json({ message: 'Appointment cancelled successfully', appointment: updatedAppointment });
     }
     catch (error) {
         res.status(500).json({ message: 'Server error', error: error.message });
@@ -346,7 +343,7 @@ const cancelAppointment = (req, res) => __awaiter(void 0, void 0, void 0, functi
 });
 exports.cancelAppointment = cancelAppointment;
 const updateAppointmentStatus = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
+    var _a, _b;
     try {
         const { id } = req.params;
         const { status } = req.body;
@@ -355,12 +352,12 @@ const updateAppointmentStatus = (req, res) => __awaiter(void 0, void 0, void 0, 
             return res.status(404).json({ message: 'Appointment not found' });
         }
         // ── Kiểm tra quyền cập nhật ──────────────────────────────────────────────
-        const isOwner = appointment.customerId.toString() === req.user.id;
+        const isOwner = ((_a = appointment.customerId) === null || _a === void 0 ? void 0 : _a.toString()) === req.user.id;
         const isAdmin = req.user.role === user_model_1.UserRole.ADMIN;
         let userShopId = req.user.shopId;
         if (!userShopId && (req.user.role === user_model_1.UserRole.STAFF || req.user.role === user_model_1.UserRole.MANAGER)) {
             const dbUser = user_model_1.default.findById(req.user.id);
-            userShopId = (_a = dbUser === null || dbUser === void 0 ? void 0 : dbUser.shopId) === null || _a === void 0 ? void 0 : _a.toString();
+            userShopId = (_b = dbUser === null || dbUser === void 0 ? void 0 : dbUser.shopId) === null || _b === void 0 ? void 0 : _b.toString();
         }
         const isShopStaff = (req.user.role === user_model_1.UserRole.STAFF || req.user.role === user_model_1.UserRole.MANAGER) &&
             (userShopId === null || userShopId === void 0 ? void 0 : userShopId.toString()) === appointment.shopId.toString();
@@ -376,25 +373,24 @@ const updateAppointmentStatus = (req, res) => __awaiter(void 0, void 0, void 0, 
         if (isOwner && !isAdmin && !isShopStaff && status !== appointment_model_1.AppointmentStatus.CANCELLED) {
             return res.status(403).json({ message: 'Customer can only cancel appointments' });
         }
-        appointment.status = status;
-        // Removed: await appointment.save() - SQLite models are immutable
+        const updatedAppointment = appointment_model_1.default.findByIdAndUpdate(id, { status });
         // --- HISTORY LOG ---
         try {
             const HistoryLog = require('../models/history.model').default;
             const { HistoryAction } = require('../models/history.model');
             const actor = user_model_1.default.findById(req.user.id);
             HistoryLog.create({
-                shopId: appointment.shopId,
+                shopId: updatedAppointment.shopId,
                 actorId: req.user.id,
                 actorName: actor ? actor.fullName : 'Hệ thống',
                 action: HistoryAction.UPDATED_STATUS,
-                details: `Đã cập nhật trạng thái đơn ${appointment.bookingCode} thành ${status}`
+                details: `Đã cập nhật trạng thái đơn ${updatedAppointment.bookingCode} thành ${status}`
             });
         }
         catch (e) {
             console.log('History Log Error:', e);
         }
-        res.json({ message: `Appointment status updated to ${status}`, appointment });
+        res.json({ message: `Appointment status updated to ${status}`, appointment: updatedAppointment });
     }
     catch (error) {
         res.status(500).json({ message: 'Server error', error: error.message });
@@ -402,7 +398,7 @@ const updateAppointmentStatus = (req, res) => __awaiter(void 0, void 0, void 0, 
 });
 exports.updateAppointmentStatus = updateAppointmentStatus;
 const getShopAppointments = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
+    var _a, _b;
     try {
         const { shopId } = req.params;
         // Verify ownership (Manager or Staff of the shop)
@@ -413,10 +409,10 @@ const getShopAppointments = (req, res) => __awaiter(void 0, void 0, void 0, func
             userShopId = (_a = dbUser === null || dbUser === void 0 ? void 0 : dbUser.shopId) === null || _a === void 0 ? void 0 : _a.toString();
         }
         const isShopStaff = (req.user.role === user_model_1.UserRole.STAFF || req.user.role === user_model_1.UserRole.MANAGER) && userShopId === shopId;
-        if (!shop || (shop.managerId.toString() !== req.user.id && req.user.role !== user_model_1.UserRole.ADMIN && !isShopStaff)) {
+        if (!shop || (((_b = shop.managerId) === null || _b === void 0 ? void 0 : _b.toString()) !== req.user.id && req.user.role !== user_model_1.UserRole.ADMIN && !isShopStaff)) {
             return res.status(403).json({ message: 'Not authorized to view appointments for this shop' });
         }
-        const appointments = appointment_model_1.default.find({ shopId });
+        const appointments = appointment_model_1.default.find({ shopId: shopId });
         res.json(appointments);
     }
     catch (error) {
@@ -447,8 +443,9 @@ const updateAppointmentServices = (req, res) => __awaiter(void 0, void 0, void 0
         const updater = user_model_1.default.findById(req.user.id);
         if (!updater)
             return res.status(404).json({ message: 'User not found' });
-        let currentServiceIds = (typeof appointment.serviceIds === "string" ? JSON.parse(appointment.serviceIds) : appointment.serviceIds).map(s => s.toString());
+        let currentServiceIds = appointment.serviceIds.map((s) => s.toString());
         let currentPrice = appointment.totalPrice;
+        const serviceChangesArray = [...(appointment.serviceChanges || [])];
         for (const change of serviceChanges) {
             const svc = service_model_1.default.findById(change.serviceId);
             if (!svc)
@@ -458,22 +455,24 @@ const updateAppointmentServices = (req, res) => __awaiter(void 0, void 0, void 0
                 currentPrice += svc.price;
             }
             else if (change.action === 'REMOVED' && currentServiceIds.includes(change.serviceId)) {
-                currentServiceIds = currentServiceIds.filter(s => s !== change.serviceId);
+                currentServiceIds = currentServiceIds.filter((s) => s !== change.serviceId);
                 currentPrice -= svc.price;
             }
-            if (!appointment.serviceChanges)
-                appointment.serviceChanges = [];
-            appointment.serviceChanges.push({
+            serviceChangesArray.push({
                 action: change.action,
                 serviceId: svc.id,
                 byName: updater.fullName,
                 byId: updater.id,
-                date: new Date()
+                date: new Date().toISOString()
             });
         }
-        appointment.serviceIds = currentServiceIds;
-        appointment.totalPrice = currentPrice;
-        // Removed: await appointment.save() - SQLite models are immutable
+        appointment_model_1.default.findByIdAndUpdate(appointment.id, {
+            serviceIds: currentServiceIds,
+            totalPrice: currentPrice,
+            serviceChanges: serviceChangesArray
+        });
+        // Refresh appointment after updates
+        const updatedAppointment = appointment_model_1.default.findById(appointment.id);
         // --- HISTORY LOG ---
         try {
             const HistoryLog = require('../models/history.model').default;
@@ -481,17 +480,17 @@ const updateAppointmentServices = (req, res) => __awaiter(void 0, void 0, void 0
             let added = serviceChanges.filter((c) => c.action === 'ADDED').length;
             let removed = serviceChanges.filter((c) => c.action === 'REMOVED').length;
             HistoryLog.create({
-                shopId: appointment.shopId,
+                shopId: updatedAppointment.shopId,
                 actorId: req.user.id,
                 actorName: updater.fullName,
                 action: HistoryAction.EDITED_SERVICES,
-                details: `Đã thay đổi dịch vụ đơn ${appointment.bookingCode} (Thêm: ${added}, Xoá: ${removed})`
+                details: `Đã thay đổi dịch vụ đơn ${updatedAppointment.bookingCode} (Thêm: ${added}, Xoá: ${removed})`
             });
         }
         catch (e) {
             console.log('History Log Error:', e);
         }
-        res.json({ message: 'Services updated successfully', appointment });
+        res.json({ message: 'Services updated successfully', appointment: updatedAppointment });
     }
     catch (error) {
         res.status(500).json({ message: 'Server error', error: error.message });

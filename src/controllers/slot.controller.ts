@@ -23,7 +23,7 @@ export const getAvailableSlots = async (req: Request, res: Response) => {
         } else {
             // Determine shop capacity by counting active staff/managers
             const staffCount = User.countDocuments({
-                shopId,
+                shopId: shopId as string,
                 role: { $in: [UserRole.MANAGER, UserRole.STAFF] },
                 isActive: true
             });

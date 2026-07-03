@@ -74,14 +74,14 @@ const createReview = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             appointmentId,
             shopId: appointment.shopId,
             customerId: req.user.id,
-            barberId: appointment.barberId,
+            barberId: appointment.barberId || undefined,
             rating,
             comment
         });
-        // Removed: await newReview.save() - SQLite models are immutable
+        // Update appointment status to completed after review
         // 5. Update Shop Average Rating
         const shopId = appointment.shopId;
-        const stats = yield reviews_model_1.default.aggregate([
+        const stats = reviews_model_1.default.aggregate([
             { $match: { shopId: shopId } },
             {
                 $group: {

@@ -15,14 +15,15 @@ export const getMyNotifications = async (req: Request, res: Response) => {
 export const markAsRead = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const notification = Notification.findByIdAndUpdate(id as string, { isRead: true });
+        const existing = Notification.findById(id as string);
 
-        if (!notification) return res.status(404).json({ message: 'Notification not found' });
+        if (!existing) return res.status(404).json({ message: 'Notification not found' });
 
-        // Ensure ownership
-        if (notification.recipientId.toString() !== req.user.id) {
+        if (existing.recipientId.toString() !== req.user.id) {
             return res.status(403).json({ message: 'Not authorized' });
         }
+
+        const notification = Notification.findByIdAndUpdate(id as string, { isRead: true });
 
         res.json(notification);
     } catch (error: any) {
@@ -32,8 +33,8 @@ export const markAsRead = async (req: Request, res: Response) => {
 
 export const markAllAsRead = async (req: Request, res: Response) => {
     try {
-        await Notification.updateMany(
-            { recipientId: req.user.id, isRead: false },
+        Notification.updateMany(
+            { recipientId: req.user.id },
             { isRead: true }
         );
         res.json({ message: 'All notifications marked as read' });

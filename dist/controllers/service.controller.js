@@ -51,7 +51,7 @@ exports.createService = createService;
 const getServicesByShop = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { shopId } = req.params;
-        const services = service_model_1.default.find({ shopId, isActive: true });
+        const services = service_model_1.default.find({ shopId: shopId, isActive: true });
         res.json(services);
     }
     catch (error) {
@@ -72,23 +72,23 @@ const updateService = (req, res) => __awaiter(void 0, void 0, void 0, function* 
             return res.status(403).json({ message: 'Not authorized' });
         }
         const { name, price, managerExtraFee, duration, description, isActive } = req.body;
+        const updates = {};
         if (name)
-            service.name = name;
+            updates.name = name;
         if (price)
-            service.price = price;
+            updates.price = price;
         if (managerExtraFee !== undefined)
-            service.managerExtraFee = managerExtraFee;
+            updates.managerExtraFee = managerExtraFee;
         if (duration)
-            service.duration = duration;
+            updates.duration = duration;
         if (description)
-            service.description = description;
+            updates.description = description;
         if (isActive !== undefined)
-            service.isActive = isActive;
-        if (req.file && req.file.path) {
-            service.image = req.file.path;
-        }
-        // Removed: await service.save() - SQLite models are immutable
-        res.json({ message: 'Service updated', service });
+            updates.isActive = isActive;
+        if (req.file && req.file.path)
+            updates.image = req.file.path;
+        const updatedService = service_model_1.default.findByIdAndUpdate(id, updates);
+        res.json({ message: 'Service updated', service: updatedService });
     }
     catch (error) {
         res.status(500).json({ message: 'Server error', error: error.message });
@@ -107,8 +107,7 @@ const deleteService = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         if (!shop || (((_a = shop.managerId) === null || _a === void 0 ? void 0 : _a.toString()) !== req.user.id && req.user.role !== user_model_1.UserRole.ADMIN)) {
             return res.status(403).json({ message: 'Not authorized' });
         }
-        service.isActive = false;
-        // Removed: await service.save() - SQLite models are immutable
+        service_model_1.default.findByIdAndUpdate(id, { isActive: false });
         res.json({ message: 'Service deleted (soft)' });
     }
     catch (error) {

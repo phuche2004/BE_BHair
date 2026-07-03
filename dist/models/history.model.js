@@ -18,7 +18,8 @@ class HistoryLog {
         const row = stmt.get(id);
         return row ? this.mapRow(row) : undefined;
     }
-    static find(filters = {}) {
+    static find(filters = {}, options = {}) {
+        var _a, _b;
         let query = 'SELECT * FROM history_logs WHERE 1=1';
         const params = [];
         if (filters.shopId) {
@@ -33,7 +34,27 @@ class HistoryLog {
             query += ' AND action = ?';
             params.push(filters.action);
         }
+        if ((_a = filters.createdAt) === null || _a === void 0 ? void 0 : _a.$gte) {
+            query += ' AND created_at >= ?';
+            params.push(filters.createdAt.$gte instanceof Date
+                ? filters.createdAt.$gte.toISOString()
+                : filters.createdAt.$gte);
+        }
+        if ((_b = filters.createdAt) === null || _b === void 0 ? void 0 : _b.$lte) {
+            query += ' AND created_at <= ?';
+            params.push(filters.createdAt.$lte instanceof Date
+                ? filters.createdAt.$lte.toISOString()
+                : filters.createdAt.$lte);
+        }
         query += ' ORDER BY created_at DESC';
+        if (options.limit !== undefined) {
+            query += ' LIMIT ?';
+            params.push(options.limit);
+        }
+        if (options.skip !== undefined) {
+            query += ' OFFSET ?';
+            params.push(options.skip);
+        }
         const stmt = sqlite_config_1.default.prepare(query);
         const rows = stmt.all(...params);
         return rows.map(row => this.mapRow(row));
