@@ -37,16 +37,23 @@ Hệ thống sử dụng cơ chế **"Build Artifacts & Trigger Webhook"** phân
    - Hiện workflow chỉ trigger khi có code mới đẩy lên nhánh `fullstack`; nhánh `main` không kích hoạt CI/CD.
    - Action sẽ:
      - Build BE (TypeScript → JavaScript tại `dist/`)
-     - Build FE (React + Vite → Static files tại `web/dist/`)
+     - Build FE (React + Vite → Static files tại `web/dist/`) **với env variables từ GitHub Secrets**
      - Dọn dẹp sạch sẽ rác (dùng `git rm -rf --ignore-unmatch src/ mobile/ web/...`) nhưng vẫn giữ lại `src/views/` cho EJS và `web/dist/` cho FE.
    - Toàn bộ cục code (Artifact) sạch sẽ này được ép push (Force Push) sang nhánh `production`.
-   - **Quan trọng:** FE config dùng relative path `/api/v1` thay vì `api.bhair.site` để giảm latency (không qua Cloudflare).
+   - **Quan trọng:** 
+     - FE config dùng relative path `/api/v1` thay vì `api.bhair.site` để giảm latency (không qua Cloudflare).
+     - Không commit `dist/` vào nhánh `fullstack` (chỉ có source code).
+     - GitHub Secrets cần thiết: `VITE_GOOGLE_CLIENT_ID`, `VITE_GOOGLE_MAPS_API_KEY`
 
 3. **Trigger Android Server (Gọi điện thoại dậy):**
-   - Sau khi đẩy code sang nhánh `production`, GitHub Actions bắn một tín hiệu Webhook xuống địa chỉ IP/Domain của con điện thoại.
-   - Điện thoại nhận lệnh, gõ `git pull origin production` để lấy mã máy về và restart PM2.
+   - Sau khi đẩy code sang nhánh `production`, GitHub Actions bắn một tín hiệu Webhook xuống địa chỉ của server.
+   - Server nhận lệnh webhook tại endpoint `/api/deploy`, thực thi:
+     ```bash
+     git fetch origin production
+     git reset --hard origin/production
+     pm2 restart BE_BHair_SQLite
+     ```
    - BE sẽ serve FE tĩnh từ `web/dist/` và xử lý client-side routing (React Router).
-   - Trạng thái sau cutover SQLite: webhook trên backend SQLite đang được bỏ qua để tránh CI/CD cũ ghi đè runtime SQLite local.
 
 ---
 
@@ -220,9 +227,10 @@ Từ giao diện màn hình Termux gốc (`~ $`), gõ lệnh sau để mở đư
 ```bash
 su
 /data/local/start_ubuntu.sh
-cd /root/BE_BHair
-
+cd /root/BE_BHair_SQLite
 ```
+
+**Lưu ý:** Folder chính là `/root/BE_BHair_SQLite` (không phải `/root/BE_BHair`).
 
 ### Quản lý PM2 (Phải ở bên trong Ubuntu)
 - `pm2 ls`: Xem danh sách các app đang chạy (`BE_BHair_SQLite` và `tunnel`).
@@ -236,26 +244,69 @@ cd /root/BE_BHair
 **Lưu ý:** BE đã được config để:
 - Serve API tại `/api/v1/*` (JSON responses)
 - Serve FE tại `/` (React SPA từ `web/dist/`)
-- Handle client-side routing (mọi route không phải `/api` đều trả về `index.html`)
+- Handle client-side routing (mọi route không phải `/api` hoặc `/explorer` đều trả về `index.html`)
+- Trust Cloudflare proxy: `app.set('trust proxy', true)`
+- Rate limiter config: `validate: { trustProxy: false }` để tránh validation error
 
 ### Cloudflare Tunnel (Locally Managed)
-- Login: `cloudflared tunnel login`
-- Tạo tunnel: `cloudflared tunnel create bhair-ubuntu`
-- Trỏ DNS: DNS được cấu hình trực tiếp trên Cloudflare Dashboard (không dùng CLI vì có thể conflict với records hiện tại):
-  ```
-  bhair.site     → CNAME → bhair-ubuntu.cfargotunnel.com (Proxied)
-  www.bhair.site → CNAME → bhair-ubuntu.cfargotunnel.com (Proxied)
-  api.bhair.site → Tunnel → bhair-ubuntu (Proxied)
-  ssh.bhair.site → CNAME → bhair-ubuntu.cfargotunnel.com (Proxied)
-  ```
-- Chạy Tunnel bằng PM2: 
-  `pm2 start cloudflared --name "tunnel" -- tunnel --protocol http2 --url http://localhost:3000 run bhair-ubuntu`
 
-**Lưu ý:** Vì BE serve cả FE và API tại cùng cổng 3000, nên:
-- `https://bhair.site` → FE (React SPA - **URL chính cho người dùng**)
-- `https://www.bhair.site` → FE (React SPA - có www)
-- `https://api.bhair.site` → FE hoặc API (legacy URL, vẫn hoạt động)
-- `https://bhair.site/api/v1/...` → API endpoints (FE gọi qua relative path)
+**Setup tunnel lần đầu:**
+```bash
+# Login Cloudflare (mở browser để authorize)
+cloudflared tunnel login
+
+# Tạo tunnel (chỉ cần 1 lần)
+cloudflared tunnel create bhair-ubuntu
+
+# Tạo config file (nếu cần)
+cat > ~/.cloudflared/config.yml << 'EOF'
+tunnel: bhair-ubuntu
+credentials-file: /root/.cloudflared/<TUNNEL_ID>.json
+
+ingress:
+  - hostname: bhair.site
+    service: http://localhost:3000
+  - hostname: www.bhair.site
+    service: http://localhost:3000
+  - hostname: api.bhair.site
+    service: http://localhost:3000
+  - service: http_status:404
+EOF
+```
+
+**Trỏ DNS (quan trọng!):**
+```bash
+# Phải dùng CLI để tạo routes, không dùng Dashboard
+cloudflared tunnel route dns bhair-ubuntu bhair.site
+cloudflared tunnel route dns bhair-ubuntu www.bhair.site
+cloudflared tunnel route dns bhair-ubuntu api.bhair.site
+```
+
+Sau khi chạy lệnh trên, DNS records trên Cloudflare sẽ tự động được tạo:
+```
+bhair.site     → CNAME → bhair-ubuntu.cfargotunnel.com (Proxied)
+www.bhair.site → CNAME → bhair-ubuntu.cfargotunnel.com (Proxied)
+api.bhair.site → Tunnel → bhair-ubuntu (Proxied)
+```
+
+**Chạy Tunnel bằng PM2:**
+```bash
+# Cách 1: Dùng config file (khuyên dùng)
+pm2 start cloudflared --name tunnel -- tunnel run bhair-ubuntu
+pm2 save
+
+# Cách 2: Dùng --url flag (đơn giản hơn, route tất cả hostnames)
+pm2 start cloudflared --name tunnel -- tunnel --url http://localhost:3000 run bhair-ubuntu
+pm2 save
+```
+
+**Lưu ý quan trọng:**
+- ⚠️ **PHẢI dùng CLI** `cloudflared tunnel route dns` để tạo routes, không được chỉ tạo CNAME trên Dashboard!
+- ✅ Vì BE serve cả FE và API tại cùng cổng 3000, nên:
+  - `https://bhair.site` → FE (React SPA - **URL chính cho người dùng**)
+  - `https://www.bhair.site` → FE (React SPA - có www)
+  - `https://api.bhair.site` → FE/API (legacy URL, vẫn hoạt động)
+  - `https://bhair.site/api/v1/...` → API endpoints (FE gọi qua relative path)
 
 ### Tự động khởi động (Termux:Boot)
 Điện thoại sẽ tự động kích hoạt Server khi sập nguồn mở lại thông qua App **Termux:Boot**.
