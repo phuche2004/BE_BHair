@@ -6,7 +6,7 @@ node_modules/
 .env.local
 
 # Build output
-# dist/ -- Removed: needed for production deployment
+dist/  # Ignored on main/fullstack, but force-added on production branch
 build/
 
 # Logs
@@ -19,6 +19,9 @@ logs/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Batch scripts
+*.bat
 
 # IDE files
 .vscode/
