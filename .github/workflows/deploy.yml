@@ -1,0 +1,56 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Build & Push Artifacts
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Build TypeScript
+        run: npm run build
+
+      - name: Push to production branch
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -B production
+          
+          # Xóa sạch sành sanh các thư mục không cần thiết cho Server
+          git rm -rf --ignore-unmatch src/ .github/ tsconfig.json mobile/ web/ scripts/ privacy-policy/ nodemon.json mongo_data/ tmp/ .aider* *.md *.png *.sh
+          
+          # CỨU HỘ! Phục hồi lại thư mục views chứa giao diện EJS
+          git reset HEAD src/views/
+          git checkout -- src/views/
+          
+          # Bắt buộc thêm thư mục dist và views
+          git add -f dist/ src/views/
+          git commit -m "🚀 Auto-build Artifacts for Production"
+          git push -f origin production
+
+  deploy:
+    name: Trigger Android Server
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Call Webhook
+        run: |
+          curl -X POST -H "x-deploy-secret: ${{ secrets.DEPLOY_SECRET }}" ${{ secrets.DEPLOY_URL }}/api/deploy
