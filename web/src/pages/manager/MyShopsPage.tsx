@@ -294,7 +294,7 @@ export default function MyShopsPage() {
         }
       }
 
-      await shopApi.updateShop(editingShop._id, formData);
+      await shopApi.updateShop(editingShop.id || editingShop._id!, formData);
       setEditingShop(null);
       await fetchShops();
     } catch (err: any) {
@@ -338,7 +338,7 @@ export default function MyShopsPage() {
               const image = shop.images?.[0] || shop.images1?.[0];
               return (
                 <div 
-                  key={shop._id} 
+                  key={shop.id} 
                   className="card" 
                   style={{ border: '1px solid var(--border)', position: 'relative' }}
                 >
@@ -374,7 +374,7 @@ export default function MyShopsPage() {
                   <div
                     onClick={() => {
                       if (user && token) {
-                        login({ ...user, shopId: shop._id }, token);
+                        login({ ...user, shopId: shop.id || shop._id }, token);
                       }
                       handleOpenEditModal(shop);
                     }}
