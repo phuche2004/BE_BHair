@@ -83,15 +83,20 @@ if (webDistExists) {
 // CI/CD Webhook cho Termux Android
 import { execSync } from 'child_process';
 app.post('/api/deploy', (req: Request, res: Response): void => {
-    if (req.headers['x-deploy-secret'] !== (process.env.DEPLOY_SECRET || 'chuoi-bi-mat-cua-tao')) {
+    if (!process.env.DEPLOY_SECRET || req.headers['x-deploy-secret'] !== process.env.DEPLOY_SECRET) {
         res.status(403).json({ error: 'Forbidden' });
         return;
     }
     try {
         console.log('📥 Received deploy webhook. Pulling code from production branch...');
         execSync('git fetch origin production && git reset --hard origin/production', { cwd: process.cwd() });
+        
+        console.log('📦 Installing dependencies...');
+        execSync('npm install --production', { cwd: process.cwd(), stdio: 'inherit' });
+        
         console.log('✅ Code updated. Restarting PM2...');
         execSync('pm2 restart BE_BHair_SQLite', { cwd: process.cwd() });
+        
         res.json({ status: 'deployed', message: 'Successfully updated from production branch' });
     } catch (err: any) {
         console.error('❌ Deploy failed:', err.message);
