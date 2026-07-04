@@ -91,29 +91,46 @@ class User {
     }): IUser {
         const id = uuidv4();
         
-        const stmt = db.prepare(`
-            INSERT INTO users (
-                id, phone_number, password, email, google_id,
-                full_name, role, avatar, is_active, shop_id, fcm_token, barber_profile
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `);
-        
-        stmt.run(
-            id,
-            userData.phoneNumber || null,
-            userData.password || null,
-            userData.email || null,
-            userData.googleId || null,
-            userData.fullName,
-            userData.role || UserRole.CUSTOMER,
-            userData.avatar || '',
-            userData.isActive !== false ? 1 : 0,
-            userData.shopId || null,
-            userData.fcmToken || null,
-            userData.barberProfile ? JSON.stringify(userData.barberProfile) : null
-        );
-        
-        return this.findById(id)!;
+        try {
+            const stmt = db.prepare(`
+                INSERT INTO users (
+                    id, phone_number, password, email, google_id,
+                    full_name, role, avatar, is_active, shop_id, fcm_token, barber_profile
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `);
+            
+            const result = stmt.run(
+                id,
+                userData.phoneNumber || null,
+                userData.password || null,
+                userData.email || null,
+                userData.googleId || null,
+                userData.fullName,
+                userData.role || UserRole.CUSTOMER,
+                userData.avatar || '',
+                userData.isActive !== false ? 1 : 0,
+                userData.shopId || null,
+                userData.fcmToken || null,
+                userData.barberProfile ? JSON.stringify(userData.barberProfile) : null
+            );
+            
+            console.log(`✅ User created: ${id}, changes: ${result.changes}, lastInsertRowid: ${result.lastInsertRowid}`);
+            
+            if (result.changes === 0) {
+                throw new Error('Failed to insert user into database');
+            }
+            
+            const createdUser = this.findById(id);
+            if (!createdUser) {
+                throw new Error(`User created but not found: ${id}`);
+            }
+            
+            return createdUser;
+        } catch (error: any) {
+            console.error('❌ User.create() error:', error.message);
+            console.error('   Data:', JSON.stringify(userData, null, 2));
+            throw error;
+        }
     }
 
     // Update user by ID
