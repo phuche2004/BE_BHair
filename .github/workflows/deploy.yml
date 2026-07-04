@@ -49,10 +49,11 @@ jobs:
           # Lưu tạm thư mục web/dist để không bị xóa mất do nó chưa nằm trong git tracker
           cp -r web/dist ./web_dist_backup
           
-          # Xóa sạch sành sanh các thư mục không cần thiết cho Server
-          git rm -rf --ignore-unmatch src/ .github/ tsconfig.json mobile/ web/ scripts/ privacy-policy/ nodemon.json mongo_data/ tmp/ .aider* *.md *.png *.sh *.bat atlas_backup/
+          # Xóa các thư mục không cần thiết cho Server (GIỮ LẠI package.json và src/views/)
+          git rm -rf --ignore-unmatch .github/ tsconfig.json mobile/ web/ scripts/ privacy-policy/ nodemon.json mongo_data/ tmp/ .aider* *.md *.png *.sh *.bat atlas_backup/
           
-          # CỨU HỘ! Phục hồi lại thư mục views chứa giao diện EJS
+          # Xóa src/ NHƯNG giữ lại src/views/
+          git rm -rf --ignore-unmatch src/
           git reset HEAD src/views/
           git checkout -- src/views/
           
@@ -60,8 +61,8 @@ jobs:
           mkdir -p web
           mv ./web_dist_backup web/dist
           
-          # Bắt buộc thêm thư mục dist, views và web/dist
-          git add -f dist/ src/views/ web/dist/
+          # Bắt buộc thêm thư mục dist, views, web/dist và package.json
+          git add -f dist/ src/views/ web/dist/ package.json package-lock.json
           git commit -m "🚀 Auto-build Artifacts for Production (Fullstack)"
           git push -f origin production
 
