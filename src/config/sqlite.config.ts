@@ -1,13 +1,19 @@
 import Database from 'better-sqlite3';
 import path from 'path';
+import fs from 'fs';
 
 // Determine database path from environment or use default
 const dbPath = process.env.DATABASE_PATH || path.join(process.cwd(), 'bhair.db');
 
-// Create SQLite connection
+// Check if database file exists, if not create it
+if (!fs.existsSync(dbPath)) {
+    console.log('⚠️ Database file not found, creating new database at:', dbPath);
+}
+
+// Create SQLite connection (fileMustExist: false to allow creation)
 const db = new Database(dbPath, {
     verbose: process.env.NODE_ENV === 'development' ? console.log : undefined,
-    fileMustExist: true
+    fileMustExist: false // Allow creating new db file if not exists
 });
 
 // Enable WAL mode for better concurrent access
