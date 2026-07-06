@@ -3,7 +3,8 @@ name: CI/CD Pipeline
 on:
   push:
     branches:
-      - main
+      - fullstack
+  workflow_dispatch:
 
 jobs:
   build:

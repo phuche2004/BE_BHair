@@ -28,3 +28,12 @@ Thumbs.db
 coverage/
 .nyc_output/
 .aider*
+
+# Database files
+*.db
+*.db-shm
+*.db-wal
+*.db-journal
+
+# Load test output
+stress-results/
