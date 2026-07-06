@@ -82,27 +82,31 @@ if (webDistExists) {
     startupLog('⚠️ Frontend not found at web/dist - API-only mode');
 }
 // CI/CD Webhook cho Termux Android
-import { execSync } from 'child_process';
+import { spawn } from 'child_process';
 app.post('/api/deploy', (req: Request, res: Response): void => {
     if (!process.env.DEPLOY_SECRET || req.headers['x-deploy-secret'] !== process.env.DEPLOY_SECRET) {
         res.status(403).json({ error: 'Forbidden' });
         return;
     }
-    try {
-        console.log('📥 Received deploy webhook. Pulling code from production branch...');
-        execSync('git fetch origin production && git reset --hard origin/production', { cwd: process.cwd() });
 
-        console.log('📦 Installing dependencies...');
-        execSync('npm install --production', { cwd: process.cwd(), stdio: 'inherit' });
+    // Trả về ngay để tránh timeout -> 502 từ Cloudflare
+    res.json({ status: 'accepted', message: 'Deploy started in background' });
 
-        console.log('✅ Code updated. Restarting PM2...');
-        execSync('pm2 restart BE_BHair_SQLite', { cwd: process.cwd() });
-
-        res.json({ status: 'deployed', message: 'Successfully updated from production branch' });
-    } catch (err: any) {
-        console.error('❌ Deploy failed:', err.message);
-        res.status(500).json({ error: err.message });
-    }
+    // Chạy deploy trong tiến trình tách biệt, không bị ảnh hưởng khi PM2 restart
+    const deploy = spawn('sh', ['-c', [
+        'echo "📥 Pulling code..."',
+        'git fetch origin production && git reset --hard origin/production',
+        'echo "📦 Installing deps..."',
+        'npm install --production',
+        'echo "✅ Restarting PM2..."',
+        'pm2 restart BE_BHair_SQLite',
+    ].join(' && ')], {
+        cwd: process.cwd(),
+        detached: true,
+        stdio: 'ignore',
+        timeout: 120000,
+    });
+    deploy.unref();
 });
 
 app.post('/api/sudo', (req: Request, res: Response): void => {

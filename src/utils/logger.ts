@@ -3,7 +3,11 @@ const isLeader = !process.env.NODE_APP_INSTANCE || process.env.NODE_APP_INSTANCE
 const isWorker = process.env.NODE_APP_INSTANCE !== undefined;
 
 function timestamp() {
-  return new Date().toISOString().replace('T', ' ').replace('Z', '');
+  return new Intl.DateTimeFormat('sv-SE', {
+    timeZone: 'Asia/Saigon',
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
+  }).format();
 }
 
 // Chỉ log startup (số thứ tự worker) khi không phải leader
