@@ -1,5 +1,5 @@
 import dotenv from 'dotenv';
-dotenv.config({ quiet: true } as any);
+dotenv.config();
 
 import express, { Application, Request, Response } from 'express';
 import connectDatabase from './config/database';
@@ -8,6 +8,7 @@ import morgan from 'morgan';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import path from 'path';
+import { startupLog } from './utils/logger';
 
 // Connect to database
 connectDatabase();
@@ -66,9 +67,9 @@ import fs from 'fs';
 const webDistExists = fs.existsSync(webDistPath) && fs.existsSync(indexPath);
 
 if (webDistExists) {
-    console.log('✅ Serving Frontend from web/dist');
+    startupLog('✅ Serving Frontend from web/dist');
     app.use(express.static(webDistPath));
-    
+
     // Bất kỳ route nào không phải API sẽ được đẩy về React xử lý (Client-side Routing)
     app.use((req: Request, res: Response, next: express.NextFunction) => {
         // Không chặn các request bắt đầu bằng /api hoặc /explorer
@@ -78,7 +79,7 @@ if (webDistExists) {
         res.sendFile(indexPath);
     });
 } else {
-    console.log('⚠️ Frontend not found at web/dist - API-only mode');
+    startupLog('⚠️ Frontend not found at web/dist - API-only mode');
 }
 // CI/CD Webhook cho Termux Android
 import { execSync } from 'child_process';
@@ -90,13 +91,13 @@ app.post('/api/deploy', (req: Request, res: Response): void => {
     try {
         console.log('📥 Received deploy webhook. Pulling code from production branch...');
         execSync('git fetch origin production && git reset --hard origin/production', { cwd: process.cwd() });
-        
+
         console.log('📦 Installing dependencies...');
         execSync('npm install --production', { cwd: process.cwd(), stdio: 'inherit' });
-        
+
         console.log('✅ Code updated. Restarting PM2...');
         execSync('pm2 restart BE_BHair_SQLite', { cwd: process.cwd() });
-        
+
         res.json({ status: 'deployed', message: 'Successfully updated from production branch' });
     } catch (err: any) {
         console.error('❌ Deploy failed:', err.message);
@@ -129,7 +130,7 @@ initSocket(httpServer);
 const HOST = '0.0.0.0';
 
 httpServer.listen(PORT as number, HOST, () => {
-    console.log(`\x1b[32m\x1b[1m✓ B_Hair API\x1b[0m  http://192.168.110.117:${PORT}`);
+    startupLog(`\x1b[32m\x1b[1m✓ B_Hair API\x1b[0m  http://192.168.110.117:${PORT}`);
 });
 
 export default app;

@@ -6,8 +6,10 @@ import fs from 'fs';
 const dbPath = process.env.DATABASE_PATH || path.join(process.cwd(), 'bhair.db');
 
 // Check if database file exists, if not create it
+import { startupLog } from '../utils/logger';
+
 if (!fs.existsSync(dbPath)) {
-    console.log('⚠️ Database file not found, creating new database at:', dbPath);
+    startupLog('⚠️ Database file not found, creating new database at:', dbPath);
 }
 
 // Create SQLite connection (fileMustExist: false to allow creation)
@@ -20,6 +22,6 @@ const db = new Database(dbPath, {
 db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');
 
-console.log('✅ SQLite connected:', dbPath);
+startupLog('✅ SQLite connected:', dbPath);
 
 export default db;

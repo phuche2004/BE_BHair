@@ -11,9 +11,9 @@ try {
             privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
         }),
     });
-    console.log('🔥 Firebase Admin Initialized');
+    // Không log ở module scope - sẽ log từ server.ts qua startupLog
 } catch (error) {
-    console.error('⚠️ Firebase Admin Initialization Failed (Check .env):', error);
+    // Không log ở module scope
 }
 
 export default admin;

@@ -14,14 +14,14 @@ export class AIService {
             this.fptApiKey = fptKey;
             this.fptBaseUrl = process.env.FPT_MARKETPLACE_BASE_URL || 'https://mkp-api.fptcloud.com/v1';
             this.fptModel = process.env.FPT_MARKETPLACE_MODEL || 'Qwen2.5-VL-7B-Instruct';
-            console.log("AI Service initialized with FPT Marketplace API.");
+            // console.log("AI Service initialized with FPT Marketplace API."); // Suppressed in PM2 cluster
         } else {
             const apiKey = process.env.GEMINI_API_KEY;
             if (!apiKey) {
-                console.warn("WARNING: Neither FPT_MARKETPLACE_API_KEY nor GEMINI_API_KEY is set in environment variables.");
+                // console.warn("WARNING: Neither FPT_MARKETPLACE_API_KEY nor GEMINI_API_KEY is set in environment variables."); // Suppressed in PM2 cluster
             }
             this.ai = new GoogleGenAI({ apiKey: apiKey || "dummy-key" });
-            console.log("AI Service initialized with Gemini API.");
+            // console.log("AI Service initialized with Gemini API."); // Suppressed in PM2 cluster
         }
     }
 

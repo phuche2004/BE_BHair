@@ -19,13 +19,15 @@ if (process.env.CLOUDINARY_URL) {
 // Cloudinary will automatically configure itself if CLOUDINARY_URL is present in process.env
 // We export the configured instance for use elsewhere.
 
+import { startupLog, log } from '../utils/logger';
+
 export const verifyCloudinaryConnection = async () => {
     try {
         const result = await cloudinary.api.ping();
-        console.log('Cloudinary connected:', result.status);
+        startupLog('Cloudinary connected:', result.status);
         return true;
     } catch (error: any) {
-        console.error('❌ Cloudinary connection failed:', error.message);
+        log('❌ Cloudinary connection failed:', error.message);
         return false;
     }
 };

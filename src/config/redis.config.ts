@@ -1,5 +1,6 @@
 import Redis from 'ioredis';
 import config from './env.config';
+import { startupLog, log } from '../utils/logger';
 
 // Khởi tạo kết nối Redis
 const redisClient = new Redis({
@@ -12,11 +13,11 @@ const redisClient = new Redis({
 });
 
 redisClient.on('error', (err) => {
-    console.error('❌ Lỗi kết nối Redis:', err.message);
+    log('❌ Lỗi kết nối Redis:', err.message);
 });
 
 redisClient.on('connect', () => {
-    console.log(`✅ Redis connected: ${config.redis.host}:${config.redis.port}`);
+    startupLog(`✅ Redis connected: ${config.redis.host}:${config.redis.port}`);
 });
 
 export default redisClient;
