@@ -5,26 +5,49 @@ const fs = require('fs');
 const path = require('path');
 const { setTimeout: sleep } = require('timers/promises');
 
-const DEFAULT_BASE_URL = 'https://api.bhair.site';
+const DEFAULT_BASE_URL = 'http://localhost:3000';
 const cli = parseArgs(process.argv.slice(2));
 
 const config = {
+  // --base-url: URL của server (env: BASE_URL, default: http://localhost:3000)
   baseUrl: opt('base-url', env('BASE_URL', DEFAULT_BASE_URL)).replace(/\/+$/, ''),
-  scenario: opt('scenario', env('SCENARIO', 'realistic')),
-  durationSeconds: intOpt('duration', intEnv('DURATION_SECONDS', 120)),
-  rampSeconds: intOpt('ramp', intEnv('RAMP_SECONDS', 30)),
-  concurrency: intOpt('concurrency', intEnv('CONCURRENCY', 100)),
+  // --scenario: Kịch bản test (env: SCENARIO, default: realistic)
+  //   realistic:     Hỗn hợp login/search/shop-detail/services/slots/profile/my-appointments
+  //   read-heavy:   Thiên về đọc (search, shop-detail, services, slots, profile)
+  //   login-bcrypt: 100% login (đè bcrypt nặng)
+  //   spike:        Tăng đột biến, hỗn hợp đọc/ghi
+  //   booking-race: Booking cạnh tranh (create-appointment + slots + my-appointments)
+  //   soak:         Chạy bền, nhẹ nhàng hơn trong thời gian dài
+  scenario: opt('scenario', env('SCENARIO', 'login-bcrypt')),
+  // --duration: Thời gian chạy test (giây) (env: DURATION_SECONDS, default: 120)
+  durationSeconds: intOpt('duration', intEnv('DURATION_SECONDS', 30)),
+  // --ramp: Thời gian tăng dần từ 1 lên max concurrency (giây) (env: RAMP_SECONDS, default: 30)
+  rampSeconds: intOpt('ramp', intEnv('RAMP_SECONDS', 5)),
+  // --concurrency: Số worker chạy đồng thời (env: CONCURRENCY, default: 100)
+  concurrency: intOpt('concurrency', intEnv('CONCURRENCY', 50)),
+  // --max-rps: Giới hạn request/giây tối đa (0 = không giới hạn) (env: MAX_RPS, default: 0)
   maxRps: intOpt('max-rps', intEnv('MAX_RPS', 0)),
-  timeoutMs: intOpt('timeout', intEnv('TIMEOUT_MS', 15000)),
-  warmupSeconds: intOpt('warmup', intEnv('WARMUP_SECONDS', 10)),
+  // --timeout: Timeout mỗi request (ms) (env: TIMEOUT_MS, default: 15000)
+  timeoutMs: intOpt('timeout', intEnv('TIMEOUT_MS', 30000)),
+  // --warmup: Thời gian làm nóng trước khi test thật (giây, 0 = tắt) (env: WARMUP_SECONDS, default: 10)
+  warmupSeconds: intOpt('warmup', intEnv('WARMUP_SECONDS', 0)),
+  // --output-dir: Thư mục lưu kết quả JSON (env: OUTPUT_DIR, default: stress-results/)
   outputDir: opt('output-dir', env('OUTPUT_DIR', path.join(process.cwd(), 'stress-results'))),
+  // --allow-writes: Cho phép tạo appointment thật (cẩn thận!) (env: ALLOW_WRITES, default: false)
   allowWrites: boolOpt('allow-writes', boolEnv('ALLOW_WRITES', false)),
-  loginPhone: opt('login-phone', env('LOGIN_PHONE', '')),
-  loginPassword: opt('login-password', env('LOGIN_PASSWORD', '')),
+  // --login-phone: SĐT đăng nhập (env: LOGIN_PHONE)
+  loginPhone: opt('login-phone', env('LOGIN_PHONE', '0912856050')),
+  // --login-password: Mật khẩu (env: LOGIN_PASSWORD)
+  loginPassword: opt('login-password', env('LOGIN_PASSWORD', '02052004')),
+  // --shop-id: ID shop để test booking (env: SHOP_ID)
   shopId: opt('shop-id', env('SHOP_ID', '')),
+  // --service-id: ID service để test booking (env: SERVICE_ID)
   serviceId: opt('service-id', env('SERVICE_ID', '')),
+  // --barber-id: ID barber để test slots/booking (env: BARBER_ID)
   barberId: opt('barber-id', env('BARBER_ID', '')),
-  verbose: boolOpt('verbose', boolEnv('VERBOSE', false)),
+  // --verbose: In log chi tiết từng request (env: VERBOSE)
+  verbose: boolOpt('verbose', boolEnv('VERBOSE', true)),
+  // --dry-run: Chỉ in cấu hình, không chạy test thật
   dryRun: boolOpt('dry-run', false),
 };
 
